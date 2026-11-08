@@ -58,6 +58,8 @@ Essas são interpretações alternativas. O significado do peso deve ser definid
 - **Matriz de adjacência:** representação alternativa.
 - **Lista de arestas:** representação alternativa.
 
+A classe [`Grafo`](../../src/simulador/grafo.py) implementa a lista de adjacência com indivíduos indexados por identificador e vizinhanças indexadas pelos identificadores dos contatos. Cada aresta é compartilhada pelas duas direções da conexão e contabilizada uma única vez.
+
 ## Topologia
 
 Uma **topologia estática** é suficiente para a versão mínima. As configurações possíveis são:
@@ -91,10 +93,10 @@ A execução termina quando não houver mais indivíduos infectados ou quando o 
 
 ## Atributos do vértice (indivíduo)
 
-- **`id`:** identificador único do indivíduo.
+- **`id`:** identificador inteiro do indivíduo; sua unicidade na rede será controlada pelo grafo.
 - **`estado`:** estado epidemiológico atual do indivíduo (S, I ou R).
 - **`isolamento`:** valor booleano que indica se o indivíduo está isolado.
-- **`diaInicioInfeccao`:** dia em que o indivíduo foi infectado, quando aplicável.
+- **`dia_inicio_infeccao`:** dia em que o indivíduo foi infectado, quando aplicável. Este é o nome adotado em Python para o atributo inicialmente descrito como `diaInicioInfeccao`.
 
 ## Atributos da aresta (conexão entre dois indivíduos)
 

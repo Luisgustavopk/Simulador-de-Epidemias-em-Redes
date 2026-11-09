@@ -1,0 +1,11 @@
+# Ambiente Python e arquivos gerados pelas ferramentas de desenvolvimento.
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+build/
+dist/

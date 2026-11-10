@@ -1,0 +1,224 @@
+@startuml
+left to right direction
+skinparam monochrome true
+skinparam dpi 170
+skinparam packageBorderColor #AAAAAA
+skinparam packageBorderThickness 1
+skinparam packageBackgroundColor #FAFAFA
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 14
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+skinparam linetype ortho
+skinparam nodesep 58
+skinparam ranksep 105
+skinparam ArrowFontSize 13
+hide empty members
+hide circle
+title Classes de projeto - domínio da simulação SIR
+
+package "Domínio da rede" {
+  enum EstadoSIR <<enumeration>> {
+    SUSCETIVEL
+    INFECTADO
+    RECUPERADO
+  }
+
+  class Individuo {
+    - id : int
+    - estado : EstadoSIR
+    - isolamento : bool = False
+    - diaInicioInfeccao : int | None
+    + Individuo(id : int)
+    + getId() : int
+    + getEstado() : EstadoSIR
+    + isIsolado() : bool
+    + getInicioInfeccao() : int | None
+    + infectar(passo : int) : None
+    + recuperar() : None
+    + isolar() : None
+  }
+
+  class Contato {
+    - extremos : set[Individuo]
+    - peso : float
+    - ativa : bool
+    + Contato(a : Individuo, b : Individuo, peso : float)
+    + getPeso() : float
+    + getExtremos() : set[Individuo]
+    + outroExtremo(individuo : Individuo) : Individuo
+    + isAtiva() : bool
+  }
+
+  class RedeContatos {
+    - individuos : dict[int, Individuo]
+    - adjacencias : dict[int, set[Contato]]
+    + RedeContatos()
+    + adicionarIndividuo(individuo : Individuo) : None
+    + buscarIndividuo(id : int) : Individuo | None
+    + getIndividuos() : set[Individuo]
+    + quantidadeIndividuos() : int
+    + conectar(a : Individuo, b : Individuo, peso : float) : Contato
+    + contatosDe(individuo : Individuo) : set[Contato]
+    + grau(individuo : Individuo) : int
+  }
+
+  RedeContatos "1" -- "0..*" Individuo
+  RedeContatos "1" *-- "0..*" Contato
+  Contato "0..*" -- "2" Individuo
+  Individuo ..> EstadoSIR
+}
+
+package "Configuração" {
+  class ConfiguracaoSimulacao {
+    - beta : float
+    - gamma : float
+    - idsInfectadosIniciais : set[int]
+    - fracaoIsolamento : float
+    - passoIntervencao : int
+    - limitePassos : int
+    - semente : int
+    + ConfiguracaoSimulacao(beta : float, gamma : float, ids : set[int],\nfracao : float, inicio : int, limite : int, semente : int)
+    + getBeta() : float
+    + getGamma() : float
+    + getIdsInfectadosIniciais() : set[int]
+    + getFracaoIsolamento() : float
+    + getPassoIntervencao() : int
+    + getLimitePassos() : int
+    + getSemente() : int
+    + validar(rede : RedeContatos) : list[str]
+    + quantidadeIsolados(populacaoInicial : int) : int
+    + deveIniciarIsolamento(passoAtual : int) : bool
+  }
+}
+
+package "Execução" {
+  class Simulacao {
+    - passoAtual : int = 0
+    - inicializada : bool = False
+    - finalizada : bool = False
+    + Simulacao(rede : RedeContatos, configuracao : ConfiguracaoSimulacao,\nestrategia : EstrategiaIsolamento)
+    + inicializar() : list[str]
+    + executar() : ResultadoSimulacao
+    + executarPasso() : RegistroPasso
+    + getPassoAtual() : int
+    + isFinalizada() : bool
+    + getResultado() : ResultadoSimulacao | None
+    - aplicarIntervencao() : None
+    - registrarEstadoAtual() : RegistroPasso
+  }
+
+  class MotorSIR {
+    - sorteiosEpidemia : GeradorAleatorio
+    + MotorSIR(gerador : GeradorAleatorio)
+    + avancar(rede : RedeContatos, configuracao : ConfiguracaoSimulacao,\npassoAtual : int) : RegistroPasso
+  }
+
+  class GeradorAleatorio {
+    - sementeBase : int
+    - fluxo : str
+    - estadoInterno : list[int]
+    + GeradorAleatorio(sementeBase : int, fluxo : str)
+    + getSementeBase() : int
+    + getFluxo() : str
+    + uniforme() : float
+  }
+
+  Simulacao "1" -- "0..1" MotorSIR
+  MotorSIR "0..1" -- "1" GeradorAleatorio
+}
+
+package "Seleção para isolamento" {
+  abstract class EstrategiaIsolamento {
+    - nome : str
+    + EstrategiaIsolamento(nome : str)
+    + getNome() : str
+    {abstract} + validar(rede : RedeContatos, configuracao : ConfiguracaoSimulacao) : list[str]
+    {abstract} + selecionar(rede : RedeContatos, k : int) : set[Individuo]
+  }
+
+  class IsolamentoAleatorio {
+    - sorteiosIsolamento : GeradorAleatorio
+    + IsolamentoAleatorio(gerador : GeradorAleatorio)
+    + validar(rede : RedeContatos, configuracao : ConfiguracaoSimulacao) : list[str]
+    + selecionar(rede : RedeContatos, k : int) : set[Individuo]
+  }
+
+  class IsolamentoPorGrau {
+    - redePreparada : RedeContatos
+    - grausOriginais : dict[int, int]
+    + IsolamentoPorGrau(rede : RedeContatos)
+    + validar(rede : RedeContatos, configuracao : ConfiguracaoSimulacao) : list[str]
+    + selecionar(rede : RedeContatos, k : int) : set[Individuo]
+  }
+
+  EstrategiaIsolamento <|-- IsolamentoAleatorio
+  EstrategiaIsolamento <|-- IsolamentoPorGrau
+}
+
+package "Resultados" {
+  enum MotivoTermino <<enumeration>> {
+    EXTINCAO
+    LIMITE_PASSOS
+  }
+
+  class ResultadoSimulacao {
+    - populacaoInicial : int
+    - motivoTermino : MotivoTermino | None
+    - metricas : MetricasEpidemia | None
+    + ResultadoSimulacao(populacaoInicial : int, registroInicial : RegistroPasso)
+    + getPopulacaoInicial() : int
+    + getRegistros() : list[RegistroPasso]
+    + getMotivoTermino() : MotivoTermino | None
+    + getMetricas() : MetricasEpidemia | None
+    + isConcluido() : bool
+    + registrar(registro : RegistroPasso) : None
+    + concluir(motivo : MotivoTermino) : None
+    + calcularMetricas() : MetricasEpidemia
+  }
+
+  class RegistroPasso {
+    - passo : int
+    - suscetiveis : int
+    - infectados : int
+    - recuperados : int
+    + RegistroPasso(passo : int, s : int, i : int, r : int)
+    + getPasso() : int
+    + getSuscetiveis() : int
+    + getInfectados() : int
+    + getRecuperados() : int
+  }
+
+  class MetricasEpidemia {
+    - populacaoInicial : int
+    - picoInfectados : int
+    - passoPico : int
+    - fracaoAcumulada : float
+    - duracaoExtincao : int | None
+    - horizonteObservado : int
+    - censurada : bool
+    + MetricasEpidemia(populacaoInicial : int, registros : list[RegistroPasso],\nmotivo : MotivoTermino)
+    + getPopulacaoInicial() : int
+    + getPicoInfectados() : int
+    + getPassoPico() : int
+    + getFracaoAcumulada() : float
+    + getDuracaoExtincao() : int | None
+    + getHorizonteObservado() : int
+    + isCensurada() : bool
+    + picoProporcional() : float
+  }
+
+  ResultadoSimulacao "1" *-- "1..*" RegistroPasso
+  ResultadoSimulacao "1" -down- "0..1" MetricasEpidemia
+  ResultadoSimulacao ..> MotivoTermino
+}
+
+Simulacao "0..1" -down- "1" RedeContatos
+ConfiguracaoSimulacao "1" -left- "0..*" Simulacao
+Simulacao "0..1" -down- "1" EstrategiaIsolamento
+Simulacao "0..1" -down- "0..1" ResultadoSimulacao
+GeradorAleatorio "1" -down- "0..1" IsolamentoAleatorio
+
+@enduml

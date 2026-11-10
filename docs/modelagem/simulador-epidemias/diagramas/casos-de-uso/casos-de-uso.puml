@@ -1,0 +1,43 @@
+@startuml
+left to right direction
+skinparam monochrome true
+skinparam dpi 170
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam packageStyle rectangle
+skinparam backgroundColor white
+skinparam usecaseBackgroundColor #F1F1F1
+skinparam usecaseBorderColor #555555
+actor "Usuário acadêmico" as Usuario
+rectangle "Simulador de Epidemias em Redes" {
+  usecase "Selecionar rede\nobservada ou sintética" as Rede
+  usecase "Configurar interpretação do peso\ne topologia da rede" as ModeloRede
+  usecase "Configurar parâmetros SIR\ne condições iniciais" as Parametros
+  usecase "Configurar estratégia, mecanismo,\norçamento e início do isolamento" as Isolamento
+  usecase "Executar simulação" as Executar
+  usecase "Executar comparação\ncom repetições" as Comparar
+  usecase "Validar configuração" as Validar
+  usecase "Consultar curvas SIR, métricas\ne motivo do término" as Resultados
+}
+Usuario -- Rede
+Usuario -- ModeloRede
+Usuario -- Parametros
+Usuario -- Isolamento
+Usuario -- Executar
+Usuario -- Comparar
+Usuario -- Resultados
+Executar ..> Validar : <<include>>
+Comparar ..> Validar : <<include>>
+note right of Comparar
+  Mesma rede, parâmetros e condições
+  iniciais por repetição.
+  Mesmo orçamento de pessoas
+  entre estratégias interventivas.
+end note
+note bottom of Isolamento
+  Isolamento é independente
+  do estado S, I ou R.
+  Mecanismos: desativação,
+  redução de pesos ou exclusão.
+end note
+@enduml

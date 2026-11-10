@@ -12,16 +12,7 @@ def _validar_id(id_individuo: int) -> None:
 
 
 class Grafo:
-    """Rede de indivíduos representada por listas de adjacência.
-
-    Cada contato compartilha a mesma instância de Aresta nas duas direções.
-    Os identificadores dos indivíduos e as extremidades das arestas devem
-    permanecer inalterados após o cadastro. Estados, isolamento, pesos e
-    indicadores de conexão ativa podem ser atualizados pelos seus consumidores.
-
-    As consultas de coleções retornam tuplas com referências aos modelos,
-    preservando a estrutura interna do grafo.
-    """
+    """Rede com contatos compartilhados nos dois sentidos e consultas protegidas."""
 
     def __init__(self) -> None:
         self._individuos: dict[int, Individuo] = {}
@@ -30,17 +21,17 @@ class Grafo:
 
     @property
     def numero_individuos(self) -> int:
-        """Quantidade de indivíduos cadastrados, consultada em O(1)."""
+        """Quantidade de indivíduos em O(1)."""
         return len(self._individuos)
 
     @property
     def numero_arestas(self) -> int:
-        """Quantidade de contatos, contando cada aresta uma vez, em O(1)."""
+        """Quantidade de contatos únicos em O(1)."""
         return self._numero_arestas
 
     @property
     def individuos(self) -> tuple[Individuo, ...]:
-        """Retorna uma tupla dos indivíduos cadastrados, em O(V)."""
+        """Retorna referências aos indivíduos em uma tupla, em O(V)."""
         return tuple(self._individuos.values())
 
     @property
@@ -54,48 +45,54 @@ class Grafo:
         )
 
     def adicionar_individuo(self, individuo: Individuo) -> None:
-        """Cadastra um indivíduo, rejeitando identificadores duplicados."""
+        """Cadastra a pessoa e sua vizinhança vazia, rejeitando IDs duplicados."""
         if not isinstance(individuo, Individuo):
             raise TypeError("O vértice deve ser uma instância de Individuo.")
-        identificador = individuo.id
-        _validar_id(identificador)
-        if identificador in self._individuos:
-            raise ValueError(f"O indivíduo {identificador} já está cadastrado.")
-        self._individuos[identificador] = individuo
-        self._adjacencias[identificador] = {}
+        if individuo.id in self._individuos:
+            raise ValueError(f"O indivíduo {individuo.id} já está cadastrado.")
+        self._individuos[individuo.id] = individuo
+        self._adjacencias[individuo.id] = {}
+
+    def buscar_individuo(self, id_individuo: int) -> Individuo | None:
+        """Busca opcional por ID, retornando None quando não há cadastro."""
+        _validar_id(id_individuo)
+        return self._individuos.get(id_individuo)
 
     def obter_individuo(self, id_individuo: int) -> Individuo:
         """Consulta por ID; lança KeyError quando o indivíduo não existe."""
-        _validar_id(id_individuo)
-        try:
-            return self._individuos[id_individuo]
-        except KeyError:
-            raise KeyError(f"O indivíduo {id_individuo} não está cadastrado.") from None
+        individuo = self.buscar_individuo(id_individuo)
+        if individuo is None:
+            raise KeyError(f"O indivíduo {id_individuo} não está cadastrado.")
+        return individuo
 
-    def adicionar_aresta(
-        self,
-        id_origem: int,
-        id_destino: int,
-        peso: float = 1.0,
-        ativa: bool = True,
+    def _adjacencia_de(self, individuo: Individuo) -> dict[int, Aresta]:
+        if not isinstance(individuo, Individuo):
+            raise TypeError("O vértice deve ser uma instância de Individuo.")
+        if self._individuos.get(individuo.id) is not individuo:
+            raise KeyError(f"O indivíduo {individuo.id} não está cadastrado nesta rede.")
+        return self._adjacencias[individuo.id]
+
+    def conectar(
+        self, origem: Individuo, destino: Individuo, peso: float = 1.0
     ) -> Aresta:
-        """Cria um contato entre indivíduos cadastrados e retorna a aresta.
-
-        Laços, pesos e tipos inválidos são rejeitados pela classe Aresta.
-        Contatos repetidos, inclusive na ordem inversa, lançam ValueError.
-        A validação ocorre antes de qualquer alteração na rede.
-        """
-        origem = self.obter_individuo(id_origem)
-        destino = self.obter_individuo(id_destino)
-        if id_destino in self._adjacencias[id_origem]:
-            raise ValueError(
-                f"Já existe uma aresta entre {id_origem} e {id_destino}."
-            )
-        aresta = Aresta(origem=origem, destino=destino, peso=peso, ativa=ativa)
-        self._adjacencias[id_origem][id_destino] = aresta
-        self._adjacencias[id_destino][id_origem] = aresta
+        """Conecta as instâncias cadastradas, validando antes de alterar a rede."""
+        adjacencia = self._adjacencia_de(origem)
+        adjacencia_destino = self._adjacencia_de(destino)
+        if destino.id in adjacencia:
+            raise ValueError(f"Já existe uma aresta entre {origem.id} e {destino.id}.")
+        aresta = Aresta(origem, destino, peso)
+        adjacencia[destino.id] = aresta
+        adjacencia_destino[origem.id] = aresta
         self._numero_arestas += 1
         return aresta
+
+    def adicionar_aresta(
+        self, id_origem: int, id_destino: int, peso: float = 1.0
+    ) -> Aresta:
+        """Conecta por IDs, reutilizando a validação da operação por objetos."""
+        return self.conectar(
+            self.obter_individuo(id_origem), self.obter_individuo(id_destino), peso
+        )
 
     def obter_aresta(self, id_origem: int, id_destino: int) -> Aresta:
         """Consulta o contato em qualquer sentido; ausências lançam KeyError."""
@@ -109,13 +106,17 @@ class Grafo:
             ) from None
 
     def vizinhos(self, id_individuo: int) -> tuple[Individuo, ...]:
-        """Consulta os vizinhos estruturais em O(grau do indivíduo).
-
-        Inclui contatos inativos e indivíduos isolados, pois essas condições
-        não removem contatos da estrutura da rede.
-        """
+        """Vizinhos estruturais, inclusive isolados, em O(grau do indivíduo)."""
         self.obter_individuo(id_individuo)
         return tuple(
             self._individuos[id_vizinho]
             for id_vizinho in self._adjacencias[id_individuo]
         )
+
+    def contatos_de(self, individuo: Individuo) -> frozenset[Aresta]:
+        """Contatos estruturais em uma coleção protegida, em O(grau)."""
+        return frozenset(self._adjacencia_de(individuo).values())
+
+    def grau(self, individuo: Individuo) -> int:
+        """Quantidade de vizinhos estruturais de uma pessoa cadastrada, em O(1)."""
+        return len(self._adjacencia_de(individuo))

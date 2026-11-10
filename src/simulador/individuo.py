@@ -1,66 +1,60 @@
-"""Representação de um indivíduo e de seu estado epidemiológico."""
+"""Indivíduo com identidade estável e transições epidemiológicas controladas."""
 
-from __future__ import annotations
-
-from dataclasses import dataclass
-from typing import Literal, TypeAlias
-
-EstadoEpidemiologico: TypeAlias = Literal["S", "I", "R"]
+from enum import Enum
 
 
-def _validar_dia(dia: int) -> None:
-    if isinstance(dia, bool) or not isinstance(dia, int):
-        raise TypeError("O dia da infecção deve ser um número inteiro.")
-    if dia < 0:
-        raise ValueError("O dia da infecção não pode ser negativo.")
+class EstadoSIR(str, Enum):
+    SUSCETIVEL = "S"
+    INFECTADO = "I"
+    RECUPERADO = "R"
 
 
-@dataclass(slots=True, eq=False)
 class Individuo:
-    """Indivíduo da rede, com isolamento separado do estado SIR.
+    """Começa suscetível; estado e isolamento mudam apenas pelas operações."""
 
-    O identificador deve ser inteiro; sua unicidade na rede será controlada
-    pelo grafo. O dia da infecção pode ser desconhecido para indivíduos
-    inicialmente infectados ou recuperados.
-    """
+    __slots__ = ("_id", "_estado", "_isolamento", "_dia_inicio_infeccao")
 
-    id: int
-    estado: EstadoEpidemiologico = "S"
-    isolamento: bool = False
-    dia_inicio_infeccao: int | None = None
-
-    def __post_init__(self) -> None:
-        if isinstance(self.id, bool) or not isinstance(self.id, int):
+    def __init__(self, id: int) -> None:
+        if isinstance(id, bool) or not isinstance(id, int):
             raise TypeError("O identificador do indivíduo deve ser inteiro.")
-        if not isinstance(self.estado, str):
-            raise TypeError("O estado epidemiológico deve ser uma string.")
-        if self.estado not in ("S", "I", "R"):
-            raise ValueError("O estado epidemiológico deve ser S, I ou R.")
-        if not isinstance(self.isolamento, bool):
-            raise TypeError("O atributo isolamento deve ser booleano.")
-        if self.dia_inicio_infeccao is not None:
-            _validar_dia(self.dia_inicio_infeccao)
-            if self.estado == "S":
-                raise ValueError("Um indivíduo suscetível não possui dia de infecção.")
+        self._id = id
+        self._estado = EstadoSIR.SUSCETIVEL
+        self._isolamento = False
+        self._dia_inicio_infeccao: int | None = None
 
-    def infectar(self, dia: int) -> None:
-        """Altera S para I e registra o dia, sem realizar sorteio de contágio."""
-        _validar_dia(dia)
-        if self.estado != "S":
+    @property
+    def id(self) -> int:
+        return self._id
+
+    @property
+    def estado(self) -> EstadoSIR:
+        return self._estado
+
+    @property
+    def isolamento(self) -> bool:
+        return self._isolamento
+
+    @property
+    def dia_inicio_infeccao(self) -> int | None:
+        return self._dia_inicio_infeccao
+
+    def infectar(self, passo: int) -> None:
+        """Aplica S → I e registra o passo, inclusive zero."""
+        if isinstance(passo, bool) or not isinstance(passo, int):
+            raise TypeError("O passo da infecção deve ser inteiro.")
+        if passo < 0:
+            raise ValueError("O passo da infecção não pode ser negativo.")
+        if self._estado is not EstadoSIR.SUSCETIVEL:
             raise ValueError("Somente indivíduos suscetíveis podem ser infectados.")
-        self.estado = "I"
-        self.dia_inicio_infeccao = dia
+        self._estado = EstadoSIR.INFECTADO
+        self._dia_inicio_infeccao = passo
 
     def recuperar(self) -> None:
-        """Altera I para R, preservando o dia da infecção e o isolamento."""
-        if self.estado != "I":
+        """Aplica I → R, preservando o histórico e o isolamento."""
+        if self._estado is not EstadoSIR.INFECTADO:
             raise ValueError("Somente indivíduos infectados podem se recuperar.")
-        self.estado = "R"
+        self._estado = EstadoSIR.RECUPERADO
 
     def isolar(self) -> None:
-        """Marca o indivíduo como isolado, mantendo o estado epidemiológico."""
-        self.isolamento = True
-
-    def liberar_isolamento(self) -> None:
-        """Retira o isolamento, mantendo o estado epidemiológico."""
-        self.isolamento = False
+        """Isola em qualquer estado; chamadas repetidas mantêm a condição."""
+        self._isolamento = True

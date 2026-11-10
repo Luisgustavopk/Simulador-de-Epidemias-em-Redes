@@ -1,161 +1,148 @@
-"""Regras de estado, isolamento e validação de indivíduos."""
+"""Estados SIR encapsulados e isolamento independente do estado."""
 
 import pytest
 
-from simulador import Individuo
+from simulador import EstadoSIR, Individuo
 
 
-@pytest.mark.parametrize("identificador", [0, -1])
-def test_identificadores_inteiros_nao_sao_limitados_a_positivos(
-    identificador: int,
-) -> None:
+def _no_estado(estado: EstadoSIR) -> Individuo:
+    individuo = Individuo(1)
+    if estado is not EstadoSIR.SUSCETIVEL:
+        individuo.infectar(2)
+    if estado is EstadoSIR.RECUPERADO:
+        individuo.recuperar()
+    return individuo
+
+
+@pytest.mark.parametrize("identificador", [0, -1, 7])
+def test_individuo_inicia_suscetivel_sem_historico(identificador: int) -> None:
     individuo = Individuo(identificador)
 
-    individuo.infectar(0)
-
     assert individuo.id == identificador
-    assert individuo.estado == "I"
-
-
-@pytest.mark.parametrize("dia", [0, 12])
-def test_infectar_registra_o_dia_e_preserva_o_isolamento(dia: int) -> None:
-    individuo = Individuo(1, isolamento=True)
-
-    individuo.infectar(dia)
-
-    assert individuo.estado == "I"
-    assert individuo.dia_inicio_infeccao == dia
-    assert individuo.isolamento is True
-
-
-def test_recuperar_preserva_historico_e_isolamento() -> None:
-    individuo = Individuo(1, estado="I", isolamento=True, dia_inicio_infeccao=3)
-
-    individuo.recuperar()
-
-    assert individuo.estado == "R"
-    assert individuo.dia_inicio_infeccao == 3
-    assert individuo.isolamento is True
-
-
-@pytest.mark.parametrize("estado", ["S", "I", "R"])
-def test_isolamento_e_liberacao_independem_do_estado_epidemiologico(
-    estado: str,
-) -> None:
-    dia = None if estado == "S" else 4
-    individuo = Individuo(1, estado=estado, dia_inicio_infeccao=dia)
-
-    individuo.isolar()
-
-    assert individuo.isolamento is True
-    assert individuo.estado == estado
-    assert individuo.dia_inicio_infeccao == dia
-
-    individuo.liberar_isolamento()
-
+    assert individuo.estado is EstadoSIR.SUSCETIVEL
     assert individuo.isolamento is False
-    assert individuo.estado == estado
-    assert individuo.dia_inicio_infeccao == dia
-
-
-@pytest.mark.parametrize("estado", ["I", "R"])
-def test_estado_inicial_admite_dia_de_infeccao_desconhecido(estado: str) -> None:
-    individuo = Individuo(1, estado=estado, isolamento=True)
-
-    assert individuo.estado == estado
     assert individuo.dia_inicio_infeccao is None
-    assert individuo.isolamento is True
 
 
-@pytest.mark.parametrize(
-    "identificador",
-    [
-        pytest.param(True, id="booleano"),
-        pytest.param(1.5, id="decimal"),
-        pytest.param("1", id="texto"),
-    ],
-)
+@pytest.mark.parametrize("identificador", [True, 1.5, "1", None])
 def test_identificador_precisa_ser_inteiro(identificador: object) -> None:
     with pytest.raises(TypeError):
         Individuo(identificador)
 
 
-@pytest.mark.parametrize("estado", [None, 1])
-def test_estado_precisa_ser_texto(estado: object) -> None:
-    with pytest.raises(TypeError):
-        Individuo(1, estado=estado)
+@pytest.mark.parametrize("passo", [0, 12])
+def test_infectar_registra_passo_e_preserva_isolamento(passo: int) -> None:
+    individuo = Individuo(1)
+    individuo.isolar()
+
+    individuo.infectar(passo)
+
+    assert individuo.estado is EstadoSIR.INFECTADO
+    assert individuo.dia_inicio_infeccao == passo
+    assert individuo.isolamento is True
 
 
-@pytest.mark.parametrize("estado", ["E", ""])
-def test_estado_precisa_pertencer_ao_modelo_sir(estado: str) -> None:
-    with pytest.raises(ValueError):
-        Individuo(1, estado=estado)
+def test_recuperar_preserva_inicio_da_infeccao_e_isolamento() -> None:
+    individuo = Individuo(1)
+    individuo.infectar(3)
+    individuo.isolar()
+
+    individuo.recuperar()
+
+    assert individuo.estado is EstadoSIR.RECUPERADO
+    assert individuo.dia_inicio_infeccao == 3
+    assert individuo.isolamento is True
 
 
-@pytest.mark.parametrize("isolamento", [1, "sim"])
-def test_isolamento_precisa_ser_booleano(isolamento: object) -> None:
-    with pytest.raises(TypeError):
-        Individuo(1, isolamento=isolamento)
-
-
-@pytest.mark.parametrize(
-    "dia,erro",
-    [
-        pytest.param(-1, ValueError, id="negativo"),
-        pytest.param(True, TypeError, id="booleano"),
-        pytest.param(2.5, TypeError, id="decimal"),
-    ],
-)
-def test_dia_inicial_de_infeccao_precisa_ser_inteiro_nao_negativo(
-    dia: object, erro: type[Exception]
+@pytest.mark.parametrize("estado", list(EstadoSIR))
+def test_isolar_e_idempotente_sem_mudar_estado_ou_historico(
+    estado: EstadoSIR,
 ) -> None:
-    with pytest.raises(erro):
-        Individuo(1, estado="I", dia_inicio_infeccao=dia)
+    individuo = _no_estado(estado)
+    inicio = individuo.dia_inicio_infeccao
+
+    individuo.isolar()
+    individuo.isolar()
+
+    assert individuo.isolamento is True
+    assert individuo.estado is estado
+    assert individuo.dia_inicio_infeccao == inicio
 
 
-def test_suscetivel_nao_pode_iniciar_com_dia_de_infeccao() -> None:
+@pytest.mark.parametrize("estado", [EstadoSIR.INFECTADO, EstadoSIR.RECUPERADO])
+def test_apenas_suscetiveis_podem_ser_infectados(estado: EstadoSIR) -> None:
+    individuo = _no_estado(estado)
+
     with pytest.raises(ValueError):
-        Individuo(1, dia_inicio_infeccao=0)
+        individuo.infectar(9)
 
-
-@pytest.mark.parametrize("estado", ["I", "R"])
-def test_apenas_suscetivel_pode_ser_infectado(estado: str) -> None:
-    individuo = Individuo(1, estado=estado, dia_inicio_infeccao=2)
-
-    with pytest.raises(ValueError):
-        individuo.infectar(5)
-
-    assert individuo.estado == estado
+    assert individuo.estado is estado
     assert individuo.dia_inicio_infeccao == 2
 
 
-@pytest.mark.parametrize("estado", ["S", "R"])
-def test_apenas_infectado_pode_se_recuperar(estado: str) -> None:
-    individuo = Individuo(1, estado=estado)
+@pytest.mark.parametrize("estado", [EstadoSIR.SUSCETIVEL, EstadoSIR.RECUPERADO])
+def test_apenas_infectados_podem_se_recuperar(estado: EstadoSIR) -> None:
+    individuo = _no_estado(estado)
+    inicio = individuo.dia_inicio_infeccao
 
     with pytest.raises(ValueError):
         individuo.recuperar()
 
-    assert individuo.estado == estado
-    assert individuo.dia_inicio_infeccao is None
+    assert individuo.estado is estado
+    assert individuo.dia_inicio_infeccao == inicio
 
 
 @pytest.mark.parametrize(
-    "dia,erro",
-    [
-        pytest.param(-1, ValueError, id="negativo"),
-        pytest.param(True, TypeError, id="booleano"),
-        pytest.param(1.5, TypeError, id="decimal"),
-    ],
+    "passo,erro",
+    [(-1, ValueError), (True, TypeError), (1.5, TypeError), (None, TypeError)],
 )
-def test_infectar_com_dia_invalido_preserva_o_individuo(
-    dia: object, erro: type[Exception]
+def test_infeccao_invalida_nao_modifica_individuo(
+    passo: object, erro: type[Exception]
 ) -> None:
-    individuo = Individuo(1, isolamento=True)
+    individuo = Individuo(1)
+    individuo.isolar()
 
     with pytest.raises(erro):
-        individuo.infectar(dia)
+        individuo.infectar(passo)
 
-    assert individuo.estado == "S"
+    assert individuo.estado is EstadoSIR.SUSCETIVEL
     assert individuo.dia_inicio_infeccao is None
     assert individuo.isolamento is True
+
+
+@pytest.mark.parametrize(
+    "atributo,valor",
+    [
+        ("id", 2),
+        ("estado", EstadoSIR.RECUPERADO),
+        ("isolamento", True),
+        ("dia_inicio_infeccao", 4),
+    ],
+)
+def test_consultas_nao_permitem_contornar_as_transicoes(
+    atributo: str, valor: object
+) -> None:
+    individuo = Individuo(1)
+
+    with pytest.raises(AttributeError):
+        setattr(individuo, atributo, valor)
+
+    assert individuo.id == 1
+    assert individuo.estado is EstadoSIR.SUSCETIVEL
+    assert individuo.isolamento is False
+    assert individuo.dia_inicio_infeccao is None
+
+
+def test_identidade_em_conjuntos_e_mapas_permanece_apos_transicoes() -> None:
+    individuo = Individuo(1)
+    participantes = {individuo}
+    indicadores = {individuo: "original"}
+    identidade_hash = hash(individuo)
+
+    individuo.infectar(0)
+    individuo.isolar()
+    individuo.recuperar()
+
+    assert individuo in participantes
+    assert indicadores[individuo] == "original"
+    assert hash(individuo) == identidade_hash

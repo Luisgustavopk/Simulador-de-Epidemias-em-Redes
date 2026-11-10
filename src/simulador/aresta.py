@@ -1,55 +1,52 @@
-"""Representação de um contato não direcionado entre dois indivíduos."""
-
-from __future__ import annotations
-
-from dataclasses import dataclass
-from math import isfinite
+"""Contato não direcionado com intensidade normalizada e extremos estáveis."""
 
 from .individuo import Individuo
 
 
-@dataclass(slots=True, eq=False)
 class Aresta:
-    """Contato ponderado, sem laços, com referências aos dois indivíduos.
+    """Consulta o isolamento dos extremos sem armazenar disponibilidade redundante."""
 
-    O peso deve ser finito e não negativo. Valores acima de um são aceitos
-    para representar intensidade de contato; sua conversão em probabilidade
-    será responsabilidade do motor de simulação.
+    __slots__ = ("_origem", "_destino", "_peso")
 
-    Os nomes origem e destino identificam apenas as extremidades da conexão.
-    O atributo ativa é independente dos indicadores de isolamento individuais.
-    """
-
-    origem: Individuo
-    destino: Individuo
-    peso: float = 1.0
-    ativa: bool = True
-
-    def __post_init__(self) -> None:
-        if not isinstance(self.origem, Individuo) or not isinstance(
-            self.destino, Individuo
-        ):
+    def __init__(
+        self, origem: Individuo, destino: Individuo, peso: float = 1.0
+    ) -> None:
+        if not isinstance(origem, Individuo) or not isinstance(destino, Individuo):
             raise TypeError("As extremidades da aresta devem ser indivíduos.")
-        if self.origem.id == self.destino.id:
+        if origem.id == destino.id:
             raise ValueError("Uma aresta não pode ligar um indivíduo a ele mesmo.")
-        if isinstance(self.peso, bool) or not isinstance(self.peso, (int, float)):
+        if isinstance(peso, bool) or not isinstance(peso, (int, float)):
             raise TypeError("O peso da aresta deve ser um número real.")
-        try:
-            peso = float(self.peso)
-        except OverflowError as exc:
-            raise ValueError("O peso da aresta deve ser finito.") from exc
-        if not isfinite(peso) or peso < 0:
-            raise ValueError("O peso da aresta deve ser finito e não negativo.")
-        if not isinstance(self.ativa, bool):
-            raise TypeError("O atributo ativa deve ser booleano.")
-        self.peso = peso
+        if not 0 <= peso <= 1:
+            raise ValueError("O peso deve ser finito e estar entre 0 e 1.")
+        self._origem, self._destino, self._peso = origem, destino, float(peso)
 
-    def outro_extremo(self, id_individuo: int) -> Individuo:
-        """Retorna o vizinho de um dos extremos, consultado pelo identificador."""
-        if isinstance(id_individuo, bool) or not isinstance(id_individuo, int):
-            raise TypeError("O identificador do indivíduo deve ser inteiro.")
-        if id_individuo == self.origem.id:
-            return self.destino
-        if id_individuo == self.destino.id:
-            return self.origem
+    @property
+    def origem(self) -> Individuo:
+        return self._origem
+
+    @property
+    def destino(self) -> Individuo:
+        return self._destino
+
+    @property
+    def extremos(self) -> frozenset[Individuo]:
+        return frozenset((self._origem, self._destino))
+
+    @property
+    def peso(self) -> float:
+        return self._peso
+
+    @property
+    def ativa(self) -> bool:
+        return not (self._origem.isolamento or self._destino.isolamento)
+
+    def outro_extremo(self, individuo: Individuo) -> Individuo:
+        """Consulta pelo próprio objeto, rejeitando cópias com o mesmo ID."""
+        if not isinstance(individuo, Individuo):
+            raise TypeError("O extremo deve ser uma instância de Individuo.")
+        if individuo is self._origem:
+            return self._destino
+        if individuo is self._destino:
+            return self._origem
         raise ValueError("O indivíduo informado não pertence a esta aresta.")

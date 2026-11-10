@@ -1,0 +1,39 @@
+@startuml
+hide empty description
+skinparam monochrome true
+skinparam dpi 170
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam backgroundColor white
+skinparam stateBackgroundColor #F1F1F1
+skinparam stateBorderColor #555555
+state "Indivíduo" as Individuo {
+  state "Condição epidemiológica" as Epidemiologia {
+    state "Configuração inicial" as Inicio <<choice>>
+    state "Suscetível (S)" as S
+    state "Infectado (I)" as I
+    state "Recuperado ou removido (R)" as R
+    [*] --> Inicio
+    Inicio --> I : [infectado inicial]
+    Inicio --> S : [demais indivíduos]
+    S --> I : atualização t -> t+1\n[U_v(t) < P_v(t)]
+    I --> R : atualização t -> t+1\n[V_v(t) < gamma_d]
+  }
+  --
+  state "Condição de isolamento" as CondicaoIsolamento {
+    state "Não isolado" as Livre
+    state "Isolado" as Isolado
+    [*] --> Livre
+    Livre --> Isolado : início do passo t_int\n[indivíduo selecionado]
+  }
+}
+note bottom of Individuo
+  Regiões independentes e simultâneas.
+  Isolar não altera S, I ou R.
+  Efeito conforme mecanismo: desativação, redução ou exclusão.
+  Passar para R não exclui automaticamente o vértice.
+  Na coorte fechada, a exclusão preserva o registro epidemiológico.
+  Sem liberação na configuração de referência.
+  Transições SIR usam os estados existentes em t.
+end note
+@enduml

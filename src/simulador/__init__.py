@@ -9,6 +9,13 @@ from simulador.analise_estrutural import (
     resumir_rede,
 )
 from simulador.contato import Contato
+from simulador.carga_rede import (
+    ArquivoCSV,
+    ErroCargaRede,
+    ProblemaCargaRede,
+    RedeDisponivel,
+    ServicoCargaRede,
+)
 from simulador.geracao import (
     ResultadoGeracaoRede,
     gerar_barabasi_albert,
@@ -30,13 +37,18 @@ from simulador.isolamento import (
 from simulador.rede_contatos import RedeContatos
 
 __all__ = [
+    "ArquivoCSV",
     "Contato",
     "ErroImportacaoRede",
+    "ErroCargaRede",
     "EstadoSIR",
     "Individuo",
     "MecanismoIsolamento",
     "ProblemaImportacao",
+    "ProblemaCargaRede",
     "RedeContatos",
+    "RedeDisponivel",
+    "ServicoCargaRede",
     "ResumoEstrutural",
     "ResultadoGeracaoRede",
     "ResultadoImportacaoRede",

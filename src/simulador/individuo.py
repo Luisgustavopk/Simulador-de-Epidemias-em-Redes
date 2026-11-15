@@ -4,6 +4,8 @@ from enum import Enum
 
 
 class EstadoSIR(str, Enum):
+    """Estados epidemiológicos do indivíduo, separados do isolamento."""
+
     SUSCETIVEL = "S"
     INFECTADO = "I"
     RECUPERADO = "R"
@@ -15,6 +17,7 @@ class Individuo:
     __slots__ = ("_id", "_estado", "_isolamento", "_dia_inicio_infeccao")
 
     def __init__(self, id: int) -> None:
+        """Cria um suscetível com ID inteiro; a rede garante sua unicidade."""
         if isinstance(id, bool) or not isinstance(id, int):
             raise TypeError("O identificador do indivíduo deve ser inteiro.")
         self._id = id
@@ -24,18 +27,22 @@ class Individuo:
 
     @property
     def id(self) -> int:
+        """Identificador estável, inclusive zero ou valores negativos."""
         return self._id
 
     @property
     def estado(self) -> EstadoSIR:
+        """Estado alterado somente pelas transições de infecção e recuperação."""
         return self._estado
 
     @property
     def isolamento(self) -> bool:
+        """Condição de isolamento, independente do estado epidemiológico."""
         return self._isolamento
 
     @property
     def dia_inicio_infeccao(self) -> int | None:
+        """Passo da primeira infecção; None indica que ela não ocorreu."""
         return self._dia_inicio_infeccao
 
     def infectar(self, passo: int) -> None:

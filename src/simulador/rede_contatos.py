@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from .aresta import Aresta
-from .individuo import Individuo
+from simulador.contato import Contato
+from simulador.individuo import Individuo
 
 
 def _validar_id(id_individuo: int) -> None:
@@ -11,13 +11,19 @@ def _validar_id(id_individuo: int) -> None:
         raise TypeError("O identificador do indivíduo deve ser inteiro.")
 
 
-class Grafo:
-    """Rede com contatos compartilhados nos dois sentidos e consultas protegidas."""
+class RedeContatos:
+    """Grafo simples não direcionado, com cadastro por ID e listas de adjacência.
+
+    Cada contato é compartilhado pelas vizinhanças dos seus dois extremos e
+    contado uma única vez. As consultas devolvem coleções imutáveis contendo
+    os mesmos objetos de domínio, não cópias dos estados epidemiológicos.
+    """
 
     def __init__(self) -> None:
+        """Cria uma rede vazia, permitindo cadastrar pessoas sem contatos."""
         self._individuos: dict[int, Individuo] = {}
-        self._adjacencias: dict[int, dict[int, Aresta]] = {}
-        self._numero_arestas = 0
+        self._adjacencias: dict[int, dict[int, Contato]] = {}
+        self._numero_contatos = 0
 
     @property
     def numero_individuos(self) -> int:
@@ -25,9 +31,9 @@ class Grafo:
         return len(self._individuos)
 
     @property
-    def numero_arestas(self) -> int:
+    def numero_contatos(self) -> int:
         """Quantidade de contatos únicos em O(1)."""
-        return self._numero_arestas
+        return self._numero_contatos
 
     @property
     def individuos(self) -> tuple[Individuo, ...]:
@@ -35,12 +41,12 @@ class Grafo:
         return tuple(self._individuos.values())
 
     @property
-    def arestas(self) -> tuple[Aresta, ...]:
+    def contatos(self) -> tuple[Contato, ...]:
         """Retorna cada contato uma única vez, em O(V + E)."""
         return tuple(
-            aresta
+            contato
             for id_origem, vizinhanca in self._adjacencias.items()
-            for id_destino, aresta in vizinhanca.items()
+            for id_destino, contato in vizinhanca.items()
             if id_origem < id_destino
         )
 
@@ -65,7 +71,7 @@ class Grafo:
             raise KeyError(f"O indivíduo {id_individuo} não está cadastrado.")
         return individuo
 
-    def _adjacencia_de(self, individuo: Individuo) -> dict[int, Aresta]:
+    def _adjacencia_de(self, individuo: Individuo) -> dict[int, Contato]:
         if not isinstance(individuo, Individuo):
             raise TypeError("O vértice deve ser uma instância de Individuo.")
         if self._individuos.get(individuo.id) is not individuo:
@@ -74,27 +80,41 @@ class Grafo:
 
     def conectar(
         self, origem: Individuo, destino: Individuo, peso: float = 1.0
-    ) -> Aresta:
-        """Conecta as instâncias cadastradas, validando antes de alterar a rede."""
+    ) -> Contato:
+        """Conecta duas pessoas cadastradas, sem alterar a rede em caso de erro.
+
+        Args:
+            origem: Instância cadastrada de um extremo do contato.
+            destino: Instância cadastrada do outro extremo.
+            peso: Intensidade normalizada em [0, 1].
+
+        Returns:
+            O mesmo contato registrado nas duas listas de adjacência.
+
+        Raises:
+            TypeError: Se um extremo ou o peso tiver tipo incompatível.
+            KeyError: Se algum objeto não for a pessoa cadastrada nesta rede.
+            ValueError: Se houver laço, contato repetido ou peso inválido.
+        """
         adjacencia = self._adjacencia_de(origem)
         adjacencia_destino = self._adjacencia_de(destino)
         if destino.id in adjacencia:
-            raise ValueError(f"Já existe uma aresta entre {origem.id} e {destino.id}.")
-        aresta = Aresta(origem, destino, peso)
-        adjacencia[destino.id] = aresta
-        adjacencia_destino[origem.id] = aresta
-        self._numero_arestas += 1
-        return aresta
+            raise ValueError(f"Já existe um contato entre {origem.id} e {destino.id}.")
+        contato = Contato(origem, destino, peso)
+        adjacencia[destino.id] = contato
+        adjacencia_destino[origem.id] = contato
+        self._numero_contatos += 1
+        return contato
 
-    def adicionar_aresta(
+    def adicionar_contato(
         self, id_origem: int, id_destino: int, peso: float = 1.0
-    ) -> Aresta:
+    ) -> Contato:
         """Conecta por IDs, reutilizando a validação da operação por objetos."""
         return self.conectar(
             self.obter_individuo(id_origem), self.obter_individuo(id_destino), peso
         )
 
-    def obter_aresta(self, id_origem: int, id_destino: int) -> Aresta:
+    def obter_contato(self, id_origem: int, id_destino: int) -> Contato:
         """Consulta o contato em qualquer sentido; ausências lançam KeyError."""
         self.obter_individuo(id_origem)
         self.obter_individuo(id_destino)
@@ -102,7 +122,7 @@ class Grafo:
             return self._adjacencias[id_origem][id_destino]
         except KeyError:
             raise KeyError(
-                f"Não existe aresta entre {id_origem} e {id_destino}."
+                f"Não existe contato entre {id_origem} e {id_destino}."
             ) from None
 
     def vizinhos(self, id_individuo: int) -> tuple[Individuo, ...]:
@@ -113,7 +133,7 @@ class Grafo:
             for id_vizinho in self._adjacencias[id_individuo]
         )
 
-    def contatos_de(self, individuo: Individuo) -> frozenset[Aresta]:
+    def contatos_de(self, individuo: Individuo) -> frozenset[Contato]:
         """Contatos estruturais em uma coleção protegida, em O(grau)."""
         return frozenset(self._adjacencia_de(individuo).values())
 

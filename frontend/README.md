@@ -2,6 +2,27 @@
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
+## Tailwind CSS
+
+O Tailwind CSS 4 está integrado ao Vite pelo plugin `@tailwindcss/vite` e é importado em `src/index.css`.
+
+Para instalar as dependências e iniciar o frontend, execute nesta pasta:
+
+```bash
+npm ci
+npm run dev
+```
+
+As classes utilitárias podem ser usadas nos componentes React:
+
+```tsx
+<div className="flex items-center gap-4">
+  Conteúdo
+</div>
+```
+
+Para validar o projeto, execute `npm run lint` e `npm run build`.
+
 Currently, two official plugins are available:
 
 - [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)

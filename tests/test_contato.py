@@ -1,4 +1,4 @@
-"""Contatos normalizados e disponibilidade derivada dos dois extremos."""
+"""Contatos normalizados e disponibilidade independente do estado SIR."""
 
 import pytest
 
@@ -87,7 +87,7 @@ def test_peso_precisa_ser_numerico(
 
 
 @pytest.mark.parametrize("indices", [(0,), (1,), (0, 1)])
-def test_isolamento_de_qualquer_extremo_bloqueia_contato_imediatamente(
+def test_marca_de_isolamento_sozinha_nao_aplica_mecanismo_aos_contatos(
     extremos: tuple[Individuo, Individuo], indices: tuple[int, ...]
 ) -> None:
     contato = Contato(*extremos, peso=0.5)
@@ -95,14 +95,14 @@ def test_isolamento_de_qualquer_extremo_bloqueia_contato_imediatamente(
     for indice in indices:
         extremos[indice].isolar()
 
-    assert contato.ativa is False
+    assert contato.ativa is True
     assert contato.peso == 0.5
 
 
-def test_recuperacao_nao_libera_o_contato_isolado(
+def test_recuperacao_nao_modifica_a_disponibilidade_do_contato(
     extremos: tuple[Individuo, Individuo],
 ) -> None:
-    contato = Contato(*extremos)
+    contato = Contato(*extremos, ativa=False)
     individuo = extremos[0]
     individuo.infectar(0)
     individuo.isolar()
@@ -111,6 +111,14 @@ def test_recuperacao_nao_libera_o_contato_isolado(
 
     assert individuo.estado is EstadoSIR.RECUPERADO
     assert contato.ativa is False
+
+
+@pytest.mark.parametrize("ativa", [0, 1, None, "false"])
+def test_disponibilidade_precisa_ser_booleana(
+    extremos: tuple[Individuo, Individuo], ativa: object,
+) -> None:
+    with pytest.raises(TypeError, match="booleana"):
+        Contato(*extremos, ativa=ativa)
 
 
 def test_colecao_de_extremos_nao_expoe_estrutura_mutavel(

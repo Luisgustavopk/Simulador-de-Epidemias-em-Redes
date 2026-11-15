@@ -246,7 +246,7 @@ def test_isolamento_e_recuperacao_preservam_topologia_e_grau(rede: RedeContatos)
 
     assert rede.vizinhos(-2)[0] is individuo
     assert individuo.estado is EstadoSIR.RECUPERADO
-    assert contato.ativa is False
+    assert contato.ativa is True  # Marcar a pessoa não escolhe um mecanismo.
     assert rede.contatos_de(individuo) == frozenset({contato})
     assert rede.grau(individuo) == grau_original
     assert rede.numero_contatos == 1
@@ -272,3 +272,84 @@ def test_colecoes_retornadas_nao_mudam_com_novos_cadastros(rede: RedeContatos) -
     assert rede.numero_individuos == 5
     assert rede.numero_contatos == 2
     assert {vizinho.id for vizinho in rede.vizinhos(0)} == {-2, 40}
+
+
+def test_iteradores_preservam_ordem_e_identidade_sem_expor_colecoes_mutaveis(
+    rede: RedeContatos,
+) -> None:
+    rede.adicionar_contato(7, 0, peso=0)
+    rede.adicionar_contato(0, -2)
+
+    assert tuple(rede.iter_individuos()) == rede.individuos
+    assert tuple(rede.iter_contatos()) == rede.contatos
+    assert tuple(rede.iter_vizinhos(0)) == rede.vizinhos(0)
+    assert tuple(rede.iter_vizinhos(11)) == ()
+    assert tuple(rede.iter_ids_vizinhos(0)) == (7, -2)
+    assert tuple(rede.iter_ids_vizinhos(11)) == ()
+
+
+@pytest.mark.parametrize("consulta", ["iter_vizinhos", "iter_ids_vizinhos"])
+@pytest.mark.parametrize("identificador,erro", [(True, TypeError), ("0", TypeError), (999, KeyError)])
+def test_iterador_de_vizinhos_valida_origem_antes_de_ser_consumido(
+    rede: RedeContatos, consulta: str, identificador: object, erro: type[Exception]
+) -> None:
+    with pytest.raises(erro):
+        getattr(rede, consulta)(identificador)
+
+
+def test_copia_de_rede_vazia_e_independente() -> None:
+    original = RedeContatos()
+
+    copia = original.copiar()
+    copia.adicionar_individuo(Individuo(1))
+
+    assert copia is not original
+    assert original.numero_individuos == original.numero_contatos == 0
+    assert copia.numero_individuos == 1
+
+
+def test_copia_preserva_estados_e_compartilha_contato_apenas_entre_extremos_copiados(
+    rede: RedeContatos,
+) -> None:
+    rede.adicionar_contato(7, 0, peso=0)
+    rede.adicionar_contato(-2, 0, peso=0.7)
+    rede.obter_individuo(-2).infectar(3)
+    rede.obter_individuo(-2).isolar()
+    rede.obter_individuo(-2).recuperar()
+    rede.obter_individuo(0).infectar(5)
+
+    copia = rede.copiar()
+    outra = rede.copiar()
+
+    assert copia.numero_individuos == rede.numero_individuos
+    assert copia.numero_contatos == rede.numero_contatos
+    for pessoa in rede.individuos:
+        pessoa_copiada = copia.obter_individuo(pessoa.id)
+        assert pessoa_copiada is not pessoa
+        assert pessoa_copiada is not outra.obter_individuo(pessoa.id)
+        assert pessoa_copiada.estado is pessoa.estado
+        assert pessoa_copiada.isolamento is pessoa.isolamento
+        assert pessoa_copiada.dia_inicio_infeccao == pessoa.dia_inicio_infeccao
+        assert [v.id for v in copia.vizinhos(pessoa.id)] == [v.id for v in rede.vizinhos(pessoa.id)]
+    for contato in rede.contatos:
+        origem, destino = contato.origem.id, contato.destino.id
+        copiado = copia.obter_contato(origem, destino)
+        assert copiado is copia.obter_contato(destino, origem)
+        assert copiado is not contato
+        assert copiado is not outra.obter_contato(origem, destino)
+        assert copiado.origem is copia.obter_individuo(origem)
+        assert copiado.destino is copia.obter_individuo(destino)
+        assert copiado.peso == contato.peso
+        assert copiado.ativa == contato.ativa
+
+    copia.obter_individuo(7).infectar(9)
+    copia.obter_individuo(0).recuperar()
+    copia.adicionar_individuo(Individuo(50))
+    copia.adicionar_contato(50, 11)
+
+    assert rede.obter_individuo(7).estado is EstadoSIR.SUSCETIVEL
+    assert outra.obter_individuo(7).estado is EstadoSIR.SUSCETIVEL
+    assert rede.obter_individuo(0).estado is EstadoSIR.INFECTADO
+    assert rede.buscar_individuo(50) is None
+    assert outra.buscar_individuo(50) is None
+    assert rede.numero_contatos == outra.numero_contatos == 2

@@ -2,7 +2,11 @@
 
 from __future__ import annotations
 
-from simulador.contato import Contato
+from collections.abc import Iterator
+from copy import deepcopy
+from typing import cast
+
+from simulador.contato import Contato, _validar_peso
 from simulador.individuo import Individuo
 
 
@@ -38,12 +42,20 @@ class RedeContatos:
     @property
     def individuos(self) -> tuple[Individuo, ...]:
         """Retorna referências aos indivíduos em uma tupla, em O(V)."""
-        return tuple(self._individuos.values())
+        return tuple(self.iter_individuos())
 
     @property
     def contatos(self) -> tuple[Contato, ...]:
         """Retorna cada contato uma única vez, em O(V + E)."""
-        return tuple(
+        return tuple(self.iter_contatos())
+
+    def iter_individuos(self) -> Iterator[Individuo]:
+        """Itera sem copiar a população; não altere o cadastro durante o uso."""
+        return iter(self._individuos.values())
+
+    def iter_contatos(self) -> Iterator[Contato]:
+        """Itera contatos únicos sem cópia; mantenha a topologia durante o uso."""
+        return (
             contato
             for id_origem, vizinhanca in self._adjacencias.items()
             for id_destino, contato in vizinhanca.items()
@@ -125,13 +137,73 @@ class RedeContatos:
                 f"Não existe contato entre {id_origem} e {id_destino}."
             ) from None
 
+    def alterar_peso_contato(
+        self, id_origem: int, id_destino: int, peso: float
+    ) -> Contato:
+        """Altera o peso em O(1), preservando identidade, atividade e topologia.
+
+        Valida o contato e o novo peso antes da alteração. As duas adjacências
+        continuam apontando para o mesmo objeto; referências anteriores veem
+        o peso atualizado. Falhas não alteram a rede.
+        """
+        contato = self.obter_contato(id_origem, id_destino)
+        peso_validado = _validar_peso(peso)
+        contato._peso = peso_validado
+        return contato
+
+    def desativar_contato(self, id_origem: int, id_destino: int) -> Contato:
+        """Desativa em O(1), sem remover a ligação nem mudar peso ou pessoas.
+
+        A operação é idempotente. A análise estrutural continua incluindo o
+        contato; o futuro motor deve consultar sua disponibilidade.
+        """
+        contato = self.obter_contato(id_origem, id_destino)
+        contato._ativa = False
+        return contato
+
+    def remover_contato(self, id_origem: int, id_destino: int) -> Contato:
+        """Remove das duas adjacências em O(1), preservando o cadastro.
+
+        Devolve o contato removido. IDs ou ligação ausentes geram KeyError
+        antes de alterar a rede; remover novamente também gera KeyError.
+        """
+        contato = self.obter_contato(id_origem, id_destino)
+        del self._adjacencias[id_origem][id_destino]
+        del self._adjacencias[id_destino][id_origem]
+        self._numero_contatos -= 1
+        return contato
+
+    def desconectar_individuo(self, id_individuo: int) -> tuple[Contato, ...]:
+        """Remove contatos em O(grau), mantendo a pessoa, seu SIR e histórico.
+
+        Devolve os contatos removidos na ordem da vizinhança. Desconectar uma
+        pessoa já sem contatos devolve (). Não marca isolamento por si só.
+        """
+        individuo = self.obter_individuo(id_individuo)
+        adjacencia = self._adjacencia_de(individuo)
+        removidos = tuple(adjacencia.values())
+        for id_vizinho in adjacencia:
+            del self._adjacencias[id_vizinho][id_individuo]
+        adjacencia.clear()
+        self._numero_contatos -= len(removidos)
+        return removidos
+
     def vizinhos(self, id_individuo: int) -> tuple[Individuo, ...]:
         """Vizinhos estruturais, inclusive isolados, em O(grau do indivíduo)."""
-        self.obter_individuo(id_individuo)
-        return tuple(
+        return tuple(self.iter_vizinhos(id_individuo))
+
+    def iter_vizinhos(self, id_individuo: int) -> Iterator[Individuo]:
+        """Valida o ID e itera sem cópia; mantenha a topologia durante o uso."""
+        ids = self.iter_ids_vizinhos(id_individuo)
+        return (
             self._individuos[id_vizinho]
-            for id_vizinho in self._adjacencias[id_individuo]
+            for id_vizinho in ids
         )
+
+    def iter_ids_vizinhos(self, id_individuo: int) -> Iterator[int]:
+        """Itera IDs sem copiar ou buscar pessoas; mantenha a topologia no uso."""
+        self.obter_individuo(id_individuo)
+        return iter(self._adjacencias[id_individuo])
 
     def contatos_de(self, individuo: Individuo) -> frozenset[Contato]:
         """Contatos estruturais em uma coleção protegida, em O(grau)."""
@@ -140,3 +212,43 @@ class RedeContatos:
     def grau(self, individuo: Individuo) -> int:
         """Quantidade de vizinhos estruturais de uma pessoa cadastrada, em O(1)."""
         return len(self._adjacencia_de(individuo))
+
+    def copiar(self) -> RedeContatos:
+        """Copia topologia, pesos, atividade e estados sem compartilhar mutáveis.
+
+        Preserva a ordem de cadastro das pessoas, a orientação armazenada de
+        cada contato e a ordem de cada vizinhança para reproduzir percursos.
+        Custa O(V + E); a estrutura deve permanecer estável durante a cópia.
+        """
+        return deepcopy(self)
+
+    def __deepcopy__(self, memo: dict[int, object]) -> RedeContatos:
+        """Copia sem recursão pela topologia, preservando referências no memo."""
+        copia = RedeContatos()
+        memo[id(self)] = copia
+        for pessoa in self.iter_individuos():
+            copia.adicionar_individuo(deepcopy(pessoa, memo))
+        contatos_copiados: dict[Contato, Contato] = {}
+        for contato in self.iter_contatos():
+            if id(contato) in memo:
+                contato_copiado = cast(Contato, memo[id(contato)])
+            else:
+                contato_copiado = Contato(
+                    copia._individuos[contato.origem.id],
+                    copia._individuos[contato.destino.id],
+                    contato.peso,
+                    ativa=contato.ativa,
+                )
+                memo[id(contato)] = contato_copiado
+            contatos_copiados[contato] = contato_copiado
+        # Reconstruir cada adjacência preserva sua ordem mesmo quando o cadastro
+        # global dos contatos não coincide com a ordem de enumeração por ID.
+        copia._adjacencias = {
+            identificador: {
+                vizinho: contatos_copiados[contato]
+                for vizinho, contato in adjacencia.items()
+            }
+            for identificador, adjacencia in self._adjacencias.items()
+        }
+        copia._numero_contatos = self._numero_contatos
+        return copia

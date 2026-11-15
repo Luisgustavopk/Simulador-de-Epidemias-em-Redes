@@ -1,6 +1,8 @@
 """Importação de arquivos reais e diagnóstico de entradas inválidas."""
 
 from pathlib import Path
+import csv
+import sys
 
 import pytest
 
@@ -314,3 +316,71 @@ def test_arquivos_de_exemplo_preservam_pessoa_sem_contatos() -> None:
     assert rede.numero_individuos == 4
     assert rede.numero_contatos == 3
     assert rede.vizinhos(4) == ()
+
+
+@pytest.mark.parametrize("campo_vazio", ['""', '"   "', '"\n\n"'])
+def test_cadastro_nao_ignora_id_vazio_entre_aspas(
+    tmp_path: Path, contatos: Path, campo_vazio: str
+) -> None:
+    cadastro = tmp_path / "cadastro.csv"
+    cadastro.write_text(f"id\n1\n2\n3\n{campo_vazio}\n", encoding="utf-8")
+
+    with pytest.raises(ErroImportacaoRede) as captura:
+        importar_rede_csv(contatos, arquivo_individuos=cadastro)
+
+    problema, = captura.value.problemas
+    assert problema.arquivo == cadastro
+    assert problema.linha == 5
+    assert problema.campo == "id"
+    assert "ID inválido" in problema.mensagem
+
+
+def test_contatos_nao_ignoram_registro_com_apenas_um_campo_vazio(tmp_path: Path) -> None:
+    arquivo = tmp_path / "contatos.csv"
+    arquivo.write_text('origem,destino\n1,2\n""\n', encoding="utf-8")
+
+    with pytest.raises(ErroImportacaoRede) as captura:
+        importar_rede_csv(arquivo)
+
+    problema, = captura.value.problemas
+    assert problema.linha == 3
+    assert "Esperadas 2 colunas" in problema.mensagem
+
+
+def test_cadastro_ignora_linhas_fisicas_em_branco(tmp_path: Path) -> None:
+    contatos = tmp_path / "contatos.csv"
+    contatos.write_text("origem,destino\n1,2\n", encoding="utf-8")
+    cadastro = tmp_path / "cadastro.csv"
+    cadastro.write_text("\n \t \nid\n1\n   \n2\n", encoding="utf-8")
+
+    rede = importar_rede_csv(contatos, arquivo_individuos=cadastro).rede
+
+    assert rede.numero_individuos == 2
+
+
+def test_caminho_com_caractere_nulo_tem_diagnostico_estruturado() -> None:
+    with pytest.raises(ErroImportacaoRede) as captura:
+        importar_rede_csv("rede\0.csv")
+
+    problema, = captura.value.problemas
+    assert problema.arquivo == Path("rede\0.csv")
+    assert "Caminho de arquivo inválido" in problema.mensagem
+
+
+def test_id_acima_do_limite_de_conversao_do_python_informa_campo(tmp_path: Path) -> None:
+    consultar_limite = getattr(sys, "get_int_max_str_digits", None)
+    if consultar_limite is None:
+        pytest.skip("Este Python não limita a quantidade de dígitos na conversão.")
+    limite = consultar_limite()
+    if not limite or limite >= csv.field_size_limit():
+        pytest.skip("O limite de conversão não é alcançável antes do limite CSV.")
+    arquivo = tmp_path / "id_longo.csv"
+    arquivo.write_text("origem,destino\n" + "9" * (limite + 1) + ",2\n", encoding="utf-8")
+
+    with pytest.raises(ErroImportacaoRede) as captura:
+        importar_rede_csv(arquivo)
+
+    problema, = captura.value.problemas
+    assert problema.linha == 2
+    assert problema.campo == "origem"
+    assert "ID inválido" in problema.mensagem

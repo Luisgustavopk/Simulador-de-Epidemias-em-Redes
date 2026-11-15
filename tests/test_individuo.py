@@ -5,6 +5,37 @@ import pytest
 from simulador import EstadoSIR, Individuo
 
 
+@pytest.mark.parametrize("estado", list(EstadoSIR))
+@pytest.mark.parametrize("isolado", [False, True])
+def test_copia_preserva_id_estado_e_historico_sem_compartilhar_pessoa(
+    estado: EstadoSIR, isolado: bool
+) -> None:
+    original = Individuo(-7)
+    if estado is not EstadoSIR.SUSCETIVEL:
+        original.infectar(4)
+    if estado is EstadoSIR.RECUPERADO:
+        original.recuperar()
+    if isolado:
+        original.isolar()
+
+    copia = original.copiar()
+
+    assert copia is not original
+    assert copia.id == original.id
+    assert copia.estado is original.estado
+    assert copia.dia_inicio_infeccao == original.dia_inicio_infeccao
+    assert copia.isolamento is original.isolamento
+    copia.isolar()
+    assert original.isolamento is isolado
+    if estado is EstadoSIR.SUSCETIVEL:
+        copia.infectar(8)
+        assert original.estado is EstadoSIR.SUSCETIVEL
+        assert original.dia_inicio_infeccao is None
+    elif estado is EstadoSIR.INFECTADO:
+        copia.recuperar()
+        assert original.estado is EstadoSIR.INFECTADO
+
+
 def _no_estado(estado: EstadoSIR) -> Individuo:
     individuo = Individuo(1)
     if estado is not EstadoSIR.SUSCETIVEL:

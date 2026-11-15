@@ -65,6 +65,16 @@ def test_erdos_renyi_configuracao_conhecida_reproduz_contatos() -> None:
     }
 
 
+def test_barabasi_albert_versao_um_preserva_rede_conhecida() -> None:
+    resultado = gerar_barabasi_albert(6, 2, semente=42)
+
+    assert resultado.versao_algoritmo == 1
+    assert _contatos(resultado.rede) == {
+        (0, 1, 1.0), (0, 2, 1.0), (0, 3, 1.0), (0, 4, 1.0), (0, 5, 1.0),
+        (1, 2, 1.0), (1, 4, 1.0), (2, 3, 1.0), (2, 5, 1.0),
+    }
+
+
 @pytest.mark.parametrize("n,m", [(2, 1), (8, 1), (8, 2), (15, 4), (8, 7)])
 @pytest.mark.parametrize("semente", [0, 19])
 def test_barabasi_albert_nucleo_crescimento_e_conectividade(
@@ -74,7 +84,7 @@ def test_barabasi_albert_nucleo_crescimento_e_conectividade(
     rede = resultado.rede
 
     assert resultado.modelo == "barabasi_albert"
-    assert resultado.parametros["tamanho_nucleo_inicial"] == m + 1
+    assert resultado.detalhes_modelo["tamanho_nucleo_inicial"] == m + 1
     assert resultado.parametros["contatos_por_novo_individuo"] == m
     assert rede.numero_individuos == n
     assert rede.numero_contatos == m * n - m * (m + 1) // 2

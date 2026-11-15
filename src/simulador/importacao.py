@@ -51,6 +51,23 @@ class ResultadoImportacaoRede:
     arquivo_individuos: Path | None = None
 
 
+class _LinhasCSV:
+    """Identifica linhas físicas em branco sem confundi-las com campos vazios."""
+
+    def __init__(self, entrada: Iterator[str]) -> None:
+        self._entrada = entrada
+        self.registro_em_branco = True
+
+    def __iter__(self) -> Iterator[str]:
+        return self
+
+    def __next__(self) -> str:
+        linha = next(self._entrada)
+        if linha.strip():
+            self.registro_em_branco = False
+        return linha
+
+
 def _ler_registros(
     arquivo: Path,
     obrigatorias: tuple[str, ...],
@@ -58,18 +75,27 @@ def _ler_registros(
     delimitador: str,
     problemas: list[ProblemaImportacao],
 ) -> Iterator[tuple[int, dict[str, str]]]:
+    if "\0" in str(arquivo):
+        problemas.append(
+            ProblemaImportacao(
+                arquivo, None, None, "Caminho de arquivo inválido: contém caractere nulo."
+            )
+        )
+        return
     inicio_linha = 1
     try:
         with arquivo.open(encoding="utf-8-sig", newline="") as entrada:
-            leitor = csv.reader(entrada, delimiter=delimitador, skipinitialspace=True, strict=True)
+            linhas = _LinhasCSV(entrada)
+            leitor = csv.reader(linhas, delimiter=delimitador, skipinitialspace=True, strict=True)
             cabecalho: list[str] | None = None
             while True:
                 inicio_linha = leitor.line_num + 1
+                linhas.registro_em_branco = True
                 try:
                     valores = next(leitor)
                 except StopIteration:
                     break
-                if not valores or (len(valores) == 1 and not valores[0].strip()):
+                if linhas.registro_em_branco:
                     continue
                 if cabecalho is None:
                     cabecalho = [valor.strip().lower() for valor in valores]

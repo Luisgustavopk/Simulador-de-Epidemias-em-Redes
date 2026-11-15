@@ -1,4 +1,4 @@
-"""Contrato de carga e inspeção para uma futura interface, sem framework web.
+"""Contrato de carga e inspeção independente de framework e transporte.
 
 O serviço mantém uma referência privada da rede. A interface recebe dados
 serializáveis; B e C recebem cópias independentes após a confirmação explícita.
@@ -124,7 +124,7 @@ def _validar_paginacao(inicio: int, limite: int) -> None:
 
 
 def _parametros_geracao(campos: Mapping[str, object]) -> dict[str, object]:
-    """Converte campos da futura tela e reúne os erros antes da geração."""
+    """Converte campos do formulário e reúne os erros antes da geração."""
     if not isinstance(campos, Mapping):
         _falhar("formulario", "Informe os parâmetros como um mapa de campos.")
     problemas: list[ProblemaCargaRede] = []

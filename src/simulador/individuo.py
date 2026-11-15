@@ -63,5 +63,18 @@ class Individuo:
         self._estado = EstadoSIR.RECUPERADO
 
     def isolar(self) -> None:
-        """Isola em qualquer estado; chamadas repetidas mantêm a condição."""
+        """Marca isolamento em qualquer SIR, sem modificar contatos.
+
+        O mecanismo é aplicado por aplicar_isolamento(); chamar este método
+        sozinho somente altera a condição individual. Não há liberação nesta
+        política: a marca persiste durante a execução, inclusive após recuperar.
+        """
         self._isolamento = True
+
+    def copiar(self) -> "Individuo":
+        """Cria uma pessoa independente com o mesmo ID, estado e histórico."""
+        copia = Individuo(self._id)
+        copia._estado = self._estado
+        copia._isolamento = self._isolamento
+        copia._dia_inicio_infeccao = self._dia_inicio_infeccao
+        return copia

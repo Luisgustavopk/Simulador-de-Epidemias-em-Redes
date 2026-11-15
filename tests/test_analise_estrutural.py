@@ -2,6 +2,7 @@
 
 from collections.abc import Callable
 from dataclasses import FrozenInstanceError
+from itertools import combinations
 from pathlib import Path
 import sys
 
@@ -167,6 +168,8 @@ def test_peso_zero_e_isolamento_nao_excluem_contatos_da_analise() -> None:
     rede.adicionar_contato(0, 1, peso=0)
     rede.adicionar_contato(1, 2, peso=0.5)
     rede.obter_individuo(1).isolar()
+    rede.desativar_contato(0, 1)
+    rede.desativar_contato(1, 2)
 
     assert all(not contato.ativa for contato in rede.contatos)
     assert bfs(rede, 0) == dfs(rede, 0) == (0, 1, 2)
@@ -269,3 +272,50 @@ def test_analise_integra_os_dois_geradores() -> None:
     assert esta_conexa(conexa) is True
     assert componentes_conexas(conexa) == (frozenset(range(10)),)
     assert resumir_rede(conexa) == ResumoEstrutural(10, 9, 1.8)
+
+
+def test_copiar_rede_preserva_ordem_de_cadastro_e_percursos(rede: RedeContatos) -> None:
+    copia = rede.copiar()
+
+    assert [p.id for p in copia.individuos] == [p.id for p in rede.individuos]
+    assert bfs(copia, 10) == bfs(rede, 10) == (10, 7, -2, 4, 9)
+    assert dfs(copia, 10) == dfs(rede, 10) == (10, 7, 4, -2, 9)
+    assert componentes_conexas(copia) == componentes_conexas(rede)
+    assert resumir_rede(copia) == resumir_rede(rede)
+
+
+def test_todos_os_grafos_simples_ate_cinco_pessoas_conferem_com_fecho_transitivo() -> None:
+    identificadores = (-8, -1, 0, 6, 11)
+    for n in range(6):
+        pares = tuple(combinations(range(n), 2))
+        for mascara in range(1 << len(pares)):
+            rede = RedeContatos()
+            for identificador in identificadores[:n]:
+                rede.adicionar_individuo(Individuo(identificador))
+            distancias = [[0 if i == j else float("inf") for j in range(n)] for i in range(n)]
+            for posicao, (i, j) in enumerate(pares):
+                if mascara & (1 << posicao):
+                    rede.adicionar_contato(identificadores[i], identificadores[j])
+                    distancias[i][j] = distancias[j][i] = 1
+            # Oráculo independente: fecho transitivo/distâncias por Floyd–Warshall.
+            for k in range(n):
+                for i in range(n):
+                    for j in range(n):
+                        distancias[i][j] = min(
+                            distancias[i][j], distancias[i][k] + distancias[k][j]
+                        )
+            componentes_esperadas = set()
+            for i in range(n):
+                alcancaveis = frozenset(
+                    identificadores[j] for j in range(n) if distancias[i][j] < float("inf")
+                )
+                componentes_esperadas.add(alcancaveis)
+                largura = bfs(rede, identificadores[i])
+                profundidade = dfs(rede, identificadores[i])
+                assert len(largura) == len(set(largura)) == len(alcancaveis)
+                assert len(profundidade) == len(set(profundidade)) == len(alcancaveis)
+                assert set(largura) == set(profundidade) == alcancaveis
+                niveis = [distancias[i][identificadores.index(j)] for j in largura]
+                assert niveis == sorted(niveis)
+            assert set(componentes_conexas(rede)) == componentes_esperadas
+            assert esta_conexa(rede) is (len(componentes_esperadas) == 1)

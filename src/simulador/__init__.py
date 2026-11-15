@@ -13,6 +13,7 @@ from simulador.geracao import (
     ResultadoGeracaoRede,
     gerar_barabasi_albert,
     gerar_erdos_renyi,
+    reconstruir_rede,
 )
 from simulador.importacao import (
     ErroImportacaoRede,
@@ -21,6 +22,11 @@ from simulador.importacao import (
     importar_rede_csv,
 )
 from simulador.individuo import EstadoSIR, Individuo
+from simulador.isolamento import (
+    MecanismoIsolamento,
+    ResultadoIsolamento,
+    aplicar_isolamento,
+)
 from simulador.rede_contatos import RedeContatos
 
 __all__ = [
@@ -28,11 +34,14 @@ __all__ = [
     "ErroImportacaoRede",
     "EstadoSIR",
     "Individuo",
+    "MecanismoIsolamento",
     "ProblemaImportacao",
     "RedeContatos",
     "ResumoEstrutural",
     "ResultadoGeracaoRede",
     "ResultadoImportacaoRede",
+    "ResultadoIsolamento",
+    "aplicar_isolamento",
     "bfs",
     "componentes_conexas",
     "dfs",
@@ -40,5 +49,6 @@ __all__ = [
     "gerar_barabasi_albert",
     "gerar_erdos_renyi",
     "importar_rede_csv",
+    "reconstruir_rede",
     "resumir_rede",
 ]

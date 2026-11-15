@@ -4,7 +4,6 @@ from collections import deque
 from collections.abc import Iterator
 from dataclasses import dataclass
 
-from simulador.individuo import Individuo
 from simulador.rede_contatos import RedeContatos
 
 
@@ -45,10 +44,10 @@ def bfs(rede: RedeContatos, id_origem: int) -> tuple[int, ...]:
     while fila:
         atual = fila.popleft()
         ordem.append(atual)
-        for vizinho in rede.vizinhos(atual):
-            if vizinho.id not in visitados:
-                visitados.add(vizinho.id)
-                fila.append(vizinho.id)
+        for id_vizinho in rede.iter_ids_vizinhos(atual):
+            if id_vizinho not in visitados:
+                visitados.add(id_vizinho)
+                fila.append(id_vizinho)
     return tuple(ordem)
 
 
@@ -71,15 +70,15 @@ def dfs(rede: RedeContatos, id_origem: int) -> tuple[int, ...]:
     rede.obter_individuo(id_origem)
     visitados = {id_origem}
     ordem = [id_origem]
-    pilha: list[Iterator[Individuo]] = [iter(rede.vizinhos(id_origem))]
+    pilha: list[Iterator[int]] = [rede.iter_ids_vizinhos(id_origem)]
     while pilha:
-        vizinho = next(pilha[-1], None)
-        if vizinho is None:
+        id_vizinho = next(pilha[-1], None)
+        if id_vizinho is None:
             pilha.pop()
-        elif vizinho.id not in visitados:
-            visitados.add(vizinho.id)
-            ordem.append(vizinho.id)
-            pilha.append(iter(rede.vizinhos(vizinho.id)))
+        elif id_vizinho not in visitados:
+            visitados.add(id_vizinho)
+            ordem.append(id_vizinho)
+            pilha.append(rede.iter_ids_vizinhos(id_vizinho))
     return tuple(ordem)
 
 
@@ -92,7 +91,7 @@ def componentes_conexas(rede: RedeContatos) -> tuple[frozenset[int], ...]:
     _validar_rede(rede)
     visitados: set[int] = set()
     componentes: list[frozenset[int]] = []
-    for pessoa in rede.individuos:
+    for pessoa in rede.iter_individuos():
         if pessoa.id not in visitados:
             componente = frozenset(bfs(rede, pessoa.id))
             visitados.update(componente)
@@ -107,10 +106,10 @@ def esta_conexa(rede: RedeContatos) -> bool:
     forma uma rede conexa. Contatos de peso zero e indisponíveis são incluídos.
     """
     _validar_rede(rede)
-    if rede.numero_individuos == 0:
+    origem = next(rede.iter_individuos(), None)
+    if origem is None:
         return False
-    id_origem = rede.individuos[0].id
-    return len(bfs(rede, id_origem)) == rede.numero_individuos
+    return len(bfs(rede, origem.id)) == rede.numero_individuos
 
 
 def resumir_rede(rede: RedeContatos) -> ResumoEstrutural:
@@ -122,7 +121,7 @@ def resumir_rede(rede: RedeContatos) -> ResumoEstrutural:
     """
     _validar_rede(rede)
     numero_individuos = rede.numero_individuos
-    soma_graus = sum(rede.grau(pessoa) for pessoa in rede.individuos)
+    soma_graus = sum(rede.grau(pessoa) for pessoa in rede.iter_individuos())
     grau_medio = soma_graus / numero_individuos if numero_individuos else 0.0
     return ResumoEstrutural(
         numero_individuos=numero_individuos,

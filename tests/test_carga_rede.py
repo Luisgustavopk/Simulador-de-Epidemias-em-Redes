@@ -15,6 +15,7 @@ from simulador import (
     ErroCargaRede,
     EstadoSIR,
     ServicoCargaRede,
+    reconstruir_rede,
 )
 
 
@@ -365,6 +366,84 @@ def test_listagem_de_contatos_vazia_em_rede_sem_ligacoes(
     }
 
 
+def test_paginas_muito_alem_do_fim_sao_vazias_sem_excecao_de_iterador(
+    servico: ServicoCargaRede,
+) -> None:
+    servico.gerar(parametros_er())
+    for listar, campo in (
+        (servico.listar_contatos, "contatos"),
+        (servico.listar_individuos, "individuos"),
+    ):
+        pagina = listar(1, inicio=10**100)
+        assert pagina[campo] == []
+        assert pagina["inicio"] == 10**100
+
+
+def test_indice_de_contatos_acompanha_nova_rede_e_preserva_carga_anterior_em_erro(
+    servico: ServicoCargaRede,
+) -> None:
+    servico.gerar(parametros_er())
+    contatos_anteriores = servico.listar_contatos(1)
+    with pytest.raises(ErroCargaRede):
+        servico.gerar(parametros_er(peso=-1))
+    assert servico.listar_contatos(1) == contatos_anteriores
+
+    servico.importar_csv(ArquivoCSV("nova.csv", b"origem,destino,peso\n20,30,0\n"))
+    assert servico.listar_contatos(2)["contatos"] == [
+        {"origem": "20", "destino": "30", "peso": 0, "ativa": True},
+    ]
+    with pytest.raises(ErroCargaRede):
+        servico.listar_contatos(1)
+    servico.gerar(parametros_er(probabilidade_contato=0))
+    assert servico.listar_contatos(3)["contatos"] == []
+
+
+@pytest.mark.parametrize("modelo", ["erdos_renyi", "barabasi_albert"])
+def test_metadados_do_servico_reconstroem_mesma_rede_apos_json(
+    servico: ServicoCargaRede, modelo: str,
+) -> None:
+    campos = {
+        "modelo": modelo, "numero_individuos": "20", "peso": "0,5",
+        "semente": str(2**128 + 1),
+    }
+    if modelo == "erdos_renyi":
+        campos["probabilidade_contato"] = "0,3"
+    else:
+        campos["contatos_por_novo_individuo"] = "3"
+    servico.gerar(campos)
+    servico.confirmar(1)
+    referencia = servico.obter_rede_confirmada(1).rede
+
+    metadados = servico.exportar_metadados_geracao(1)
+    recriada = reconstruir_rede(json.loads(json.dumps(metadados))).rede
+
+    assert isinstance(metadados["semente"], int)
+    assert metadados["semente"] == 2**128 + 1
+    assert "tipo" not in metadados
+    assert referencia.numero_individuos == recriada.numero_individuos
+    assert [
+        (c.origem.id, c.destino.id, c.peso, c.ativa) for c in referencia.contatos
+    ] == [
+        (c.origem.id, c.destino.id, c.peso, c.ativa) for c in recriada.contatos
+    ]
+    metadados["parametros"]["peso"] = 0
+    assert servico.exportar_metadados_geracao(1)["parametros"]["peso"] == 0.5
+    assert servico.inspecionar()["origem"]["semente"] == campos["semente"]
+
+
+def test_exportacao_de_geracao_recusa_ausencia_revisao_antiga_e_rede_observada(
+    servico: ServicoCargaRede,
+) -> None:
+    with pytest.raises(ErroCargaRede):
+        servico.exportar_metadados_geracao(0)
+    servico.gerar(parametros_er())
+    servico.importar_csv(ArquivoCSV("rede.csv", b"origem,destino\n10,20\n"))
+    with pytest.raises(ErroCargaRede, match="alterada"):
+        servico.exportar_metadados_geracao(1)
+    with pytest.raises(ErroCargaRede, match="arquivos de origem"):
+        servico.exportar_metadados_geracao(2)
+
+
 @pytest.mark.parametrize("falha_na_saida", [False, True])
 def test_falha_da_pasta_temporaria_nao_publica_rede_parcial(
     servico: ServicoCargaRede, monkeypatch: pytest.MonkeyPatch,
@@ -419,3 +498,17 @@ def test_inteiro_textual_acima_do_limite_do_python_tem_diagnostico(
     with pytest.raises(ErroCargaRede) as capturado:
         servico.gerar(parametros_er(semente="1" * (limite + 1)))
     assert capturado.value.problemas[0].campo == "semente"
+
+
+def test_inteiro_numerico_acima_do_limite_textual_tem_erro_de_formulario(
+    servico: ServicoCargaRede,
+) -> None:
+    limite = sys.get_int_max_str_digits() if hasattr(sys, "get_int_max_str_digits") else 0
+    if limite == 0:
+        pytest.skip("O ambiente não limita a representação de inteiros.")
+    anterior = servico.gerar(parametros_er())
+    with pytest.raises(ErroCargaRede) as capturado:
+        servico.gerar(parametros_er(semente=10**limite))
+    assert capturado.value.problemas[0].campo == "semente"
+    assert "limite de representação" in capturado.value.problemas[0].mensagem
+    assert servico.inspecionar() == anterior

@@ -11,7 +11,6 @@ from collections.abc import Mapping
 from copy import deepcopy
 from dataclasses import asdict, dataclass
 from hashlib import sha256
-from itertools import islice
 from pathlib import Path, PureWindowsPath
 import re
 from tempfile import TemporaryDirectory
@@ -19,6 +18,7 @@ from threading import RLock
 from typing import NoReturn
 
 from simulador.analise_estrutural import componentes_conexas, resumir_rede
+from simulador.contato import Contato
 from simulador.geracao import gerar_barabasi_albert, gerar_erdos_renyi
 from simulador.importacao import ErroImportacaoRede, importar_rede_csv
 from simulador.rede_contatos import RedeContatos
@@ -90,6 +90,10 @@ def _falhar(campo: str, mensagem: str) -> NoReturn:
 
 def _inteiro(valor: object, campo: str) -> int:
     if isinstance(valor, int) and not isinstance(valor, bool):
+        try:
+            str(valor)
+        except ValueError:
+            _falhar(campo, "O inteiro excede o limite de representação do ambiente.")
         return valor
     if isinstance(valor, str) and re.fullmatch(r"[+-]?[0-9]+", valor.strip()):
         try:
@@ -173,6 +177,7 @@ class ServicoCargaRede:
 
     def __init__(self) -> None:
         self._rede: RedeContatos | None = None
+        self._contatos: tuple[Contato, ...] = ()
         self._origem: dict[str, object] | None = None
         self._resumo: dict[str, object] | None = None
         self._ordenacao: tuple[int, ...] = ()
@@ -266,9 +271,13 @@ class ServicoCargaRede:
             distribuicao_graus=[{"grau": grau, "quantidade": quantidade} for grau, quantidade in sorted(distribuicao.items())],
         )
         ordenacao = tuple(sorted(graus, key=lambda identificador: (-graus[identificador], identificador)))
+        # A referência fica privada e estável até a próxima carga. Guardar apenas
+        # referências evita percorrer todas as páginas anteriores em cada consulta.
+        contatos = rede.contatos
         # Publicar somente depois de finalizar todas as análises da candidata.
         self._rede, self._origem, self._resumo = rede, origem, resumo
         self._ordenacao = ordenacao
+        self._contatos = contatos
         self._revisao += 1
         self._confirmada = False
         return self.inspecionar()
@@ -298,6 +307,25 @@ class ServicoCargaRede:
             self._exigir_revisao(revisao)
             self._confirmada = True
             return self.inspecionar()
+
+    def exportar_metadados_geracao(self, revisao: int) -> dict[str, object]:
+        """Exporta a configuração nativa aceita por reconstruir_rede().
+
+        O retrato de origem da tela inclui o tipo da rede e uma semente textual.
+        Esta operação separa o formato de reprodução: devolve somente os campos
+        do gerador e restaura a semente inteira. Recusa redes observadas, cuja
+        reprodução exige conservar os arquivos de origem.
+        """
+        with self._lock:
+            self._exigir_revisao(revisao)
+            if self._origem["tipo"] != "sintetica":
+                _falhar("origem", "A rede observada deve ser reproduzida pelos arquivos de origem.")
+            metadados = deepcopy({
+                campo: self._origem[campo]
+                for campo in ("modelo", "parametros", "semente", "versao_algoritmo", "detalhes_modelo")
+            })
+            metadados["semente"] = int(metadados["semente"])
+            return metadados
 
     def obter_rede_confirmada(self, revisao: int) -> RedeDisponivel:
         """Entrega uma cópia independente para configurar ou executar um cenário.
@@ -337,7 +365,8 @@ class ServicoCargaRede:
 
         Preserva a ordem de enumeração da referência. Extremos são IDs textuais;
         peso e atividade vêm do domínio, sem recalcular regras no frontend.
-        A consulta percorre a enumeração até a página, sem copiar a rede inteira.
+        O índice privado de contatos permite consultar em O(limite), sem copiar
+        a rede inteira. Uma página além do fim devolve contatos vazios.
         """
         with self._lock:
             rede = self._exigir_revisao(revisao)
@@ -349,7 +378,7 @@ class ServicoCargaRede:
                 "contatos": [{
                     "origem": str(c.origem.id), "destino": str(c.destino.id),
                     "peso": c.peso, "ativa": c.ativa,
-                } for c in islice(rede.iter_contatos(), inicio, inicio + limite)],
+                } for c in self._contatos[inicio:inicio + limite]],
             }
 
     def inspecionar_individuo(self, revisao: int, identificador: int | str) -> dict[str, object]:

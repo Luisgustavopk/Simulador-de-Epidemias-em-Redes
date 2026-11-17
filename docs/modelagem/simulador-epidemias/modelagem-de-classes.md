@@ -1,267 +1,226 @@
 # Modelagem de classes do simulador de epidemias
 
-> Situação no repositório: este diagrama é uma proposta de projeto anterior, ainda sujeita à compatibilização com a [modelagem do grafo vigente](../ModelagemGrafo.md). A estrutura implementada utiliza Grafo, Aresta e Individuo. As classes RedeContatos e Contato, a intervenção por orçamento e o cálculo de ativa a partir do isolamento não descrevem literalmente essa implementação. A regra vigente utiliza dias, intensidade não negativa sem limite superior de 1, probabilidade min(1, β × peso), entrada diária de infectados em isolamento com probabilidade q e liberação na recuperação; ativa é um indicador independente da aresta. Estas diferenças não foram resolvidas unilateralmente nesta importação.
+## 1. Escopo, status e configuração de referência
 
+Este é um diagrama de classes de projeto para uma execução SIR, não uma declaração de implementação concluída. A estrutura consultada utiliza RedeContatos, Contato e Individuo; os nomes correspondem à estrutura atual, evitando manter uma cópia paralela do mesmo domínio. Configuração, motor, execução, estratégias e resultados permanecem responsabilidades propostas.
 
-## 1. Escopo, definições e premissas
+A configuração de referência é **proposta, sujeita à confirmação coletiva**: grafo simples, não direcionado, ponderado e estático; população fechada; peso como intensidade normalizada em [0,1]; um passo como dia do modelo sem calibração real; recuperação probabilística; isolamento único por orçamento, lógico total e permanente até o término. Ausência de intervenção usa fração zero e nenhuma estratégia. Intensidade é padrão, com probabilidade direta como alternativa de configuração. A interface prevê infectados iniciais manuais ou sorteados. Topologia dinâmica e q diário são alternativas de menor prioridade; redução parcial e exclusão continuam documentadas, mas o fluxo representado usa orçamento, com mecanismo configurado. O módulo de mecanismos existe; isso não certifica a integração completa. Dinâmica e q não são presumidos implementados. Essa delimitação não afirma que o grupo tenha aprovado todas essas escolhas.
 
-A modelagem representa o domínio e as responsabilidades de uma execução SIR. As definições estabelecidas pelo grupo são o grafo simples, não direcionado e ponderado, os indivíduos como vértices, os contatos como arestas, a lista de adjacência principal e o isolamento independente do estado SIR.
+A estrutura local consultada após a integração em Luis utiliza RedeContatos e Contato, com atividade independente e operações controladas de alteração dos contatos. O módulo isolamento.py contém os três mecanismos. A presença desses módulos não certifica correção ou conclusão do simulador. O arquivo ModelagemGrafo.md ainda descreve outra política diária e pesos acima de 1; esses pontos continuam sujeitos a alinhamento, sem misturar políticas nesta referência.
 
-O recorte operacional continua proposto para confirmação. Ele utiliza população fechada, topologia estática, intensidade normalizada nos pesos, recuperação probabilística, atualização simultânea e isolamento lógico completo, mantido até o término. Os contatos originais estão habilitados. A seleção aleatória e por grau são duas estratégias propostas para comparação.
+Os tipos são compatíveis com Python 3.10+: coleções parametrizadas e união com None. Construtores com nome de classe em UML correspondem a __init__. Os atributos são privados no projeto; consultas públicas retornam cópias ou coleções protegidas. Não são previstas alterações públicas arbitrárias de estado, identificador ou peso durante a execução.
 
-As convenções acrescentadas nesta revisão são propostas de projeto. Incluem os construtores, os métodos de consulta, as mensagens de validação, os fluxos pseudoaleatórios identificados por nome e a preservação das métricas calculadas no resultado. Os nomes de atributos e métodos existentes foram preservados quando compatíveis com a revisão.
-
-Os tipos seguem Python. A escrita de união com None e as coleções parametrizadas pressupõem Python 3.10 ou posterior. Construtores aparecem com o nome da classe na notação UML e correspondem a __init__ na implementação. Os atributos privados serão encapsulados e acessados pelos métodos públicos indicados. As coleções retornadas serão cópias ou visões que impeçam alteração da estrutura interna.
-
-## 2. Diagrama
+## 2. Diagrama e correspondência com a API existente
 
 ![Diagrama de classes](diagramas/classes-dominio/classes-dominio.png)
 
-O [diagrama vetorial](diagramas/classes-dominio/classes-dominio.svg) permite ampliar o desenho. A [fonte PlantUML](diagramas/classes-dominio/classes-dominio.puml) é editável. A exportação ajusta a posição das multiplicidades para manter margem em relação às bordas dos pacotes e aos traços.
+O [SVG](diagramas/classes-dominio/classes-dominio.svg) permite ampliação; a [fonte PlantUML](diagramas/classes-dominio/classes-dominio.puml) é editável. A exportação afasta multiplicidades das bordas e dos traços, sem alterar as relações.
 
-## 3. Indivíduo e estado epidemiológico
+| Consulta de projeto | Correspondência na revisão Python consultada | Observação |
+|---|---|---|
+| Individuo.getId/getEstado/isIsolado/getInicioInfeccao | Propriedades id, estado, isolamento, dia_inicio_infeccao | São os mesmos dados, não novos estados paralelos; a notação de consulta não exige wrappers redundantes. |
+| RedeContatos.getIndividuos/numero_individuos | Propriedades individuos e numero_individuos | A assinatura de consulta explicita o retorno no UML; a implementação pode manter properties. |
+| RedeContatos.adicionar_individuo/buscar_individuo/conectar/contatos_de/grau | Operações correspondentes da estrutura existente | Preservar nomes e contratos, inclusive identidade dos objetos cadastrados. |
+| Contato.getExtremos/getPeso/isAtiva | Propriedades extremos, peso e ativa | ativa é indicador próprio. O motor consulta esse valor e o peso atual; o mecanismo aplica o efeito do isolamento. |
+| Individuo.infectar/recuperar/isolar | Operações correspondentes | Alteram somente o domínio indicado, preservando a independência entre estado e isolamento. |
 
-### Individuo
+O desenho usa uma estrutura especializada de domínio. RedeContatos mantém cadastro e adjacências; Individuo mantém dados epidemiológicos e Contato descreve o contato. Isso separa responsabilidades sem duplicar identidades em classes genéricas de vértice/aresta. Uma estrutura genérica só seria justificável se o projeto precisasse de outros domínios, o que não integra este recorte.
 
-Representa uma pessoa identificável da população.
+## 3. Indivíduo e contato
 
-- id é int e identifica a pessoa de forma única na rede.
-- estado é EstadoSIR.
-- isolamento é bool.
-- diaInicioInfeccao admite um inteiro ou None. None indica que a pessoa nunca foi infectada.
+### Individuo e EstadoSIR
 
-Individuo(id) começa em SUSCETIVEL, com isolamento False e início de infecção None. getId(), getEstado(), isIsolado() e getInicioInfeccao() fornecem as consultas necessárias ao motor, às estratégias e à apresentação.
+Individuo possui id inteiro único na rede, estado do enum EstadoSIR, isolamento booleano e dia_inicio_infeccao inteiro ou None. O construtor recebe id e inicia S, False e None. As consultas públicas expõem esses valores sem permitir alteração arbitrária.
 
-infectar(passo) exige estado S e passo não negativo, muda o estado para I e registra o instante. recuperar() exige I e muda para R, preservando o início da infecção. isolar() marca o indivíduo como isolado e pode ser repetido com o mesmo efeito.
+infectar(passo) exige estado S e passo inteiro não negativo; aplica I e grava o instante. recuperar() exige I e aplica R, preservando histórico e isolamento. isolar() marca a condição independentemente de S,I ou R; chamadas repetidas não aumentam o orçamento. Não há liberação automática na política de referência.
 
-O atributo diaInicioInfeccao guarda o índice do passo abstrato, inclusive zero para os infectados iniciais. A equivalência entre um passo e um dia ainda depende de decisão do grupo.
-
-### EstadoSIR
-
-A enumeração contém SUSCETIVEL, INFECTADO e RECUPERADO. O ciclo é S → I → R. O estado R representa afastamento do processo de transmissão e, no recorte atual, recuperação com imunidade. A transição para R preserva o vértice. O isolamento é uma condição independente e pode coexistir com qualquer estado.
-
-## 4. Contato e estrutura da rede
+EstadoSIR contém SUSCETIVEL, INFECTADO e RECUPERADO. Não há subclasses para esses estados nem isolamento como quarto estado. R é absorvente durante a execução e não exclui o indivíduo do grafo.
 
 ### Contato
 
-Representa uma única ligação entre dois indivíduos. Uma associação com Individuo possui multiplicidade 2 no extremo das pessoas e 0..* no extremo dos contatos. Assim, cada contato possui exatamente duas pessoas e cada pessoa pode participar de vários contatos.
+Os atributos de projeto são extremos, peso e ativa. extremos é frozenset[Individuo] com exatamente dois objetos distintos cadastrados na mesma rede; a associação UML representa essa mesma referência. Não há ordem entre os participantes. peso é float finito em [0,1]. O construtor valida esses limites, os extremos e o indicador ativa booleano.
 
-extremos é set[Individuo] com exatamente dois objetos distintos, pertencentes à mesma rede. O conjunto expressa a ausência de ordem entre os participantes e representa a mesma referência da associação UML. A validação do construtor impede que o conjunto tenha tamanho diferente de dois.
+getExtremos() entrega a coleção protegida; getPeso() consulta o peso; outro_extremo() devolve o outro participante e recusa objeto externo. isAtiva() corresponde à propriedade ativa e não consulta implicitamente isolamento. O construtor aceita ativa=True por padrão. A criação pela rede usa seus defaults e as alterações são efetuadas pelas operações de RedeContatos.
 
-- peso é float, com 0 ≤ peso ≤ 1, e representa intensidade.
-- ativa é bool e funciona como um valor privado recalculado na consulta.
+O mecanismo de desativação marca contatos como inativos, a redução altera seu peso uma única vez e a remoção retira ligações. Não há isDisponivel baseado no isolamento dos extremos: esse filtro impediria a transmissão residual da redução. O indicador isolamento continua útil para condição individual, elegibilidade e Q, sem ser quarto estado SIR. Peso zero pode coexistir com ativa=True.
 
-Contato(a, b, peso) estabelece os extremos e valida o peso e a diferença entre os indivíduos. getPeso() consulta a intensidade. getExtremos() fornece uma cópia do conjunto de participantes. outroExtremo(individuo) retorna o outro participante e rejeita uma pessoa que não pertença ao contato.
 
-isAtiva() recalcula ativa a partir dos extremos antes de retornar. A regra é ativa = nenhum dos extremos está isolado. Toda consulta de disponibilidade passa por esse método. Assim, mesmo que um indivíduo seja isolado depois da construção do contato, a próxima consulta já refletirá sua condição. O atributo fica privado e não possui método público de alteração.
 
-A barra de atributo derivado foi retirada. O cálculo continua descrito por contrato do método. Peso zero produz probabilidade de transmissão zero, enquanto a disponibilidade segue a condição de isolamento.
+## 4. RedeContatos e responsabilidades estruturais
 
-### RedeContatos
+RedeContatos possui individuos: dict[int,Individuo] e adjacencias: dict[int,dict[int,Contato]]. O construtor inicia os mapas vazios. Cada Contato é compartilhada nas duas vizinhanças, sem criar dois contatos distintos. Os indivíduos sem contatos continuam cadastrados e contados em N.
 
-Organiza os indivíduos e as conexões em dois mapas privados.
+| Operação | Responsabilidade e contrato |
+|---|---|
+| adicionar_individuo(individuo) | Validar ID único, cadastrar a referência e criar vizinhança vazia. |
+| buscar_individuo(id) | Buscar no cadastro e retornar None se ausente. Não confundir com obter_individuo da API, que pode lançar erro. |
+| getIndividuos() | Entregar uma coleção protegida das mesmas pessoas cadastradas. |
+| numero_individuos() | Consultar o tamanho do cadastro, inclusive grau zero. |
+| conectar(a,b,peso) | Exigir os próprios objetos cadastrados, extremos distintos e par não existente; criar e cadastrar um único contato nas duas vizinhanças. |
+| contatos_de(individuo) | Consultar contatos estruturais, inclusive os indisponíveis pelo isolamento. |
+| grau(individuo) | Contar vizinhos estruturais, sem ponderação e sem excluir isolados. |
 
-- individuos associa cada ID ao objeto Individuo.
-- adjacencias associa cada ID ao conjunto de contatos incidentes.
+### Por que adicionarIndividuo(), contatosDe() e grau() pertencem à rede
 
-RedeContatos() cria ambos vazios. adicionarIndividuo(individuo) verifica a unicidade do ID, armazena a pessoa e cria uma entrada de adjacência vazia. Pessoas sem contatos permanecem cadastradas e participam dos denominadores.
+Esses nomes conceituais correspondem a adicionar_individuo(), contatos_de() e grau() na API Python. As três operações consultam ou alteram coleções que pertencem ao RedeContatos. Uma pessoa não tem acesso, por si só, ao cadastro global, à unicidade de IDs ou à política de contatos da rede.
 
-buscarIndividuo(id) retorna a pessoa cadastrada ou None. getIndividuos() retorna o conjunto de pessoas. quantidadeIndividuos() fornece N.
+Quem solicita a ação na interface não determina a classe responsável por executá-la. Assim como um usuário pode solicitar o cadastro de um objeto, a operação de domínio pertence a quem mantém seus dados e invariantes. Individuo conserva suas transições; RedeContatos conserva estrutura e cadastro.
 
-conectar(a, b, peso) exige que os dois objetos sejam os indivíduos cadastrados na rede, que sejam distintos e que o par ainda não possua contato. Cria um único objeto Contato e o referencia nas adjacências dos dois extremos. contatosDe(individuo) consulta os contatos incidentes. grau(individuo) conta os vizinhos distintos. IDs ou indivíduos desconhecidos são rejeitados nas operações que exigem cadastro.
+contatosDe() e grau() poderiam ficar em Individuo se cada pessoa mantivesse sua própria vizinhança como fonte de verdade, ou conhecesse explicitamente sua rede e delegasse a consulta. Isso criaria outras responsabilidades de vínculo e sincronização. Na estrutura atual, duplicar adjacências em Individuo aumentaria o risco de inconsistência e não é necessário.
 
-### Por que esses métodos pertencem à rede
+## 5. ConfiguracaoSimulacao
 
-adicionarIndividuo() altera o cadastro e as adjacências da rede. contatosDe() e grau() consultam os dados estruturais que ela mantém. Quem solicita essas operações pode ser o coordenador da simulação ou a leitura de dados, enquanto a rede mantém a consistência da coleção.
+Os atributos mecanismo,reducao,beta,modoPeso,sementeIniciais,gamma,idsInfectadosIniciais,fracaoIsolamento,passoIntervencao,limitePassos e semente descrevem uma execução. O construtor recebe os valores de execução e inicia sementeIniciais=None; a operação de sorteio preenche esse atributo quando utilizada. Consultas públicas correspondentes permitem revisão pela interface e uso pelo domínio; coleções retornadas são protegidas e os valores ficam preservados durante a execução.
 
-As consultas poderiam ser operações de Individuo se o projeto passasse a armazenar a coleção de contatos em cada pessoa. Essa alternativa exigiria manter as coleções dos dois extremos coerentes. O desenho atual concentra essa estrutura em RedeContatos.
+modoPeso admite intensidade (padrão) ou probabilidade; getModoPeso expõe o modo. No primeiro, beta é finito em [0,1]; no segundo, beta=None e p=peso, sem multiplicação adicional. gamma e fração são finitos em [0,1]. mecanismo usa MecanismoIsolamento; reducao é fração retirada em [0,1] somente em REDUCAO, e None nos outros mecanismos. getMecanismo/getReducao expõem esses valores. Os defaults propostos são DESATIVACAO e None. getBeta retorna float ou None. IDs pertencem ao cadastro, o limite é inteiro positivo e o início inteiro satisfaz 0≤início<limite. Semente e contagens inteiras não aceitam bool como substituto. O conjunto vazio de infectados é válido; duplicação digitada deve ser informada antes de converter a entrada em conjunto. A rede deve ter N>0, sem exigir conectividade ou arestas.
 
-A estrutura especializada usa Individuo e Contato diretamente. Isso evita duplicar as mesmas identidades em uma camada paralela de vértices e arestas. As transições epidemiológicas são calculadas pelo motor, e a rede fornece consultas estruturais.
+validar(rede) retorna list[str], vazia quando válida. Reúne mensagens por campo, por exemplo “beta deve estar entre 0 e 1”, “limitePassos deve ser positivo” ou “ID inicial 42 não encontrado”. Entradas inválidas não alteram a rede nem consomem geradores. Alterar entrada exige nova validação.
 
-## 5. Configuração
+quantidadeIsolados(N) exige N>0 e calcula piso(fracaoIsolamento×N). A quantidade pertence à configuração; a estratégia escolhe quais pessoas. deveIniciarIsolamento(passoAtual) consulta igualdade com o instante agendado, mas Simulacao também verifica orçamento positivo, intervenção ainda não aplicada e existência de outra transição possível.
 
-### ConfiguracaoSimulacao
+sortearInfectadosIniciais(rede,quantidade,gerador) é operação de preparação antes da execução: valida 0≤quantidade≤N, amostra sem reposição em ordem estável com fluxo “infectados-iniciais”, guarda os IDs e sementeIniciais, consultável por getSementeIniciais. A interface também aceita IDs manuais; o construtor inicia sementeIniciais=None. A configuração é congelada ao iniciar; não sortear novamente para cada cenário. O manifesto registra método, quantidade,semente e IDs realizados. Quantidade de repetições é parâmetro do lote, não de um passo. Formatos, famílias sintéticas e preparação dos pesos pertencem à entrada da rede e não são seletores fictícios nessa configuração.
 
-O construtor recebe beta, gamma, IDs dos infectados iniciais, fração de isolamento, instante da intervenção, limite e semente. Copia o conjunto de IDs e armazena os parâmetros. Os valores ficam fixos durante uma execução.
-
-- beta e gamma são float com valores entre 0 e 1.
-- idsInfectadosIniciais é set[int].
-- fracaoIsolamento é float entre 0 e 1.
-- passoIntervencao e limitePassos são int.
-- semente é int e serve de base aos geradores.
-
-getBeta(), getGamma(), getIdsInfectadosIniciais(), getFracaoIsolamento(), getPassoIntervencao(), getLimitePassos() e getSemente() expõem esses valores. A configuração é construída com os valores pretendidos e oferece consultas, preservando-os durante a execução.
-
-validar(rede) retorna list[str]. Uma lista vazia significa configuração válida. Havendo problemas, retorna todas as mensagens identificadas antes de alterar a rede. Devem ser verificados N positivo, probabilidades e pesos finitos nos intervalos válidos, limite positivo, 0 ≤ início < limite, semente inteira e IDs iniciais existentes. A verificação dos tipos também rejeita bool em campos que exigem contagens inteiras.
-
-Exemplos de mensagens são “beta deve estar entre 0 e 1”, “limitePassos deve ser positivo” e “infectado inicial com ID 42 não foi encontrado”. O conjunto de IDs elimina repetições e o conjunto vazio é permitido para verificar extinção no instante zero.
-
-quantidadeIsolados(N) exige N positivo e calcula piso(fracaoIsolamento × N). O orçamento pertence à configuração. A estratégia recebe esse número e escolhe as pessoas.
-
-deveIniciarIsolamento(passoAtual) retorna True somente quando o instante atual coincide com passoIntervencao. A simulação também verifica que a quantidade calculada é positiva. O método consulta a programação da intervenção.
-
-## 6. Execução e geração pseudoaleatória
+## 6. Execução, relógio e aleatoriedade
 
 ### Simulacao
 
-O construtor recebe rede, configuração e estratégia. Mantém suas referências e começa com passoAtual = 0, inicializada = False e finalizada = False. Cada execução utiliza uma rede própria, sem compartilhar indivíduos mutáveis com outras execuções.
+O construtor recebe RedeContatos próprio, configuração, estratégia ou None e origemRede, um mapa de metadados da entrada preparada. passoAtual=0, inicializada=False, finalizada=False e intervencaoAplicada=False. origemRede identifica fonte/arquivo ou gerador, assinatura canônica e transformação, sem reter uma rede mutável de outra execução.
 
-inicializar() retorna list[str]. Primeiro reúne os erros de configuração, verifica se a rede está em estado inicial e se a estratégia foi preparada para ela. Havendo erros, a execução permanece sem inicialização e a rede permanece íntegra.
+inicializar() retorna erros de configuração, origem e preparo da estratégia antes de mutar a rede. None é aceito como estratégia somente quando o orçamento é zero; para k>0 exige uma estratégia válida da mesma rede. A rede deve estar em condição inicial nova. No preparo válido, inicializa os infectados, cria o gerador epidemiológico e o motor, prepara a intervenção de t=0 quando cabível e cria resultado com o registro inicial e manifesto. Se não há infectados, registra e conclui em t=0, sem intervenção.
 
-Na inicialização válida, cria o gerador epidemiológico com a semente da configuração e o fluxo “epidemia”, constrói MotorSIR, marca os infectados iniciais no instante zero, registra S(0), I(0), R(0) e cria ResultadoSimulacao. O motor é criado junto da simulação, podendo aguardar esse preparo para receber um gerador compatível. A construção de um MotorSIR sempre exige seu gerador.
+executar() inicializa quando necessário e repete executarPasso() até a conclusão. Erros impedem a execução e são apresentados ao consumidor; chamada após conclusão devolve o mesmo resultado. executarPasso() exige inicialização válida e estado em andamento.
 
-A estratégia aleatória já deve ter recebido outro gerador com a mesma semente-base e fluxo “isolamento”. A preparação garante que sejam objetos distintos. A estratégia por grau já deve estar vinculada à rede fornecida e ter seu mapa completo.
+**MotorSIR não altera passoAtual nem registra.** executarPasso() chama o motor uma vez para t→t+1, incrementa passoAtual uma vez e chama prepararInstante(). Este método verifica término, aplica intervenção devida apenas se outra transição puder ocorrer e constrói o registro com Q após essa intervenção. O registro é adicionado exatamente uma vez; então a execução conclui quando cabível. A inicialização usa a mesma ordem para produzir t=0.
 
-executar() inicializa a execução quando necessário e repete as atualizações até o término. Caso a validação falhe, informa os erros por uma exceção de configuração e não inicia as atualizações. Uma chamada após conclusão devolve o mesmo resultado. executarPasso() exige inicialização válida e execução em andamento.
+aplicarIntervencao() consulta k, solicita selecionar(rede,k), delega à função aplicar_isolamento(rede, IDs, mecanismo, orcamento=k, reducao=valor), que modifica contatos e chama isolar() nos indivíduos; depois marca intervencaoAplicada. A função já existe no módulo isolamento.py e retorna ResultadoIsolamento. O diagrama recorta as entidades da execução; não cria outra classe de serviço só para reproduzir essa função. Selecionar exatamente k pessoas é responsabilidade da estratégia/coordenador; a função aceita seleção até o orçamento, portanto o coordenador deve verificar a igualdade requerida no experimento. prepararManifesto() constrói o snapshot descritivo da execução. getPassoAtual(), isFinalizada() e getResultado() permitem consulta; resultado é None antes do preparo válido.
 
-aplicarIntervencao() é privado. Obtém k da configuração, solicita selecionar(rede, k) e chama isolar() nos escolhidos. registrarEstadoAtual() é privado e produz uma fotografia das contagens. getPassoAtual(), isFinalizada() e getResultado() permitem acompanhar a execução. getResultado() retorna None antes de sua criação.
-
-Se I(0)=0, a execução conclui em t=0. Caso contrário, antes de cada atualização t → t+1, consulta o início do isolamento, aplica a intervenção quando programada e solicita o avanço ao motor. Depois registra t+1 e verifica extinção ou limite. Uma intervenção em t=5 ocorre antes de calcular os estados de t=6.
+Extinção em t prevalece sobre coincidência com o limite. Se t=T_max e I>0, o resultado é censurado. Uma intervenção em t=5 aparece no registro de 5 e afeta a transição 5→6; se a execução termina ao chegar a 5, não é aplicada. Não há registro duplicado, alteração retroativa do histórico ou liberação de isolados.
 
 ### MotorSIR
 
-O construtor recebe GeradorAleatorio e o armazena em sorteiosEpidemia. avancar(rede, configuracao, passoAtual) captura os estados em t, sorteia as mudanças, aplica-as simultaneamente e retorna RegistroPasso de t+1.
+O construtor recebe o gerador epidemiológico e o mantém em sorteiosEpidemia. avancar(rede,configuracao,passoAtual): None calcula e aplica **somente uma transição** usando valores congelados de estado/isolamento. A captura não pode ser só uma coleção de referências mutáveis.
 
-Para cada contato ativo entre um infectado e um suscetível, p = beta × peso. Para vários infectados vizinhos, P = 1 − produto(1 − p), admitindo tentativas independentes condicionadas aos estados e contatos. O produto vazio é 1, dando P=0.
+Para cada suscetível, combina contatos disponíveis por P=1−produto(1−p), com p=βw no modo intensidade e p=w no modo probabilidade. Somente contatos existentes e ativos participam; o motor não aplica bloqueio adicional por isolamento. A redução já foi incorporada ao peso e deve permitir transmissão residual. Para cada infectado inicial do passo, sorteia recuperação com γ, inclusive isolados. Infecção e recuperação usam sorteios distintos. Guarda as decisões e só então aplica S→I e I→R; recém-infectados recebem início t+1 e não transmitem nem recuperam naquele passo. Recuperação preserva isolamento.
 
-A recuperação de cada infectado existente em t ocorre com probabilidade gamma. Um infectado que recupera ao final ainda pode transmitir nesse passo. Recém-infectados passam a transmitir e a participar dos sorteios de recuperação a partir do passo seguinte.
-
-O motor mantém temporariamente as decisões de mudança até terminar os sorteios. As duas fases evitam que a ordem de visita aos indivíduos produza transmissão adicional na mesma rodada.
+O retorno None torna explícito que o motor não cria RegistroPasso; só Simulacao conta e publica após preparar o novo instante. Não há segunda aplicação das transições em Simulacao.
 
 ### GeradorAleatorio
 
-sementeBase guarda a origem da sequência. fluxo identifica sua finalidade. estadoInterno é list[int] e representa o estado codificado do algoritmo, que avança a cada sorteio.
+sementeBase é a condição inicial, fluxo identifica finalidade e estadoInterno: object é o estado do algoritmo que evolui. O tipo object evita atribuir uma lista de inteiros ao estado interno de um algoritmo ainda não escolhido. Uma implementação poderá encapsular geradores da biblioteca padrão, sem implementar grafo por biblioteca externa.
 
-GeradorAleatorio(sementeBase, fluxo) inicializa o estado usando uma derivação determinística da semente e do nome do fluxo. getSementeBase() e getFluxo() permitem verificar essa preparação. uniforme() retorna float em [0,1) e atualiza o estado.
+O construtor deriva estado inicial de sementeBase e fluxo de forma estável. uniforme() retorna float em [0,1) e avança o estado; getSementeBase/getFluxo consultam o preparo. Não reseedar a cada sorteio. Algoritmo, versão e derivação efetiva precisam ser definidos antes da implementação e registrados no manifesto; não usar hash aleatório de strings do processo para derivar sementes.
 
-O algoritmo pseudoaleatório e a derivação dos fluxos ainda precisam ser escolhidos e registrados, incluindo sua versão. Em Python, a implementação poderá encapsular instâncias independentes de um gerador disponível na biblioteca padrão. A lista de inteiros é uma representação conceitual do estado, sujeita ao mapeamento do algoritmo escolhido.
+Geração da rede e sorteio de infectados iniciais ocorrem na preparação com fluxos próprios, distintos da epidemia e da seleção de isolamento. Seleção usa outra instância com fluxo “isolamento”; o motor usa “epidemia”. A ordem de consumo é estável por ID; seeds iguais só reproduzem trajetórias com rede, configuração e ambiente compatíveis. Streams separados não garantem pareamento por evento entre estratégias que consomem quantidades diferentes de sorteios.
 
-A semente não é reaplicada a cada sorteio. Recriar o gerador repetidamente faria a sequência recomeçar. Fluxos separados evitam que um sorteio de seleção consuma a sequência dos eventos epidemiológicos.
+## 7. Estratégias de isolamento
 
-Mesmo com sementes iguais, o pareamento evento a evento entre cenários depende da ordem de consumo dos números. Esse controle continua uma decisão do protocolo de experimentos.
+EstrategiaIsolamento é abstrata porque existem duas variações concretas. Possui nome privado, construtor e getNome(). validar(rede,configuracao): list[str] e selecionar(rede,k): set[Individuo] são abstratos e aparecem nas duas subclasses. O contrato exige 0≤k≤N, devolve exatamente k objetos distintos cadastrados e não altera seus estados ou isolamento. Simulacao aplica a intervenção.
 
-## 7. Estratégias de seleção
+IsolamentoAleatorio possui sorteiosIsolamento, recebido pelo construtor com fluxo correto. validar() confere semente-base/finalidade e separação da instância epidemiológica. selecionar() faz amostragem uniforme sem reposição, partindo de IDs ordenados e algoritmo registrado.
 
-### EstrategiaIsolamento
+IsolamentoPorGrau mantém redePreparada e grausOriginais: dict[int,int]. O construtor preenche grau para todos os IDs, inclusive zero. validar() exige a rede preparada e mapa compatível com sua estrutura. selecionar() ordena por grau decrescente e ID crescente. Graus permanecem os da topologia inicial, sem ponderação ou recálculo após isolamento.
 
-É abstrata e possui nome privado, recebido pelo construtor e consultado por getNome(). Seu construtor é utilizado pelas subclasses. validar(rede, configuracao) e selecionar(rede, k) são abstratos e implementados pelas duas classes concretas. A validação retorna as mensagens de incompatibilidade de preparo para a execução.
+Essas classes selecionam vértices. Atividade própria da aresta não é outra estratégia de seleção de pessoas. Política diária de infectados e mecanismos alternativos não foram adicionados à hierarquia da referência; exigiriam outros contratos e não fazem parte do mínimo proposto.
 
-O contrato exige 0 ≤ k ≤ N e retorna set[Individuo] com exatamente k objetos distintos cadastrados na rede. Pode incluir S, I e R. A seleção mantém os estados e a condição de isolamento dos candidatos. Quem aplica a intervenção é Simulacao.
-
-### IsolamentoAleatorio
-
-O construtor recebe um gerador preparado com fluxo “isolamento” e define o nome da estratégia. O atributo sorteiosIsolamento mantém essa referência.
-
-validar() verifica a semente-base e o nome do fluxo recebido em relação à configuração. selecionar() amostra uniformemente k pessoas sem reposição. A implementação deve usar uma ordem inicial estável por ID e um algoritmo de amostragem definido para que a reprodução dependa da semente e dos dados, sem depender da ordem de iteração de set.
-
-### IsolamentoPorGrau
-
-O construtor recebe a rede, armazena sua referência em redePreparada e preenche grausOriginais com um grau para cada ID, inclusive zero para indivíduos sem contatos.
-
-validar() verifica se a rede é a mesma preparada e se os IDs e os graus do mapa correspondem à topologia de entrada. selecionar() exige essa rede, ordena os candidatos por grau decrescente e desempata por ID crescente. O mapa permanece ligado à topologia inicial. Como o recorte é estático, os graus continuam válidos durante a execução.
-
-As estratégias concretas expõem selecionar() explicitamente no desenho. Elas especializam a classe abstrata por generalização, com linha contínua e triângulo vazio.
-
-## 8. Registros e métricas
+## 8. Histórico, manifesto e métricas
 
 ### RegistroPasso
 
-O construtor recebe passo, S, I e R. Valida contagens inteiras não negativas e passo não negativo. Os atributos passo, suscetiveis, infectados e recuperados são consultados por getPasso(), getSuscetiveis(), getInfectados() e getRecuperados().
+Possui passo,suscetiveis,infectados,recuperados e isolados, todos privados e inteiros não negativos. O construtor recebe t,S,I,R,Q. Cada get correspondente expõe o valor, incluindo getIsolados(). Depois da construção, os valores não mudam. Alterações posteriores dos indivíduos não modificam registros anteriores.
 
-O registro preserva suas contagens após a construção e possui apenas consultas públicas. Dessa forma, as mudanças posteriores dos indivíduos mantêm o histórico intacto.
+Q é contado após a intervenção de t e antes dos sorteios t→t+1; em instante terminal não ocorre nova intervenção. RegistroPasso valida domínios; ResultadoSimulacao verifica S+I+R=N e 0≤Q≤N. Isolados não são quarto compartimento. H transições exigem H+1 registros consecutivos, incluindo t=0.
 
 ### ResultadoSimulacao
 
-ResultadoSimulacao(N, registroInicial) exige N positivo, registro em t=0, S+I+R=N e R(0)=0. Já nasce com esse registro. populacaoInicial guarda N. motivoTermino e metricas começam com None.
+O construtor recebe N, registroInicial e manifesto. Exige N>0, registro em t=0, conservação e R(0)=0. populacaoInicial guarda o denominador; motivoTermino e metricas começam em None. O manifesto é copiado e preservado. getPopulacaoInicial/getRegistros/getManifesto/getMotivoTermino/getMetricas/isConcluido permitem consulta; os mapas e listas retornados não permitem alterar o conteúdo interno.
 
-getPopulacaoInicial(), getRegistros(), getMotivoTermino(), getMetricas() e isConcluido() permitem consultar o resultado. A lista de registros retornada é protegida contra alterações externas.
+O manifesto: dict[str,str] representa snapshots serializados de rede e configuração, não uma associação a objetos mutáveis. Seu contrato mínimo de chaves é:
 
-registrar() exige execução aberta, instante imediatamente posterior e conservação de S+I+R=N. Também verifica que S não aumentou e R não diminuiu. concluir() fixa EXTINCAO quando I=0 ou LIMITE_PASSOS quando ainda houver infectados no limite definido pelo coordenador. O motivo fica fixo após a conclusão.
+| Chave | Conteúdo a registrar |
+|---|---|
+| rede | Identificador, assinatura canônica de IDs/contatos/pesos/atividade própria, origem/arquivo ou gerador, versão/janela e transformação de pesos. |
+| configuracao | modo de peso, β aplicável ou None,γ, método manual/sorteado, quantidade e semente inicial, IDs iniciais ordenados, limite, política, fração,k,início e unidade temporal; parâmetros efetivamente utilizados. |
+| aleatoriedade | Semente-base, sementes efetivas dos fluxos usados, algoritmo, versão, derivação e ordem de consumo. Geração da rede também deve ser identificada quando aleatória. |
+| execucao | Identificação do cenário e da repetição quando em lote, mais identificação da execução individual. |
+| ambiente | Revisão do projeto, versão do Python e dependências relevantes. |
 
-calcularMetricas() exige conclusão. Na primeira chamada, constrói MetricasEpidemia com a própria populacaoInicial, os próprios registros e o motivo registrado. Guarda o objeto em metricas e o devolve. Chamadas posteriores devolvem os mesmos indicadores. metricas representa essa mesma associação, com presença zero ou um.
+Cada valor pode ser texto JSON canônico, com regras de serialização declaradas antes do uso; não é necessário criar outra entidade só para armazená-lo. A assinatura da rede deve evitar diferenças artificiais pela ordem de inserção. Esse manifesto não exige exportação ou persistência entre sessões como nova funcionalidade. Ele evita preservar uma referência ao grafo já alterado como se fosse o estado inicial.
+
+registrar() exige execução aberta, próximo instante e invariantes S não crescente, R não decrescente, conservação e Q não decrescente somente na política permanente padrão; o protocolo diário com liberação precisaria outro contrato. concluir() fixa EXTINCAO para I=0 ou LIMITE_PASSOS para limite com I>0, conforme o instante informado pelo coordenador. O motivo não muda após conclusão.
+
+calcularMetricas() só após conclusão cria MetricasEpidemia com o próprio N, registros e motivo; preserva e reutiliza o objeto. O atributo metricas e a associação no desenho representam a mesma referência, não dois armazenamentos.
 
 ### MetricasEpidemia
 
-O construtor recebe N, os registros e o motivo do resultado. Valida o histórico e calcula seus atributos. A criação cabe a ResultadoSimulacao no fluxo proposto.
+O construtor recebe N do resultado, registros e motivo. Calcula populacaoInicial,picoInfectados,passoPico,fracaoAcumulada,duracaoExtincao,horizonteObservado e censurada. As consultas públicas correspondentes e isCensurada() expõem os valores. Não há setters de métricas.
 
-- populacaoInicial copia o denominador do resultado.
-- picoInfectados é o maior I(t) observado, incluindo isolados.
-- passoPico é o primeiro instante desse máximo.
-- fracaoAcumulada é [I(H)+R(H)]/N e inclui os infectados iniciais.
-- duracaoExtincao é o primeiro instante com I=0, ou None quando a extinção não foi observada.
-- horizonteObservado é H, o último instante registrado.
-- censurada é True quando a execução termina pelo limite ainda com infectados.
+Pico é máximo I(t), incluindo isolados e t=0; passoPico é sua primeira ocorrência. fracaoAcumulada=[N−S(H)]/N=[I(H)+R(H)]/N, sob R(0)=0 e SIR fechado, incluindo iniciais. picoProporcional() usa o próprio N e não recebe denominador externo.
 
-getPopulacaoInicial(), getPicoInfectados(), getPassoPico(), getFracaoAcumulada(), getDuracaoExtincao(), getHorizonteObservado() e isCensurada() expõem os valores calculados.
+duracaoExtincao é primeiro instante com I=0, ou None quando censurada. horizonteObservado=H sempre existe. Se I=0 exatamente no limite, motivo é EXTINCAO; caso contrário, duração não observada é maior que H. Sem infectados iniciais, pico e instante são zero, acumulado zero e duração zero.
 
-picoProporcional() calcula picoInfectados/populacaoInicial, sem receber outro denominador. Em execuções censuradas, pico e acumulado se referem ao horizonte observado. A duração desconhecida é maior que H. Quando a extinção ocorre exatamente no limite, o motivo é EXTINCAO.
+Comparação e estatística agregada pertencem ao executor/consumidor de coleções de resultados, não ao motor ou a esta métrica individual. Seus contratos estão no [documento epidemiológico](../../epidemiologia/problema-e-epidemiologia.md): referência sem intervenção, médias/desvios,n,censura, diferenças e redução com referência positiva. Não se criaram classes extras para antecipar a arquitetura do lote.
 
-### MotivoTermino
+MotivoTermino contém EXTINCAO e LIMITE_PASSOS. None representa execução ainda aberta; não é outro motivo de término.
 
-É a enumeração com EXTINCAO e LIMITE_PASSOS. A ausência de motivo durante a execução é representada por None no atributo do resultado, preservando a distinção entre execução aberta e causa de encerramento.
+## 9. Valores ausentes e restrições do domínio
 
-## 9. Ausência de valores em Python
+Usar None para início da infecção ainda inexistente, resultado antes da inicialização, motivo antes da conclusão, métricas ainda não calculadas, busca por ID ausente e duração de extinção não observada. Zero continua sendo valor válido de instante, contagem, fração ou duração; não o usar como marcador de ausência. Estratégia None é válida apenas para orçamento zero.
 
-A convenção é usar None e anotações de união em todos os valores que podem estar ausentes. Um exemplo é o início da infecção, anotado como inteiro ou None. Uma pessoa nunca infectada permanece com None. Um indivíduo infectado inicialmente registra 0, um instante válido.
+Cada contato possui dois extremos distintos na mesma rede, sem laço ou duplicação de par invertido. IDs e extremos não mudam após cadastro. A rede pode estar vazia durante construção, mas não ao executar. Pessoas sem contatos são válidas. N não muda por recuperação ou isolamento.
 
-O motivo de término fica com None até concluir(). As métricas ficam com None até serem calculadas após a conclusão. A duração até extinção fica com None quando o limite é atingido com infectados. A busca por um ID inexistente e a consulta de resultado antes da inicialização também retornam None.
+Cadastro estrutural inicial ocorre no preparo; a intervenção pode desativar, reduzir peso ou remover contatos de forma controlada. Pessoas não são removidas. Cada execução recebe indivíduos e contatos próprios; não basta copiar um mapa mantendo os mesmos objetos mutáveis de outro cenário. O snapshot inicial e o manifesto permanecem preservados; pesos/atividade/contatos operacionais podem mudar pela intervenção. Cenários novos partem de cópias independentes da condição original. As coleções retornadas preservam a estrutura interna, embora as pessoas sejam alteradas por operações legítimas de domínio.
 
-O cliente deve verificar a presença do valor antes de usá-lo. Isso preserva a diferença entre ausência, zero e False.
+## 10. Relações e multiplicidades
 
-## 10. Relações, multiplicidades e propriedade
-
-| Relação | Multiplicidade | Justificativa |
+| Relação | Multiplicidade | Semântica |
 |---|---|---|
-| Rede e indivíduo | Rede possui 0..* indivíduos. Cada indivíduo pertence a 1 rede neste recorte. | Associação de cadastro. A rede pode estar vazia na preparação. |
-| Rede e contato | Rede possui 0..* contatos. Cada contato pertence a 1 rede. | Composição com propriedade exclusiva e ciclo de vida dependente. |
-| Contato e indivíduos | Cada contato possui exatamente 2 indivíduos. Cada indivíduo participa de 0..* contatos. | Uma associação com dois participantes distintos e sem ordem. O conjunto extremos representa essa mesma propriedade. |
-| Simulação e rede | Cada simulação usa 1 rede. Cada rede está ligada a 0..1 execução. | Uma rede própria por execução. |
-| Simulação e configuração | Cada simulação usa 1 configuração. Cada configuração pode servir a 0..* execuções. | Valores preservados e reutilizáveis. |
-| Simulação e motor | Cada simulação possui 0..1 motor. Cada motor pertence ao contexto de 1 execução. | O motor e seu gerador são criados durante a inicialização válida. |
-| Motor e gerador | Cada motor usa 1 gerador. Um gerador está associado a 0..1 motor. | Fluxo epidemiológico. |
-| Simulação e estratégia | Cada execução recebe 1 estratégia. Cada estratégia pertence a 0..1 execução. | Preparo e estado específicos do contexto de execução. |
-| Estratégia aleatória e gerador | Cada estratégia aleatória usa 1 gerador. Cada gerador está associado a 0..1 estratégia. | Fluxo de seleção distinto do epidemiológico. |
-| Simulação e resultado | Cada lado possui multiplicidade 0..1. | O resultado surge na inicialização e pode ser preservado após a execução. |
-| Resultado e registros | Cada resultado possui 1..* registros. Cada registro pertence a 1 resultado. | Composição com registro inicial obrigatório. |
-| Resultado e métricas | Cada resultado possui 0..1 métricas. Cada objeto de métricas corresponde a 1 resultado. | Associação com cálculo após conclusão e preservação do objeto. |
-| Estratégias e classe abstrata | Aleatória e por grau especializam EstrategiaIsolamento. | Generalização. |
-| Individuo e EstadoSIR | Uso do enum no atributo estado. | Seta tracejada de tipagem. |
-| Resultado e MotivoTermino | Uso do enum no atributo de término. | Seta tracejada de tipagem. |
+| RedeContatos e Individuo | RedeContatos tem 0..* pessoas; pessoa pertence a 1 grafo neste recorte | Associação de cadastro; permite preparo com grau zero. |
+| RedeContatos e Contato | RedeContatos tem 0..* arestas; cada aresta pertence a 1 grafo | Composição: contato é criado/cadastrado por uma única rede e não é compartilhado entre execuções. |
+| Contato e Individuo | Contato liga exatamente 2 pessoas; pessoa participa de 0..* arestas | Associação única, sem ordem, com extremos distintos. |
+| Simulacao e RedeContatos | Simulação usa 1 grafo; grafo participa de 0..1 simulação | Estado próprio por execução. |
+| Simulacao e ConfiguracaoSimulacao | Simulação usa 1 configuração; configuração pode servir a 0..* execuções | Valores preservados, resultados guardam snapshots no manifesto. |
+| Simulacao e MotorSIR | Simulação tem 0..1 motor; motor pertence ao contexto de 1 simulação | Criado no preparo válido; sem segundo relógio. |
+| MotorSIR e GeradorAleatorio | Motor usa 1 gerador; gerador serve a 0..1 motor | Stream epidemiológico exclusivo. |
+| Simulacao e EstrategiaIsolamento | Cada lado tem 0..1 | Ausência permitida só para k=0; estratégia preparada pertence a no máximo uma execução. |
+| IsolamentoAleatorio e GeradorAleatorio | Estratégia usa 1 gerador; gerador serve a 0..1 estratégia | Stream distinto do motor, restrição adicional ao desenho. |
+| Simulacao e ResultadoSimulacao | Cada lado tem 0..1 | Resultado aparece após preparo e pode sobreviver à execução. |
+| ResultadoSimulacao e RegistroPasso | Resultado possui 1..* registros; registro pertence a 1 resultado | Composição com registro inicial obrigatório. |
+| ResultadoSimulacao e MetricasEpidemia | Resultado possui 0..1 métricas; métricas correspondem a 1 resultado | Associação de indicadores calculados e preservados. |
+| Estratégias concretas e abstrata | Duas generalizações | Aleatória e por grau concretizam validar e selecionar. |
+| ConfiguracaoSimulacao e MecanismoIsolamento | Dependência de tipagem | Enum do mecanismo de intervenção. |
+| Individuo e EstadoSIR; Resultado e MotivoTermino | Dependências de tipagem | Únicas setas tracejadas do diagrama de classes. |
 
-Quando um atributo e uma associação descrevem a mesma referência, haverá um único objeto ou coleção correspondente na implementação. Isso vale para os geradores, o mapa de indivíduos, os contatos e as métricas. O atributo redePreparada da estratégia é uma referência à mesma rede recebida. Os usos temporários de parâmetros e retornos são expressos pelas assinaturas.
-
-O mesmo objeto Contato aparece em duas listas de adjacência e pertence a uma única rede. Os indivíduos são associados à rede e preservam sua identidade. Os registros são exclusivos de seu resultado. As associações têm navegabilidade não especificada no desenho.
+Nenhuma associação implica cópia adicional de um atributo equivalente. O mesmo objeto de aresta aparece nas duas adjacências, mas pertence a um único grafo. A navegabilidade não está especificada porque não houve decisão adicional que a justifique. Não há agregação de significado indefinido.
 
 ## 11. Sequência de preparação e execução
 
-1. Criar RedeContatos e os indivíduos. Cadastrar todos, inclusive os que terão grau zero.
-2. Criar os contatos pela rede, validando extremos, pesos e unicidade dos pares.
-3. Construir ConfiguracaoSimulacao e validar seus valores antes de preparar os demais objetos. Mensagens de erro devem ser apresentadas para correção.
-4. Preparar a estratégia. Por grau, construir com a rede. Aleatória, construir com gerador da semente-base e fluxo “isolamento”.
-5. Construir Simulacao. inicializar() reúne os erros da configuração e da estratégia antes das alterações. No preparo válido, cria o motor e seu gerador com fluxo “epidemia” e semente da configuração e registra t=0.
-6. Aplicar o isolamento no instante configurado e atualizar a epidemia em rodadas simultâneas, registrando cada instante.
-7. Concluir por extinção ou limite. Calcular as métricas com a população e o histórico do próprio resultado.
-8. Apresentar curvas a partir de getRegistros() e indicadores pelos métodos de consulta das métricas, identificando execuções censuradas.
+1. Preparar dados/gerador, normalizar pesos e criar RedeContatos com todos os indivíduos, inclusive sem contatos. Registrar origem e assinatura da entrada.
+2. Construir configuração com IDs explícitos e parâmetros; validar antes de iniciar qualquer execução.
+3. Para k>0, preparar estratégia por grau na mesma rede ou aleatória com RNG próprio. Para k=0, usar None, sem consumir RNG de seleção.
+4. Construir Simulacao com origemRede e estado novo. inicializar() valida, marca I(0), prepara intervenção de 0 se cabível e cria manifesto/resultado inicial.
+5. Chamar executarPasso(): motor aplica uma transição, Simulacao incrementa t e prepara/registra o novo instante uma vez.
+6. Concluir por extinção ou limite, calcular métricas com o denominador do resultado e apresentar registros/manifesto/indicadores.
+7. Em lote, reconstruir estado inicial independente para cada cenário/repetição. Registrar as condições utilizadas antes da consolidação e visualização.
 
-## 12. Restrições e decisões pendentes
+## 12. Decisões ainda pendentes e alcance da verificação
 
-As operações estruturais da rede ocorrem na preparação. Todo contato possui extremos distintos e cadastrados, e existe no máximo um contato por par não ordenado. Os IDs de objetos recebidos precisam corresponder aos objetos cadastrados. Os pares podem ser padronizados por ID na implementação.
+O grupo deverá confirmar a configuração proposta, a compatibilidade das APIs entre branches, base/arquivo, preparação dos pesos, formatos/geradores, algoritmo pseudoaleatório, derivação de sementes, serialização/assinatura canônica e parâmetros experimentais. Sua escolha não pode ser inferida apenas da presença em um arquivo ou commit.
 
-Todos os indivíduos da coorte continuam contados durante o isolamento. As contagens permanecem não negativas e somam N. A função getIndividuos() entrega referências às mesmas pessoas, enquanto a coleção em si permanece protegida. Os consumidores utilizam os métodos de domínio para alterações válidas.
+As fontes e as imagens devem ser validadas sintaticamente e inspecionadas visualmente. Isso verifica o artefato de projeto; não executa nem valida o simulador. Correção epidemiológica, desempenho, integração e resultados experimentais continuam como trabalho futuro. As restrições descritas aqui são contratos propostos a testar, não funcionalidades já demonstradas.
 
-Os valores originais da configuração, dos pesos, dos registros e das métricas são preservados por construtores e consultas. Os atributos mutáveis possuem apenas operações de alteração pertinentes, como infectar(), recuperar(), isolar(), registrar() e concluir().
+## 12.1. Mecanismos e correspondência com o código atual
 
-Ainda precisam ser confirmados pelo grupo o recorte estático e fechado, a base de dados, os valores dos cenários, o algoritmo pseudoaleatório e a derivação das sementes. A linguagem definida para a implementação é Python. As anotações utilizadas pressupõem versão 3.10 ou posterior. A implementação das regras e as avaliações futuras permanecem como etapas posteriores.
+MecanismoIsolamento contém DESATIVACAO, REDUCAO e EXCLUSAO. O coordenador seleciona e agenda e a função aplicar_isolamento aplica o mecanismo uma vez. Antes da mutação, valida tipos, IDs, orçamento, ausência de duplicatas e preparo da rede; não aceita isolamento prévio. A UI não deve oferecer execução repetida sobre o mesmo estado já intervindo.
 
-As alternativas de topologia dinâmica, peso como probabilidade pronta, redução parcial e exclusão de vértices continuam no planejamento geral. Sua adoção exigirá revisar a transmissão, os denominadores, a conservação da população e o término.
+- DESATIVACAO: RedeContatos.desativar_contato marca o contato como inativo. O motor não transmite por ele.
+- REDUCAO: RedeContatos.alterar_peso_contato aplica peso×(1−reducao) uma única vez por contato afetado, mesmo com dois extremos selecionados. Atividade é preservada. Não há multiplicação por extremo nem uso de isDisponivel para bloquear isolados.
+- EXCLUSAO: RedeContatos.remover_contato retira as ligações incidentes; o indivíduo permanece cadastrado com grau zero. No texto acadêmico, denomina-se remoção dos contatos, não exclusão do vértice.
 
-## 13. Verificação da revisão
+A rede também oferece copiar() para estado independente. Contatos e suas duas adjacências devem continuar consistentes após as operações. A política única permanece até o término; liberação futura exige restauração seletiva do snapshot anterior. Topologia dinâmica e q diário continuam de menor prioridade e exigem contratos próprios.
 
-As treze classes têm atributos privados pertinentes e consultas públicas. O cadastro de indivíduos e a busca por ID estão explícitos. As duas estratégias concretas mostram selecionar(). Os construtores descrevem a preparação. A semente e o estado do gerador têm papéis distintos. None representa ausência. O pico proporcional utiliza o denominador do resultado. A validação fornece mensagens.
+Essas operações existem no código consultado, mas seus testes não foram executados nesta revisão documental. Motor, configuração e resultados do diagrama continuam projeto a integrar. As fontes efetivamente usadas devem ser distinguidas das classes apenas propostas.
 
-O desenho usa relações contínuas entre classes e tracejadas para os dois enums, com trajetos ortogonais. As multiplicidades exibem apenas números. Os cinco pacotes são blocos separados e os rótulos recebem ajuste de posição na exportação.
-
-## 14. PlantUML completo
+## 13. PlantUML completo
 
 ```plantuml
 @startuml
@@ -296,7 +255,7 @@ package "Domínio da rede" {
     - id : int
     - estado : EstadoSIR
     - isolamento : bool = False
-    - diaInicioInfeccao : int | None
+    - dia_inicio_infeccao : int | None
     + Individuo(id : int)
     + getId() : int
     + getEstado() : EstadoSIR
@@ -308,27 +267,31 @@ package "Domínio da rede" {
   }
 
   class Contato {
-    - extremos : set[Individuo]
+    - extremos : frozenset[Individuo]
     - peso : float
-    - ativa : bool
-    + Contato(a : Individuo, b : Individuo, peso : float)
+    - ativa : bool = True
+    + Contato(a : Individuo, b : Individuo, peso : float, ativa : bool = True)
     + getPeso() : float
-    + getExtremos() : set[Individuo]
-    + outroExtremo(individuo : Individuo) : Individuo
+    + getExtremos() : frozenset[Individuo]
+    + outro_extremo(individuo : Individuo) : Individuo
     + isAtiva() : bool
   }
 
   class RedeContatos {
     - individuos : dict[int, Individuo]
-    - adjacencias : dict[int, set[Contato]]
+    - adjacencias : dict[int, dict[int, Contato]]
     + RedeContatos()
-    + adicionarIndividuo(individuo : Individuo) : None
-    + buscarIndividuo(id : int) : Individuo | None
-    + getIndividuos() : set[Individuo]
-    + quantidadeIndividuos() : int
+    + adicionar_individuo(individuo : Individuo) : None
+    + buscar_individuo(id : int) : Individuo | None
+    + getIndividuos() : tuple[Individuo, ...]
+    + numero_individuos() : int
     + conectar(a : Individuo, b : Individuo, peso : float) : Contato
-    + contatosDe(individuo : Individuo) : set[Contato]
+    + contatos_de(individuo : Individuo) : frozenset[Contato]
     + grau(individuo : Individuo) : int
+    + alterar_peso_contato(a : int, b : int, peso : float) : Contato
+    + desativar_contato(a : int, b : int) : Contato
+    + remover_contato(a : int, b : int) : Contato
+    + copiar() : RedeContatos
   }
 
   RedeContatos "1" -- "0..*" Individuo
@@ -338,16 +301,30 @@ package "Domínio da rede" {
 }
 
 package "Configuração" {
+  enum MecanismoIsolamento <<enumeration>> {
+    DESATIVACAO
+    REDUCAO
+    EXCLUSAO
+  }
   class ConfiguracaoSimulacao {
-    - beta : float
+    - beta : float | None
+    - modoPeso : str = "intensidade"
+    - mecanismo : MecanismoIsolamento
+    - reducao : float | None
+    - sementeIniciais : int | None
     - gamma : float
     - idsInfectadosIniciais : set[int]
     - fracaoIsolamento : float
     - passoIntervencao : int
     - limitePassos : int
     - semente : int
-    + ConfiguracaoSimulacao(beta : float, gamma : float, ids : set[int],\nfracao : float, inicio : int, limite : int, semente : int)
-    + getBeta() : float
+    + ConfiguracaoSimulacao(beta : float | None, gamma : float, ids : set[int],\nfracao : float, inicio : int, limite : int, semente : int,\nmodoPeso : str = "intensidade",\nmecanismo : MecanismoIsolamento = DESATIVACAO, reducao : float | None = None)
+    + getBeta() : float | None
+    + getModoPeso() : str
+    + getMecanismo() : MecanismoIsolamento
+    + getReducao() : float | None
+    + getSementeIniciais() : int | None
+    + sortearInfectadosIniciais(rede : RedeContatos, quantidade : int,\ngerador : GeradorAleatorio) : None
     + getGamma() : float
     + getIdsInfectadosIniciais() : set[int]
     + getFracaoIsolamento() : float
@@ -358,6 +335,7 @@ package "Configuração" {
     + quantidadeIsolados(populacaoInicial : int) : int
     + deveIniciarIsolamento(passoAtual : int) : bool
   }
+  ConfiguracaoSimulacao ..> MecanismoIsolamento
 }
 
 package "Execução" {
@@ -365,7 +343,9 @@ package "Execução" {
     - passoAtual : int = 0
     - inicializada : bool = False
     - finalizada : bool = False
-    + Simulacao(rede : RedeContatos, configuracao : ConfiguracaoSimulacao,\nestrategia : EstrategiaIsolamento)
+    - origemRede : dict[str, str]
+    - intervencaoAplicada : bool = False
+    + Simulacao(rede : RedeContatos, configuracao : ConfiguracaoSimulacao,\nestrategia : EstrategiaIsolamento | None,\norigemRede : dict[str, str])
     + inicializar() : list[str]
     + executar() : ResultadoSimulacao
     + executarPasso() : RegistroPasso
@@ -373,19 +353,20 @@ package "Execução" {
     + isFinalizada() : bool
     + getResultado() : ResultadoSimulacao | None
     - aplicarIntervencao() : None
-    - registrarEstadoAtual() : RegistroPasso
+    - prepararInstante() : RegistroPasso
+    - prepararManifesto() : dict[str, str]
   }
 
   class MotorSIR {
     - sorteiosEpidemia : GeradorAleatorio
     + MotorSIR(gerador : GeradorAleatorio)
-    + avancar(rede : RedeContatos, configuracao : ConfiguracaoSimulacao,\npassoAtual : int) : RegistroPasso
+    + avancar(rede : RedeContatos, configuracao : ConfiguracaoSimulacao,\npassoAtual : int) : None
   }
 
   class GeradorAleatorio {
     - sementeBase : int
     - fluxo : str
-    - estadoInterno : list[int]
+    - estadoInterno : object
     + GeradorAleatorio(sementeBase : int, fluxo : str)
     + getSementeBase() : int
     + getFluxo() : str
@@ -434,9 +415,11 @@ package "Resultados" {
     - populacaoInicial : int
     - motivoTermino : MotivoTermino | None
     - metricas : MetricasEpidemia | None
-    + ResultadoSimulacao(populacaoInicial : int, registroInicial : RegistroPasso)
+    - manifesto : dict[str, str]
+    + ResultadoSimulacao(populacaoInicial : int, registroInicial : RegistroPasso,\nmanifesto : dict[str, str])
     + getPopulacaoInicial() : int
     + getRegistros() : list[RegistroPasso]
+    + getManifesto() : dict[str, str]
     + getMotivoTermino() : MotivoTermino | None
     + getMetricas() : MetricasEpidemia | None
     + isConcluido() : bool
@@ -450,11 +433,13 @@ package "Resultados" {
     - suscetiveis : int
     - infectados : int
     - recuperados : int
-    + RegistroPasso(passo : int, s : int, i : int, r : int)
+    - isolados : int
+    + RegistroPasso(passo : int, s : int, i : int, r : int, q : int)
     + getPasso() : int
     + getSuscetiveis() : int
     + getInfectados() : int
     + getRecuperados() : int
+    + getIsolados() : int
   }
 
   class MetricasEpidemia {
@@ -483,7 +468,7 @@ package "Resultados" {
 
 Simulacao "0..1" -down- "1" RedeContatos
 ConfiguracaoSimulacao "1" -left- "0..*" Simulacao
-Simulacao "0..1" -down- "1" EstrategiaIsolamento
+Simulacao "0..1" -down- "0..1" EstrategiaIsolamento
 Simulacao "0..1" -down- "0..1" ResultadoSimulacao
 GeradorAleatorio "1" -down- "0..1" IsolamentoAleatorio
 

@@ -30,7 +30,7 @@ package "Domínio da rede" {
     - id : int
     - estado : EstadoSIR
     - isolamento : bool = False
-    - diaInicioInfeccao : int | None
+    - dia_inicio_infeccao : int | None
     + Individuo(id : int)
     + getId() : int
     + getEstado() : EstadoSIR
@@ -42,27 +42,31 @@ package "Domínio da rede" {
   }
 
   class Contato {
-    - extremos : set[Individuo]
+    - extremos : frozenset[Individuo]
     - peso : float
-    - ativa : bool
-    + Contato(a : Individuo, b : Individuo, peso : float)
+    - ativa : bool = True
+    + Contato(a : Individuo, b : Individuo, peso : float, ativa : bool = True)
     + getPeso() : float
-    + getExtremos() : set[Individuo]
-    + outroExtremo(individuo : Individuo) : Individuo
+    + getExtremos() : frozenset[Individuo]
+    + outro_extremo(individuo : Individuo) : Individuo
     + isAtiva() : bool
   }
 
   class RedeContatos {
     - individuos : dict[int, Individuo]
-    - adjacencias : dict[int, set[Contato]]
+    - adjacencias : dict[int, dict[int, Contato]]
     + RedeContatos()
-    + adicionarIndividuo(individuo : Individuo) : None
-    + buscarIndividuo(id : int) : Individuo | None
-    + getIndividuos() : set[Individuo]
-    + quantidadeIndividuos() : int
+    + adicionar_individuo(individuo : Individuo) : None
+    + buscar_individuo(id : int) : Individuo | None
+    + getIndividuos() : tuple[Individuo, ...]
+    + numero_individuos() : int
     + conectar(a : Individuo, b : Individuo, peso : float) : Contato
-    + contatosDe(individuo : Individuo) : set[Contato]
+    + contatos_de(individuo : Individuo) : frozenset[Contato]
     + grau(individuo : Individuo) : int
+    + alterar_peso_contato(a : int, b : int, peso : float) : Contato
+    + desativar_contato(a : int, b : int) : Contato
+    + remover_contato(a : int, b : int) : Contato
+    + copiar() : RedeContatos
   }
 
   RedeContatos "1" -- "0..*" Individuo
@@ -72,16 +76,30 @@ package "Domínio da rede" {
 }
 
 package "Configuração" {
+  enum MecanismoIsolamento <<enumeration>> {
+    DESATIVACAO
+    REDUCAO
+    EXCLUSAO
+  }
   class ConfiguracaoSimulacao {
-    - beta : float
+    - beta : float | None
+    - modoPeso : str = "intensidade"
+    - mecanismo : MecanismoIsolamento
+    - reducao : float | None
+    - sementeIniciais : int | None
     - gamma : float
     - idsInfectadosIniciais : set[int]
     - fracaoIsolamento : float
     - passoIntervencao : int
     - limitePassos : int
     - semente : int
-    + ConfiguracaoSimulacao(beta : float, gamma : float, ids : set[int],\nfracao : float, inicio : int, limite : int, semente : int)
-    + getBeta() : float
+    + ConfiguracaoSimulacao(beta : float | None, gamma : float, ids : set[int],\nfracao : float, inicio : int, limite : int, semente : int,\nmodoPeso : str = "intensidade",\nmecanismo : MecanismoIsolamento = DESATIVACAO, reducao : float | None = None)
+    + getBeta() : float | None
+    + getModoPeso() : str
+    + getMecanismo() : MecanismoIsolamento
+    + getReducao() : float | None
+    + getSementeIniciais() : int | None
+    + sortearInfectadosIniciais(rede : RedeContatos, quantidade : int,\ngerador : GeradorAleatorio) : None
     + getGamma() : float
     + getIdsInfectadosIniciais() : set[int]
     + getFracaoIsolamento() : float
@@ -92,6 +110,7 @@ package "Configuração" {
     + quantidadeIsolados(populacaoInicial : int) : int
     + deveIniciarIsolamento(passoAtual : int) : bool
   }
+  ConfiguracaoSimulacao ..> MecanismoIsolamento
 }
 
 package "Execução" {
@@ -99,7 +118,9 @@ package "Execução" {
     - passoAtual : int = 0
     - inicializada : bool = False
     - finalizada : bool = False
-    + Simulacao(rede : RedeContatos, configuracao : ConfiguracaoSimulacao,\nestrategia : EstrategiaIsolamento)
+    - origemRede : dict[str, str]
+    - intervencaoAplicada : bool = False
+    + Simulacao(rede : RedeContatos, configuracao : ConfiguracaoSimulacao,\nestrategia : EstrategiaIsolamento | None,\norigemRede : dict[str, str])
     + inicializar() : list[str]
     + executar() : ResultadoSimulacao
     + executarPasso() : RegistroPasso
@@ -107,19 +128,20 @@ package "Execução" {
     + isFinalizada() : bool
     + getResultado() : ResultadoSimulacao | None
     - aplicarIntervencao() : None
-    - registrarEstadoAtual() : RegistroPasso
+    - prepararInstante() : RegistroPasso
+    - prepararManifesto() : dict[str, str]
   }
 
   class MotorSIR {
     - sorteiosEpidemia : GeradorAleatorio
     + MotorSIR(gerador : GeradorAleatorio)
-    + avancar(rede : RedeContatos, configuracao : ConfiguracaoSimulacao,\npassoAtual : int) : RegistroPasso
+    + avancar(rede : RedeContatos, configuracao : ConfiguracaoSimulacao,\npassoAtual : int) : None
   }
 
   class GeradorAleatorio {
     - sementeBase : int
     - fluxo : str
-    - estadoInterno : list[int]
+    - estadoInterno : object
     + GeradorAleatorio(sementeBase : int, fluxo : str)
     + getSementeBase() : int
     + getFluxo() : str
@@ -168,9 +190,11 @@ package "Resultados" {
     - populacaoInicial : int
     - motivoTermino : MotivoTermino | None
     - metricas : MetricasEpidemia | None
-    + ResultadoSimulacao(populacaoInicial : int, registroInicial : RegistroPasso)
+    - manifesto : dict[str, str]
+    + ResultadoSimulacao(populacaoInicial : int, registroInicial : RegistroPasso,\nmanifesto : dict[str, str])
     + getPopulacaoInicial() : int
     + getRegistros() : list[RegistroPasso]
+    + getManifesto() : dict[str, str]
     + getMotivoTermino() : MotivoTermino | None
     + getMetricas() : MetricasEpidemia | None
     + isConcluido() : bool
@@ -184,11 +208,13 @@ package "Resultados" {
     - suscetiveis : int
     - infectados : int
     - recuperados : int
-    + RegistroPasso(passo : int, s : int, i : int, r : int)
+    - isolados : int
+    + RegistroPasso(passo : int, s : int, i : int, r : int, q : int)
     + getPasso() : int
     + getSuscetiveis() : int
     + getInfectados() : int
     + getRecuperados() : int
+    + getIsolados() : int
   }
 
   class MetricasEpidemia {
@@ -217,7 +243,7 @@ package "Resultados" {
 
 Simulacao "0..1" -down- "1" RedeContatos
 ConfiguracaoSimulacao "1" -left- "0..*" Simulacao
-Simulacao "0..1" -down- "1" EstrategiaIsolamento
+Simulacao "0..1" -down- "0..1" EstrategiaIsolamento
 Simulacao "0..1" -down- "0..1" ResultadoSimulacao
 GeradorAleatorio "1" -down- "0..1" IsolamentoAleatorio
 

@@ -1,19 +1,7 @@
 # Etapa 1 - problema e epidemiologia
 
-> Este texto registra a proposta de estudo e comparação elaborada anteriormente. A referência operacional vigente no repositório é [Modelagem do grafo](../modelagem/ModelagemGrafo.md). As diferenças abaixo permanecem explícitas para revisão coletiva; a importação deste documento não substitui as regras já registradas nem afirma equivalência com a implementação existente. Os exemplos são didáticos, sem calibração com uma doença real.
-
-## Situação da proposta em relação ao repositório
-
-| Aspecto | Regra registrada na modelagem do grafo | Proposta desenvolvida neste documento |
-|---|---|---|
-| Tempo | Cada passo corresponde a um dia do modelo. | Passo abstrato, sem equivalência temporal confirmada. |
-| Peso | Intensidade finita não negativa, inclusive acima de 1; probabilidade min(1, β × peso). | Intensidade normalizada em [0,1] e probabilidade β × peso; modo de probabilidade pronta discutido como alternativa. |
-| Isolamento | A cada dia, infectados elegíveis entram com probabilidade q; recuperação desencadeia liberação explícita pelo motor. | Intervenção única por orçamento de pessoas, seleção aleatória ou por grau e manutenção até o término. |
-| Disponibilidade do contato | Indicador ativa próprio da aresta, preservado durante o isolamento; motor também consulta os extremos. | No projeto de classes proposto, ativa é recalculada a partir do isolamento dos extremos. |
-
-A pergunta de pesquisa, o levantamento de dados e as métricas podem apoiar a integração. Já o protocolo de isolamento e o diagrama de classes representam uma proposta alternativa a compatibilizar. Não se deve implementar simultaneamente os dois significados de isolamento ou de atividade de contato sem uma decisão explícita.
-
 ## 1. Introdução e contextualização
+
 
 A propagação de uma doença transmissível depende das oportunidades de contato entre indivíduos. Essas oportunidades não se distribuem uniformemente: algumas pessoas mantêm muitos contatos, outras interagem principalmente em um mesmo grupo e determinados contatos conectam regiões pouco relacionadas da população.
 
@@ -29,66 +17,52 @@ Propõe-se um **simulador acadêmico exploratório**, destinado à compreensão 
 
 ### 2.1. Definição do problema
 
-O problema consiste em representar uma população por uma rede de contatos e planejar uma simulação da evolução dos estados epidemiológicos dos indivíduos. A ferramenta deverá permitir comparar cenários com e sem isolamento, preservando condições que tornem a comparação interpretável.
+O problema consiste em representar uma população e seus contatos e planejar a evolução estocástica dos estados epidemiológicos. A ferramenta proposta permitirá comparar ausência de isolamento, seleção aleatória e seleção por grau sob condições controladas.
 
-Conforme a modelagem estabelecida, o grafo é **simples, não direcionado e ponderado**. Cada vértice representa um indivíduo e cada aresta representa um contato pelo qual o vírus pode ser transmitido. Não existem laços nem múltiplas arestas entre o mesmo par de indivíduos. A ausência de direção representa o contato sem orientação; a transmissão depende dos estados dos extremos.
+Cada vértice representa um indivíduo; cada aresta representa um contato potencialmente transmissor. O grafo é simples, sem laços nem contatos duplicados por par não ordenado, não direcionado e ponderado. A ausência de direção descreve o contato; a possibilidade de transmissão depende dos estados dos extremos. Lista de adjacência é a representação principal documentada.
 
-A **lista de adjacência** é a representação principal. Matriz de adjacência e lista de arestas são representações alternativas previstas na modelagem, sem pressupor que todas serão implementadas nesta versão. Os campos `origem` e `destino` identificam os extremos de uma aresta, sem lhe atribuir direção.
-
-O peso poderá expressar probabilidade de transmissão ou intensidade do contato, em configurações alternativas. A topologia poderá ser estática ou dinâmica; o isolamento poderá utilizar remoção do vértice ou intervenção lógica sobre os contatos. Essas possibilidades não serão confundidas com uma única configuração já escolhida.
-
-Para especificar os procedimentos epidemiológicos e as comparações de forma verificável, este documento mantém como **configuração de referência proposta** a população fechada, topologia estática e isolamento lógico por desativação. Ela não exclui as alternativas apresentadas na modelagem do grafo. As adaptações necessárias para outras configurações são explicitadas adiante.
-
-### 2.1.1. Atributos compartilhados com a modelagem do grafo
-
-| Elemento | Atributos estabelecidos | Interpretação epidemiológica |
-|---|---|---|
-| Vértice | `id`, `estado`, `isolamento`, `diaInicioInfeccao` | Identificação única, estado S/I/R, condição booleana de isolamento e início da infecção. |
-| Aresta | `peso`, `ativa`, `origem`, `destino` | Valor de contato com interpretação declarada, disponibilidade booleana e referências aos dois extremos. |
-
-O atributo `diaInicioInfeccao` será mantido com o nome definido na modelagem. Como o passo ainda é abstrato, propõe-se armazenar nele o índice do passo de início da infecção: zero para infectados iniciais e t+1 para uma transição S → I concluída nesse instante. Antes da infecção, será não aplicável. O nome do campo não estabelece, por si só, equivalência com um dia real.
-
-`estado` e `isolamento` serão independentes. O atributo `ativa` indica disponibilidade do contato e não o estado epidemiológico de seus extremos. Um indivíduo infectado poderá estar isolado, e uma aresta ativa poderá ter probabilidade de transmissão zero, conforme o peso.
+O cadastro inclui indivíduos sem contatos. Na estrutura Python existente, RedeContatos, Contato e Individuo correspondem à rede, ao contato e à pessoa. Os nomes origem e destino identificam extremos, sem direção. O projeto reutiliza essas classes; não introduz outra estrutura paralela de grafo ou aresta.
 
 ### 2.2. Pergunta central
 
-**Como a estrutura de uma rede de contatos influencia a propagação de uma epidemia simulada e, sob igual número de pessoas isoladas, como as estratégias de isolamento aleatório e por grau alteram o pico de infectados e a fração acumulada de indivíduos infectados em comparação com a ausência de isolamento?**
+**Como a estrutura de uma rede de contatos influencia a propagação de uma epidemia simulada e, sob igual número de pessoas isoladas, como as estratégias aleatória e por grau alteram o pico de infectados e a fração acumulada em relação à ausência de isolamento?**
 
-A comparação entre estruturas será um eixo complementar, com redes sintéticas controladas. Uma estratégia por posição estrutural poderá ser incorporada após definição do critério na modelagem dos algoritmos.
+A comparação entre estruturas será um eixo complementar, utilizando redes sintéticas controladas. Uma estratégia adicional por posição estrutural exige justificativa, critério e orçamento próprios e não integra o mínimo.
 
 ### 2.3. Objetivo geral
 
-Planejar um simulador estocástico SIR em redes de contatos para investigar a influência da estrutura da rede e comparar estratégias de isolamento por meio de indicadores definidos e reproduzíveis.
+Planejar um simulador estocástico SIR em rede para investigar a influência da estrutura e comparar estratégias de isolamento por indicadores definidos e reproduzíveis.
 
 ### 2.4. Objetivos específicos
 
-1. Definir os estados epidemiológicos e as regras de transmissão, recuperação e atualização.
-2. Especificar parâmetros configuráveis e seus domínios válidos.
-3. Definir o efeito do isolamento sobre os contatos, independentemente do estado SIR.
-4. Levantar bases candidatas e critérios de preparação.
-5. Definir métricas de evolução, magnitude e duração da epidemia simulada.
-6. Propor comparações entre ausência de isolamento, isolamento aleatório e por grau.
-7. Planejar repetições para avaliar a variabilidade dos resultados.
-8. Representar as interações do usuário e os estados do indivíduo por UML.
+1. Especificar transmissão, recuperação e atualização simultânea.
+2. Definir parâmetros, domínios, condições iniciais e validação.
+3. Definir seleção e efeito do isolamento separadamente do estado SIR.
+4. Levantar bases candidatas e procedimentos de preparação.
+5. Definir histórico, métricas, denominadores e censura.
+6. Planejar cenários e repetições com condições controladas.
+7. Representar interações, estados e responsabilidades por UML.
 
-Esses objetivos serão verificáveis pela presença das especificações na Etapa 1 e, posteriormente, pela correspondência entre o funcionamento implementado e as regras documentadas.
+Nesta etapa, a verificação ocorre pela consistência das especificações; nas posteriores, por testes e experimentos a realizar. Não há resultados experimentais nesta contribuição.
 
-### 2.5. Escopo e limitações
+### 2.5. Escopo, alternativas e prioridades
 
-A configuração de referência terá população fechada, sem nascimentos, mortes ou entrada de indivíduos. Não haverá incubação explícita, reinfecção, vacinação, heterogeneidade individual de suscetibilidade ou transmissão fora da rede.
+A configuração padrão proposta mantém população fechada, topologia estática e isolamento por orçamento. Incubação, reinfecção, vacinação e transmissão fora da rede não são previstas. Padrão não significa que as alternativas tenham sido descartadas ou já implementadas.
 
-Nessa configuração, a topologia permanecerá fixa, embora contatos possam ser desativados logicamente. A alternativa dinâmica apresentada na modelagem permite atualizar vértices e arestas, incluindo novos indivíduos ou excluindo vértices conforme a configuração. Adotá-la exigirá definir regras de entrada, saída, contatos e contagem antes dos experimentos. A possibilidade de excluir falecidos não estabelece uma regra de mortalidade: essa regra não foi fornecida e não será inferida do SIR.
+| Dimensão | Padrão proposto | Alternativa e prioridade |
+|---|---|---|
+| Topologia | Estática | Dinâmica, de menor prioridade; regras temporais precisam ser definidas antes da implementação. |
+| Política de isolamento | Intervenção única por orçamento | Entrada diária de infectados com probabilidade q, de menor prioridade; protocolo separado. |
+| Seleção por orçamento | Aleatória ou por grau, ambas previstas para comparação | Uma não substitui a outra; as duas usam o mesmo k. |
+| Infectados iniciais | Seleção manual ou sorteio na interface | Ambas previstas; o sorteio registra e reutiliza os IDs escolhidos. |
+| Peso | Intensidade normalizada | Probabilidade direta por contato e passo, explicitamente identificada. |
+| Mecanismo de isolamento | Bloqueio lógico total | Redução parcial ou exclusão da rede de contatos, mantidas como alternativas documentadas. |
 
-As conclusões serão condicionadas às redes e aos parâmetros estudados. Uma única configuração ou execução não permitirá afirmar superioridade universal de uma estratégia.
+O diagrama de classes detalha a execução na referência estática por orçamento, com os dois modos de peso e as duas formas de preparação dos IDs. As alternativas dinâmica, q diário e mecanismos adicionais não são apresentadas como implementações concluídas. A ordem restante de implementação e sua inclusão na entrega dependem do planejamento coletivo.
 
 ### 2.6. Isolamento de pessoas e bloqueio de contatos
 
-- **Isolar um indivíduo** significa impedir ou reduzir seus contatos. A modelagem admite excluir o vértice e suas arestas ou manter o vértice e desativar contatos/reduzir pesos. Na comparação de referência, propõe-se desativação lógica completa.
-- **Bloquear um contato** significa selecionar uma aresta e impedir somente aquela interação.
-- **Ponto de articulação** é um vértice cuja remoção aumenta o número de componentes conexas.
-- **Ponte** é uma aresta cuja remoção aumenta o número de componentes conexas.
-
-Pontos de articulação podem fundamentar uma política de isolamento de pessoas; pontes fundamentam bloqueio de contatos. Não são intervenções equivalentes. A comparação principal terá orçamento em número de pessoas isoladas. Uma comparação com bloqueio de arestas exigirá definir outro custo, como quantidade de contatos ou soma dos pesos desativados, e discutir suas limitações.
+Isolar uma pessoa atua sobre seus contatos incidentes conforme o mecanismo. Bloquear uma aresta atua somente sobre aquela interação. O indicador ativa pode representar uma indisponibilidade própria do contato; sua presença não exige uma interface adicional de bloqueio de arestas. Ponto de articulação é vértice cuja remoção aumenta o número de componentes; ponte é uma aresta com esse efeito. Uma comparação entre essas intervenções exigiria outro critério de custo. O orçamento aqui é número de pessoas, não número de arestas afetadas.
 
 ## 3. Modelo epidemiológico SIR
 
@@ -96,226 +70,181 @@ Pontos de articulação podem fundamentar uma política de isolamento de pessoas
 
 | Estado | Significado |
 |---|---|
-| Suscetível (S) | Pode adquirir a infecção por contato ativo com um infectado. |
-| Infectado (I) | Pode transmitir a infecção e está sujeito à recuperação. |
-| Recuperado ou removido (R) | Deixou de participar da transmissão. Na regra epidemiológica de referência, representa recuperação com imunidade durante a execução. |
+| Suscetível (S) | Pode adquirir infecção pelos contatos permitidos com infectados. |
+| Infectado (I) | Pode transmitir e está sujeito à recuperação, inclusive quando isolado. |
+| Recuperado (R) | Não transmite nem volta a S durante a execução. Representa remoção epidemiológica, sem excluir a pessoa do grafo. |
 
-O modelo adotado é **SIR**, com transições **S → I → R**, sem retorno de R para S. O termo removido em R designa a retirada do processo de transmissão; **passar para R e excluir o vértice são operações distintas**. A exclusão física depende da configuração da rede e não ocorre automaticamente pela transição epidemiológica. A estrutura compartimental e a imunidade após a infecção se relacionam à tradição dos modelos de Kermack e McKendrick [2]. As regras discretas abaixo são uma proposta operacional do projeto, não uma reprodução integral do modelo histórico.
-
-Inicialmente, todos serão suscetíveis, exceto os infectados iniciais; portanto, R(0) = 0. Os parâmetros epidemiológicos serão iguais para todos. A heterogeneidade decorrerá da rede e dos pesos.
+O ciclo é S → I → R. A tradição dos modelos compartimentais de Kermack e McKendrick [2] fundamenta a organização SIR; as regras discretas aqui são propostas operacionais próprias. Todos têm os mesmos parâmetros epidemiológicos; a heterogeneidade resulta da rede e dos pesos. Estado e isolamento são condições independentes.
 
 ### 3.2. Tempo e condições iniciais
 
-O tempo será t = 0, 1, 2, ... Cada passo representará **uma unidade abstrata de tempo simulado**, sem equivalência automática com um dia real. O instante t = 0 contém os estados iniciais; o primeiro passo produz os estados em t = 1.
+t = 0,1,2,... é índice inteiro; cada transição t → t+1 corresponde a um dia do modelo. Essa unidade não é calibrada com tempo de uma doença real. T_max é o número máximo de transições.
 
-Serão escolhidos n₀ infectados iniciais, sem repetição. A proposta principal é seleção uniforme entre os vértices. Uma lista manual poderá apoiar verificações ou estudos específicos, devendo ser registrada.
+Os infectados iniciais são um conjunto explícito de IDs existentes, sem repetição; n₀ é seu tamanho, 0 ≤ n₀ ≤ N. Todos os demais começam em S, R(0)=0 e inicialmente não há isolados antes da intervenção. O conjunto vazio é permitido e produz extinção em t=0. A interface deve oferecer duas opções propostas: informar IDs manualmente ou informar quantidade n₀ e semente para sorteio uniforme sem reposição. O sorteio ocorre na preparação, usa fluxo próprio e mostra os IDs antes da execução. O conjunto resultante fica registrado e é reutilizado nos cenários da mesma repetição; não se sorteia novamente para cada estratégia. A escolha não depende de ferramenta externa à interface.
 
-O conjunto inicial será idêntico entre estratégias na mesma repetição. Não haverá substituição de infectado inicial que também seja escolhido para isolamento.
+O campo dia_inicio_infeccao armazena None para quem nunca foi infectado, 0 para infectados iniciais e t+1 para novas infecções. Isolar um infectado inicial não o substitui nem o recupera.
 
-### 3.3. Pesos e transmissão por contato
+### 3.3. Pesos e probabilidade por contato
 
-Considere G = (V, E), com N = |V| indivíduos na configuração fechada. Cada aresta {u,v} terá peso simétrico wᵤᵥ = wᵥᵤ. A interpretação deverá ser escolhida para cada configuração; não se poderá tratar simultaneamente o mesmo peso como intensidade e probabilidade pronta.
+Seja G=(V,E), N=|V|>0. O peso simétrico wᵤᵥ=wᵥᵤ é finito em [0,1], com interpretação identificada por configuração. **Intensidade é o modo padrão proposto.** Nesse modo, β é probabilidade por passo em contato de peso 1, com 0 ≤ β ≤ 1. Para contato permitido entre I e S:
 
-**Modo 1 - peso como intensidade.** Propõe-se normalizar wᵤᵥ em [0,1] e calcular a probabilidade-base por contato e passo por:
+**pᵤᵥ = β · wᵤᵥ**.
 
-**pᵤᵥ = βd · wᵤᵥ**, com **0 ≤ βd ≤ 1**.
+A relação linear é uma hipótese simplificadora, sem calibração empírica. Peso zero impede transmissão, mas não significa isolamento. Ausência de peso pode ser preparada como intensidade unitária, com essa escolha registrada; não se interpreta peso 1 como transmissão certa quando β<1.
 
-βd é a probabilidade de transmissão por passo de um contato de peso 1; wᵤᵥ é a intensidade relativa; pᵤᵥ ∈ [0,1] é a probabilidade efetiva por contato e passo. Esta relação linear é uma hipótese simplificadora proposta, sem calibração empírica.
+Para duração acumulada dᵤᵥ ≥ 0 em janela declarada, uma transformação candidata é **wᵤᵥ = min(1, dᵤᵥ/dref)**, com dref>0 na mesma unidade. O exemplo dref=900 segundos é didático, não decisão ou calibração. A saturação perde distinção entre durações acima da referência. A escala e a janela devem permanecer iguais em comparações; normalizar separadamente pelo máximo de cada rede pode confundir intensidade e estrutura. Valores brutos acima de 1 exigem preparação antes do cadastro nessa referência.
 
-Para duração observada, uma transformação candidata é:
+**Modo alternativo: probabilidade direta.** Quando o peso já expressa probabilidade de transmissão por contato e por passo, adota-se pᵤᵥ=wᵤᵥ. β fica não aplicável, representado por None; não multiplicar novamente. Peso 1 significa transmissão certa em uma exposição permitida nesse modo, mas não no modo intensidade com β<1. Probabilidades referentes a outro intervalo exigem conversão documentada antes da entrada. A escala deve ser comum entre cenários; interpretação não pode mudar silenciosamente durante a execução.
 
-**wᵤᵥ = min(1, dᵤᵥ / dref)**.
+### 3.4. Múltiplas exposições
 
-dᵤᵥ > 0 é a duração acumulada na janela escolhida e dref > 0 é uma referência, ambas na mesma unidade. O exemplo dref = 900 segundos é didático. A saturação em 1 reduz a distinção entre contatos acima da referência e deverá ser documentada.
+Seja bᵤᵥ(t)∈{0,1} o indicador ativa do contato existente em t, independente do estado SIR e do isolamento. Um contato ausente ou inativo contribui probabilidade zero. Para contato ativo entre um I e um S do snapshot, aplicar p=βw(t) no modo intensidade ou p=w(t) no modo probabilidade direta. O mecanismo de intervenção modifica disponibilidade, peso ou existência antes desses sorteios.
 
-**Modo 2 - peso como probabilidade.** Se o arquivo ou a configuração fornecer diretamente a probabilidade de transmissão por contato e por passo, será exigido wᵤᵥ ∈ [0,1] e adotado **pᵤᵥ = wᵤᵥ**. Nesse modo, βd não será aplicado novamente; deverá ficar não aplicável na configuração. Uma probabilidade referente a outro intervalo de tempo exigirá conversão explicitada antes do uso.
+O motor **não bloqueia adicionalmente pelo booleano isolamento**: a desativação já bloqueou os contatos, a redução deve permitir transmissão residual e a remoção já retirou as interações. Um filtro automático por pessoa isolada anularia incorretamente a redução parcial.
 
-Zero significa ausência de transmissão naquele contato, mas não exige alterar `ativa` para falso nem excluir a aresta. Disponibilidade e probabilidade são atributos distintos. Duração ou proximidade brutas não serão interpretadas diretamente como probabilidade.
+Para suscetível v, Jᵥ(t) reúne os vizinhos infectados no início do passo com contato permitido. Sob independência condicional das tentativas, dados os estados e contatos:
 
-Comparações entre redes exigirão janelas de agregação e escalas compatíveis. Normalizar cada rede por seu próprio maior peso poderia alterar a escala de transmissão e confundir efeitos estruturais. No caso de pesos unitários usados como aproximação estrutural, recomenda-se o modo intensidade; no modo probabilidade, peso 1 significaria transmissão certa por exposição elegível antes do isolamento.
+**Pᵥ(t) = 1 − ∏[u ∈ Jᵥ(t)] (1 − pᵤᵥ)**.
 
-### 3.4. Exposição a múltiplos infectados
-
-Seja Jᵥ(t) o conjunto de vizinhos infectados no início do passo com contato ativo com o suscetível v. Seja p_eff,uv(t) a probabilidade efetiva por contato, após aplicar o modo de peso e a intervenção da seção 3.7. Admitindo tentativas independentes, condicionadas aos estados e contatos do início do passo:
-
-**Pᵥ(t) = 1 − ∏[u ∈ Jᵥ(t)] (1 − p_eff,uv(t))**.
-
-O produto representa a probabilidade de nenhuma exposição transmitir. O complemento representa pelo menos uma transmissão. Sem vizinhos elegíveis, o produto vazio vale 1 e Pᵥ(t) = 0.
-
-Um sorteio uniforme Uᵥ(t) ∈ [0,1) determinará a infecção: se Uᵥ(t) < Pᵥ(t), v será marcado para transição S → I. Cada pessoa terá no máximo uma infecção no passo.
-
-Duas exposições de probabilidade 0,10, por exemplo, resultam em 1 − (1 − 0,10)² = 0,19. A regra não será somar diretamente probabilidades.
+O produto vazio vale 1: sem vizinhos elegíveis, Pᵥ=0. Um sorteio uniforme Uᵥ(t) em [0,1) causa S → I se Uᵥ(t)<Pᵥ(t). Há no máximo uma nova infecção por pessoa no passo. Exposições 0,2 e 0,4 dão 1−0,8×0,6=0,52; não se somam as probabilidades.
 
 ### 3.5. Recuperação probabilística
 
-A regra principal será **recuperação probabilística por passo**:
+Para cada indivíduo v em I no início do passo, um sorteio uniforme Vᵥ(t) em [0,1), independente dos sorteios de transmissão, decide a recuperação se Vᵥ(t)<γ, com γ finito em [0,1]. A transição é aplicada ao final, inclusive para isolados. Recém-infectados não participam desse sorteio no mesmo passo.
 
-**P(Xᵥ(t+1) = R | Xᵥ(t) = I) = γd**, com **0 ≤ γd ≤ 1**.
+γ=0 impede recuperação; γ=1 recupera todos os infectados iniciais do passo ao final, sem impedir sua transmissão anterior quando permitida. Para γ>0, a quantidade de passos infecciosos tem média 1/γ sob essa convenção. Duração fixa não é usada conjuntamente.
 
-Xᵥ(t) é o estado do indivíduo v. Cada infectado no início do passo terá um sorteio independente Vᵥ(t) ∈ [0,1): se Vᵥ(t) < γd, recupera-se ao final do passo; caso contrário, permanece infectado.
+β, quando aplicável, e γ são probabilidades discretas adimensionais por passo, não taxas contínuas em tempo inverso. Mudar a duração representada pelo passo exigiria rever os parâmetros. β/γ não será apresentado automaticamente como número reprodutivo da rede.
 
-Para γd > 0, a quantidade de passos infecciosos tem distribuição geométrica com média 1/γd, conforme esta convenção. Com γd = 0 não há recuperação; com γd = 1 todos os infectados do início do passo recuperam-se ao final. Os recém-infectados desse passo não participam desse sorteio.
+### 3.6. Ordem das operações e histórico
 
-Uma duração fixa de infecção seria uma alternativa de modelagem, mas não integra a proposta principal.
+Simulacao é a única responsável pelo relógio e pelo histórico. MotorSIR calcula e aplica exatamente uma transição por chamada, sem laço próprio, incremento de t ou registro. A preparação de cada instante segue esta convenção:
 
-βd, quando aplicável no modo intensidade, e γd são probabilidades discretas adimensionais, vinculadas ao passo. O peso do modo probabilidade também deverá se referir a esse intervalo. Esses valores não são taxas contínuas em unidades de tempo inverso. Atribuir outra duração física ao passo exigiria rever os parâmetros. A razão βd/γd não será apresentada automaticamente como número reprodutivo da rede.
+1. Inicializar S,I,R em t=0 e validar tudo antes de alterar a rede ou consumir sorteios.
+2. Ao chegar a um instante t, verificar extinção e limite. Se a execução pode avançar, aplicar a intervenção programada para t, uma única vez.
+3. Registrar t,S(t),I(t),R(t),Q(t) exatamente uma vez. Q(t) é o número de isolados **após a intervenção devida nesse instante e antes dos sorteios**. Se o instante é terminal, concluir sem nova transição ou intervenção.
+4. Capturar valores dos estados epidemiológicos em t; guardar somente referências a objetos mutáveis não constitui snapshot.
+5. Calcular e sortear infecções dos suscetíveis e recuperação dos infectados presentes nesse snapshot. Guardar decisões separadamente.
+6. Aplicar conjuntamente as transições pelo motor. Somente Simulacao incrementa t para t+1 e retorna à preparação do novo instante.
 
-### 3.6. Atualização simultânea
+Assim, intervenção em t=0 já aparece em Q(0). Em t_int>0, o registro daquele instante inclui seus efeitos, sem gerar um segundo registro com o mesmo índice. Se I(t)=0 ou t=T_max ao chegar ao instante, registrar o término sem aplicar uma intervenção que não teria outra transição a afetar. Não se altera retroativamente um registro já publicado.
 
-Cada passo seguirá a ordem conceitual:
+Uma execução com H transições produz H+1 registros. O recém-infectado só transmite e pode recuperar a partir do passo seguinte. O infectado que recupera ao final pode ter transmitido naquele passo. A recuperação não libera isolamento nesta referência.
 
-1. Aplicar a intervenção, quando for seu instante de início.
-2. Preservar os estados epidemiológicos existentes em t.
-3. Calcular e sortear infecções usando somente os infectados existentes em t.
-4. Sortear a recuperação desses mesmos infectados.
-5. Aplicar simultaneamente as transições e registrar os estados em t+1.
+### 3.7. Estratégia, mecanismo e orçamento
 
-O recém-infectado aparecerá em I somente em t+1. Não transmitirá nem se recuperará no passo em que adquirir a infecção. Um infectado que se recuperar ao final ainda poderá transmitir durante esse passo.
+**Estratégia** escolhe as pessoas; **mecanismo** aplica o efeito sobre seus contatos. O padrão é DESATIVACAO: desativar explicitamente os contatos incidentes. Os mecanismos REDUCAO e EXCLUSAO seguem os contratos existentes em isolamento.py, sem que sua presença no código comprove integração completa ou testes aprovados do simulador.
 
-Essa convenção será igual para todas as estratégias e impedirá que a ordem de visita aos vértices produza cadeias artificiais de contágio dentro de uma unidade de tempo.
+Depois de validar toda a intervenção, o coordenador entrega IDs selecionados, mecanismo, orçamento e redução quando aplicável à função aplicar_isolamento(). Ela enumera contatos afetados uma única vez, aplica o efeito e marca as pessoas como isoladas. A seleção e o agendamento não são repetidos nessa função.
 
-Se a alternativa dinâmica for adotada, propõe-se aplicar suas alterações em um ponto definido antes da captura dos estados, mantendo uma fotografia coerente de vértices, arestas e estados durante cada passo. Regras para essas alterações ainda precisam ser especificadas. Eventos de exclusão não substituirão o registro das transições SIR.
+Para fração f finita em [0,1], o orçamento é **k=piso(fN)**, sendo N a população inicial. A fração realizada k/N pode diferir de f. A seleção ocorre uma única vez no início de t_int, inteiro com 0 ≤ t_int < T_max, se a execução ainda pode avançar. Não há reposição de alvos ou liberação até o término.
 
-### 3.7. Isolamento independente de SIR
+Todos os indivíduos, S,I ou R, são elegíveis. A seleção aleatória amostra k IDs distintos uniformemente sem reposição. A seleção por grau ordena pelo número de vizinhos da rede original, em ordem decrescente, com desempate por ID crescente; não usa pesos nem recalcula graus após cada isolamento. Pessoas de grau zero continuam elegíveis.
 
-Cada pessoa terá uma condição qᵥ(t) ∈ {0,1}, correspondente ao atributo `isolamento`: zero significa não isolada e um significa isolada. O estado SIR permanece em `estado`. A modelagem admite três mecanismos operacionais:
+O cenário sem intervenção usa k=0, sem sorteios de seleção. Se extinção ocorre antes ou no instante agendado, informar que a intervenção não foi realizada. Com k=N e intervenção em t=0, nenhum contato transmite, mas os infectados continuam sujeitos à recuperação.
 
-**Isolamento lógico por desativação, configuração de referência proposta.** O indivíduo permanece no grafo e seus contatos ficam indisponíveis. Seja bᵤᵥ ∈ {0,1} a disponibilidade original da aresta, antes da intervenção. O valor efetivo de `ativa` será:
+### 3.7.1. Mecanismos e políticas alternativos
 
-**aᵤᵥ(t) = bᵤᵥ · (1 − qᵤ(t))(1 − qᵥ(t))**.
+**Redução parcial:** o parâmetro r (reducao) é a fração retirada, finita em [0,1]. Cada contato incidente a pelo menos uma pessoa selecionada recebe **w_novo=w_anterior×(1−r)** uma única vez, mesmo se ambos os extremos foram selecionados. Sua atividade é preservada, inclusive se já era False. Com peso 0,8 e r=0,5, o resultado é 0,4 em ambos os casos. r=0 preserva o peso e r=1 o zera, sem necessariamente mudar ativa. Não se aplica um segundo fator por extremo. Se for usada a notação residual ρ, ela significa ρ=1−r; não é a fração retirada.
 
-Nesse caso, **p_eff,uv(t) = aᵤᵥ(t) · pᵤᵥ**. A disponibilidade original deverá ser preservada para que uma intervenção não reative contatos previamente inativos.
+O motor utiliza o peso resultante: p=βw_novo no modo intensidade e p=w_novo no modo direto, sem reaplicar β no segundo. Não combina essa redução com bloqueio automático por isolamento. A fórmula de múltiplas exposições usa os contatos ainda existentes e ativos.
 
-Assim, o isolado não transmitirá nem receberá transmissão pelos contatos da rede. Se já estiver infectado, continuará recuperando-se normalmente. Isolar não produz recuperação ou imunidade.
+**Remoção dos contatos (EXCLUSAO na API):** remover as ligações incidentes, mantendo o indivíduo cadastrado, com grau zero, e seu estado epidemiológico. Não é exclusão do vértice, recuperação ou morte. N e S,I,R,Q continuam relativos à mesma população; infectados desconectados recuperam normalmente. Remoção de vértices é outra operação, não representada por esse mecanismo.
 
-**Isolamento lógico por redução dos pesos, alternativa.** Propõe-se um fator residual ρ ∈ [0,1]. Para cada pessoa, defina cᵥ(t) = 1 quando não isolada e cᵥ(t) = ρ quando isolada. A probabilidade efetiva candidata será **p_eff,uv(t) = bᵤᵥ · pᵤᵥ · cᵤ(t)cᵥ(t)**. Portanto, um extremo isolado reduz o contato pelo fator ρ; dois extremos, pelo fator ρ². Zero representa bloqueio completo e um ausência de redução. Trata-se de uma regra operacional proposta, ainda a confirmar, aplicada ao peso efetivo de intensidade ou probabilidade, sem sobrescrever a referência original. Nesse mecanismo, `ativa` pode continuar verdadeira e o isolado ainda pode transmitir se ρ > 0.
+A intervenção é aplicada uma única vez e permanece até o término. O estado inicial da rede, incluindo pesos e ativa, fica preservado no snapshot/manifesto para reprodução e para iniciar cenários independentes. A referência não oferece liberação; se futuramente adicionada, será necessário restaurar seletivamente a condição anterior, sem reativar contatos bloqueados por outro motivo.
 
-**Isolamento por remoção do vértice, alternativa.** O indivíduo e suas arestas são retirados do grafo de contatos. Isso modifica sua topologia e exige uma configuração que permita essa alteração, ou sua aplicação antes do início de uma execução estática. A exclusão não produz transição para R. Para comparações de uma mesma população inicial, propõe-se preservar o cadastro epidemiológico e o histórico fora do grafo: um infectado isolado por exclusão continua sujeito à recuperação nesse cadastro. Excluir também seu registro das métricas produziria uma redução artificial dos indicadores. Essa separação deverá ser alinhada antes de utilizar o mecanismo.
+**Política diária q, menor prioridade:** no início de cada passo, cada infectado ainda não isolado tem chance q∈[0,1] de entrar em isolamento, com sorteio próprio. q não é fração populacional e não garante k fixo. Como proposta de protocolo separado, acompanha-se a regra de liberação na recuperação descrita na modelagem do grafo; uma liberação não altera ativa. Nesse protocolo Q pode diminuir, e a seleção por orçamento e o atributo intervencaoAplicada não substituem os eventos diários. O contrato de registro e os testes precisam ser adaptados antes de implementar.
 
-Pessoas em S, I ou R poderão ser selecionadas. A proposta prevê uma intervenção única no início de t_int, antes dos sorteios, mantida até o término, sem liberação após recuperação nem substituição de alvos. Se t_int = 0, o isolamento ocorrerá antes da primeira atualização epidemiológica.
-
-O bloqueio completo e a permanência até o término pertencem à configuração de referência; não caracterizam obrigatoriamente todas as alternativas nem representam adesão real a medidas de saúde. O mecanismo de isolamento deverá ser registrado separadamente da estratégia que escolhe os indivíduos.
+**Topologia dinâmica, menor prioridade:** permite contatos aparecerem/desaparecerem entre instantes; mudança de estado SIR ou bloqueio lógico não constitui, por si só, mudança estrutural. Será necessário definir agenda/regra das mudanças, captura consistente por passo e significado do grau no momento da seleção. Se admitir entrada/saída de pessoas, definir também população de referência e denominadores; as fórmulas da coorte fechada não se transferem automaticamente. Essas regras ainda não foram fechadas.
 
 ### 3.8. Término
 
-A execução de referência terminará quando I(t) = 0 ou após completar T_max passos. Se I(T_max) > 0, será registrada como encerrada pelo limite, sem afirmar extinção. Caso haja exclusão por isolamento, I(t) deverá incluir os infectados do cadastro epidemiológico, e não apenas os vértices ainda no grafo.
-
-Na alternativa com entrada de novos indivíduos, I(t) = 0 só caracteriza término definitivo se não houver futuras entradas infectadas ou outra fonte prevista de infecção. Até definir essas regras, o limite de passos permanece um critério de encerramento, e uma extinção transitória não será confundida com fim definitivo.
-
-A ausência de novas infecções em um único passo não será suficiente para encerrar: os infectados remanescentes poderão transmitir posteriormente.
+Extinção ocorre no primeiro instante com I(t)=0, incluindo t=0. Caso contrário, concluir ao completar T_max transições. Se I(T_max)=0, prevalece EXTINCAO; se I(T_max)>0, registrar LIMITE_PASSOS e censura. Ausência de novas infecções em um passo não basta para encerrar enquanto houver infectados.
 
 ## 4. Parâmetros
 
-Todos os exemplos são didáticos, sem calibração com uma doença real. N será determinado pela rede preparada.
+Todos os valores exemplificativos são escolhas didáticas. Não há calibração com doença real. Na execução individual, n₀ é derivado dos IDs; a quantidade de repetições pertence ao protocolo do lote, não ao motor de um passo.
 
-| Parâmetro | Símbolo | Significado | Domínio válido | Exemplo |
+| Parâmetro | Símbolo | Significado | Domínio válido | Exemplo didático |
 |---|---|---|---|---|
-| Unidade do passo | Δt | Intervalo entre atualizações | Uma unidade abstrata; interpretação constante | 1 unidade simulada |
-| Modo de peso | — | Interpretação antes de calcular transmissão | Intensidade ou probabilidade | Intensidade |
-| Contágio base | βd | Probabilidade por contato de intensidade 1 e por passo | [0,1]; não aplicável no modo probabilidade | 0,10 |
-| Recuperação | γd | Probabilidade de I → R por passo | [0,1]; principal > 0 | 0,20 |
-| Peso do contato | wᵤᵥ | Intensidade normalizada ou probabilidade por passo | [0,1] na regra operacional; modo explícito | 0,50 |
-| Duração de referência | dref | Conversão de duração para intensidade | Real positivo; não aplicável a probabilidade pronta | 900 s |
-| Topologia | — | Regra de atualização de vértices e arestas | Estática ou dinâmica; dinâmica exige regras adicionais | Estática, referência proposta |
-| Mecanismo de isolamento | — | Como a intervenção altera contatos | Desativação, redução de pesos ou remoção de vértice | Desativação lógica |
-| Fator residual | ρ | Multiplicador por extremo isolado | [0,1]; aplicável à redução de pesos | 0,20 |
-| Infectados iniciais | n₀ | Quantidade em I no instante zero | Inteiro de 0 a N; principal: 1 ≤ n₀ < N | 3, se N > 3 |
-| Seleção inicial | — | Critério para escolher infectados | Uniforme sem reposição ou lista válida | Uniforme |
-| Estratégia | σ | Critério de isolamento | Nenhuma, aleatória, grau; estrutural pendente | Grau |
-| Fração de isolamento | f | Parcela solicitada da população | [0,1] | 0,10 |
-| Orçamento realizado | k | Pessoas isoladas | k = piso(fN) | 24, se N = 242 |
-| Início da intervenção | t_int | Instante anterior aos sorteios | Inteiro: 0 ≤ t_int < T_max | 5, se T_max > 5 |
-| Limite de passos | T_max | Horizonte máximo | Inteiro positivo | 200 |
-| Semente | s | Inicialização pseudoaleatória | Inteiro aceito pelo gerador | 2026 |
-| Repetições | M | Execuções por cenário | Inteiro positivo; principal M ≥ 2 | 50 |
+| Unidade | Δt | Uma transição | 1 dia do modelo, constante | 1 dia do modelo |
+| Contágio | β | Probabilidade em peso 1, modo intensidade | Real finito em [0,1]; None no modo probabilidade direta | 0,10 |
+| Recuperação | γ | Probabilidade de I → R por passo | Real finito em [0,1] | 0,20 |
+| Modo de peso | — | Interpretação explícita | Intensidade (padrão) ou probabilidade direta | Intensidade |
+| Peso | wᵤᵥ | Valor interpretado pelo modo | Real finito em [0,1] | 0,50 |
+| Atividade própria | bᵤᵥ | Contato habilitado independentemente do isolamento | Booleano | True |
+| Referência de duração | dref | Preparação de pesos de duração | Real positivo na unidade de d; fixado na preparação | 900 s |
+| População | N | Indivíduos cadastrados, inclusive sem contatos | Inteiro positivo | Contagem do arquivo |
+| Infectados iniciais | IDs₀; n₀ | Manual ou sorteio na interface | Subconjunto de V; 0 ≤ n₀ ≤ N; semente no sorteio | IDs 1,2,3 se existentes |
+| Estratégia | σ | Seleção de pessoas | Nenhuma, aleatória ou grau original | Grau |
+| Mecanismo | — | Efeito sobre os contatos | DESATIVACAO padrão; REDUCAO; EXCLUSAO dos contatos | DESATIVACAO |
+| Redução | r | Fração retirada uma vez por contato | [0,1] somente em REDUCAO; None nos demais | 0,50 |
+| Fração | f | Parcela solicitada da população | Real finito em [0,1] | 0,10 |
+| Orçamento | k | Quantidade selecionada | piso(fN), de 0 a N | 24 se N=242 |
+| Início | t_int | Instante antes dos sorteios | Inteiro; 0 ≤ t_int < T_max | 5 se T_max>5 |
+| Limite | T_max | Máximo de transições | Inteiro positivo, excluindo bool | 200 |
+| Sementes | s | Estado inicial dos fluxos identificados | Inteiros válidos no algoritmo escolhido | Base 2026 |
+| Repetições | m | Execuções por cenário | Inteiro positivo; m≥2 para desvio amostral | 30 |
 
-A fração efetiva será k/N, que pode diferir de f por arredondamento. No cenário sem isolamento, k = 0.
+O quadro descreve a referência e seus modos de peso/inicialização. Para as extensões, acrescentar q∈[0,1] na política diária e r∈[0,1] como fração retirada somente na redução parcial; não confundi-los com f ou β. Topologia dinâmica e q têm menor prioridade. Os três mecanismos estão documentados; sua oferta deve ser identificada conforme disponibilidade, sem executar alternativa não implementada. No cenário sem intervenção, f=0. A validação rejeita valores não finitos, IDs ausentes, duplicação na entrada, limites inválidos e incompatibilidades de preparo; apresenta mensagens por campo e exige nova validação se a configuração mudar.
 
 ## 5. Métricas
 
-As métricas a seguir referem-se à **mesma população inicial fechada**, com N fixo. Em cada instante serão registrados S(t), I(t) e R(t), com **S(t) + I(t) + R(t) = N**. Os isolados permanecem contados em seu estado epidemiológico; a exclusão de um vértice de contato não apagará seu histórico dessa coorte. Seja H o último instante observado, por extinção ou limite.
+N é sempre a população inicial do próprio resultado, fixa e positiva. Isolamento não reduz N. Seja H o último instante observado.
 
-| Métrica | Definição | Unidade ou denominador | Interpretação |
+| Métrica | Definição | Unidade/denominador | Interpretação |
 |---|---|---|---|
-| Curvas SIR | S(t), I(t), R(t) | Pessoas; proporções divididas por N | Evolução dos compartimentos |
-| Pico | I_pico = máximo de I(t), de 0 a H | Pessoas; relativo: I_pico/N | Maior número simultâneo, incluindo isolados |
-| Momento do pico | Primeiro t com I(t) = I_pico | Passos | Primeiro máximo observado |
-| Fração acumulada | A(t) = [N − S(t)]/N = [I(t) + R(t)]/N | Toda a população original N | Pessoas que já estiveram infectadas, incluindo n₀ |
-| Novas infecções acumuladas | C_novas(t) = N − S(t) − n₀ | Pessoas | Infecções adquiridas após a inicialização |
-| Duração até extinção | D = primeiro t com I(t) = 0 | Passos desde t = 0 | Tempo até não haver infectados |
-| Diferença para referência | ΔQ = média(Q₀) − média(Qσ) | Mesma unidade de Q | Alteração média perante ausência de isolamento |
-| Redução relativa | 100 · [média(Q₀) − média(Qσ)] / média(Q₀) | Percentual; exige média(Q₀) > 0 | Redução proporcional média |
+| Curvas | S(t),I(t),R(t), t=0,...,H | Pessoas; proporções divididas por N | S+I+R=N |
+| Isolados | Q(t), contado após intervenção de t | Pessoas; 0 ≤ Q ≤ N | Sobrepõe os estados SIR; não somar aos compartimentos |
+| Pico | I_pico=max I(t), de 0 a H | Pessoas; relativo I_pico/N | Inclui infectados isolados |
+| Momento do pico | Primeiro t com I(t)=I_pico | Passos/dias do modelo | Primeiro máximo em caso de empate |
+| Acumulado | A_H=[N−S(H)]/N=[I(H)+R(H)]/N | População inicial N | Pessoas já infectadas, incluindo n₀ |
+| Novas infecções | N−S(H)−n₀ | Pessoas | Infecções posteriores à inicialização |
+| Duração | D=primeiro t com I(t)=0 | Passos/dias do modelo | None se não observada |
+| Horizonte | H | Passos/dias do modelo | Último instante registrado |
+| Diferença média | ΔZ=média(Z_ref−Z_σ) | Mesma unidade de Z | Comparação em repetições correspondentes |
+| Redução relativa | 100×[média(Z_ref)−média(Z_σ)]/média(Z_ref) | Percentual; referência positiva | Razão das médias, não média das razões |
 
-Q é o indicador comparado; o índice 0 identifica o cenário sem isolamento e σ a estratégia. Redução negativa significa aumento. Se a referência for zero, a redução percentual será indefinida e será apresentada a diferença absoluta.
+Z é o indicador comparado, não a contagem Q de isolados. Redução negativa significa aumento. Com referência zero, apresentar diferença absoluta e redução não aplicável. Como R(0)=0 e não há reinfecção, o acumulado conta cada pessoa uma única vez; ΣI(t) não é total de pessoas distintas. N=10 e I=[2,4,4,0] dão pico 4, proporção 0,4 e primeiro instante 1.
 
-Como R(0) = 0 e não há reinfecção, A(t) conta cada pessoa uma vez. Após extinção, A(D) = R(D)/N. Com infectados presentes, usar apenas R(t)/N subestima o acumulado.
+### 5.1. Censura e comparação no horizonte
 
-Opcionalmente, a fração de infecções novas entre os inicialmente suscetíveis será [N − S(t) − n₀]/(N − n₀), válida para n₀ < N. Seu nome e denominador serão explícitos para não confundi-la com A(t).
+Se I(H)>0 ao atingir o limite, A_H e pico são observados até H, não necessariamente finais. D permanece None e a apresentação informa D>H. Não substituir por zero ou T_max. Sem infectados iniciais, H=D=0, pico=0, instante do pico=0 e acumulado=0.
 
-### 5.1. Execuções que atingem o limite
+Usar horizonte T_max comum. Históricos extintos antes dele podem ser prolongados apenas para alinhamento visual, com I=0 e S,R,Q constantes sob a política permanente; identificar esse prolongamento. Históricos censurados não podem ser completados com I=0.
 
-Se I(T_max) > 0, A(T_max) será o acumulado **até o horizonte**, não necessariamente final. O pico será identificado como observado até T_max; o máximo de toda a trajetória ainda poderá ser maior. A duração será registrada como **D > T_max**, sem imputar T_max como se houvesse extinção.
+Apresentar quantidade e proporção de execuções censuradas. Média da duração somente entre extinções deve ser identificada como condicional, com número de observações, pois pode ser enviesada. Diferenças pareadas de duração exigem pares completos e indicação das exclusões. Para momento do pico, preferir diferença em passos; duração menor isoladamente não comprova melhor intervenção.
 
-O momento do pico será o do máximo observado, sem garantia de ser definitivo. A proporção de execuções ainda com infectados ao final será informada.
+## 6. Proposta de comparação e reprodutibilidade
 
-As comparações principais utilizarão horizonte comum. Em execuções extintas antes dele, as curvas poderão ser prolongadas com I = 0, mantendo S e R constantes.
+### 6.1. Cenários e condições controladas
 
-A duração média calculada apenas entre execuções concluídas pode ser enviesada. Se apresentada, será identificada como condicionada à extinção observada e acompanhada da proporção de execuções censuradas pelo limite.
+Comparar referência sem isolamento, seleção aleatória e seleção por grau. Nas intervenções, manter o mesmo k, t_int e bloqueio lógico total; a referência usa k=0. Dentro de cada repetição, manter rede, pesos, β,γ, IDs iniciais e T_max. Variar estrutura constitui outro eixo experimental, com famílias, densidades e escalas declaradas.
 
-A redução relativa será priorizada para pico e fração acumulada. Para momento do pico, será preferível informar atraso ou antecipação em passos. Duração menor, isoladamente, não significará melhor resultado.
+Cada execução deve começar com estado independente: reconstruir ou copiar a condição inicial preservando as relações entre objetos dentro da própria execução. Nunca reutilizar estados finais ou indivíduos mutáveis de outra execução. Na comparação padrão por bloqueio lógico, a topologia e os graus estruturais não mudam na desativação; a remoção de contatos altera os graus operacionais. A seleção por grau usa sempre o snapshot anterior à intervenção, nunca um recálculo entre os alvos. Manter também modo de peso, atividades das arestas e mecanismo iguais entre cenários. Mecanismos diferentes e q diário pertencem a experimentos separados, sem presumir custo equivalente ao orçamento.
 
-### 5.2. Contagem na alternativa dinâmica
+### 6.2. Execução, consolidação e apresentação
 
-Se forem incluídas entradas ou saídas da população epidemiológica, N deixará de ser constante e as identidades da tabela não poderão ser aplicadas diretamente aos vértices presentes. Será necessário distinguir o cadastro histórico da população em observação, registrar entradas e saídas com estado e instante, e definir os denominadores antes dos experimentos.
+O executor de lotes organiza cenários/repetições e reinicializa as execuções; não recalcula regras do motor. A consolidação usa resultados identificados para médias, desvios e censura. A apresentação mostra histórico individual, cenário/repetição, curvas e síntese. Esses são contratos distintos, não três implementações da mesma comparação; a atribuição pessoal pertence ao planejamento coletivo.
 
-Para contagens restritas aos presentes, S_pres(t) + I_pres(t) + R_pres(t) = N_pres(t). Esses valores não substituem o acumulado histórico de infecções. Deverão ser separados casos importados e infecções produzidas dentro da rede, sem concluir que a exclusão de recuperados diminuiu o total de casos. Não se fará comparação direta de frações calculadas com populações diferentes ou de durações que usem regras incompatíveis de término.
+Para m≥2, propor média e desvio-padrão amostral dos picos e acumulados observados. Com m=1, o desvio amostral é não aplicável. Não imputar duração de extinção aos censurados. A quantidade de repetições e os valores experimentais dependem de deliberação e avaliação de custo, sem alegar suficiência estatística automática.
 
-As avaliações numéricas propostas neste documento permanecem vinculadas à coorte fechada até que as regras dinâmicas sejam definidas; isso não altera a possibilidade de topologia dinâmica prevista na modelagem.
+### 6.3. Manifesto de execução
 
-## 6. Proposta de comparação
+O resultado deverá preservar um manifesto com identificação e assinatura canônica da rede preparada (IDs, pares não ordenados, pesos e atividade própria), fonte/arquivo/janela e transformação; configuração completa, incluindo IDs iniciais; cenário e repetição; sementes-base e efetivas dos fluxos utilizados; algoritmo e derivação das sementes; revisão do projeto, versão do Python e dependências relevantes.
 
-### 6.1. Cenários
+A configuração efetivamente executada e o manifesto devem ser snapshots, sem referências mutáveis que possam mudar a descrição depois da execução. Fluxos de geração da rede, sorteio dos infectados iniciais, seleção de isolamento e eventos epidemiológicos são distintos, com ordem estável de processamento por ID. O algoritmo e a derivação estável ainda precisam ser selecionados e registrados; não se deve depender do hash aleatório de strings do processo nem reaplicar a semente a cada sorteio.
 
-O protocolo abaixo utiliza a configuração de referência proposta: topologia estática, população fechada e isolamento lógico por desativação. A modelagem do grafo estabelece a estrutura do grafo, mas não confirma, por si só, as estratégias aleatória, por grau ou estrutural; elas permanecem propostas de avaliação.
+Reproduzir exige a mesma entrada preparada, estado inicial, configuração, sementes, algoritmo, ordem de consumo e ambiente compatível. A mesma semente isolada não garante reprodução. Sementes diferentes podem produzir resultados iguais por acaso ou em casos determinísticos.
 
-| Cenário | Regra proposta |
-|---|---|
-| Sem isolamento | Manter todos os contatos disponíveis. |
-| Isolamento aleatório | Selecionar uniformemente k pessoas, sem reposição. |
-| Isolamento por grau | Selecionar as k pessoas de maior grau na rede original; desempatar por identificador. |
-| Estrutural, pendente | Definir um critério de seleção por vértices, caso permaneça o orçamento em pessoas. |
+Entre repetições, utilizar sementes distintas segundo política registrada; dentro de cada repetição, documentar sua associação aos cenários. Fluxos separados impedem que a seleção consuma o gerador epidemiológico, mas sementes iguais entre estratégias não garantem pareamento por pessoa/evento se o consumo divergir. Não pressupor esse pareamento nas análises.
 
-Grau significa número de vizinhos distintos, não soma de pesos. Essa soma, ou força do vértice, é outra medida.
+### 6.4. Estrutura e variabilidade
 
-Todos os vértices serão elegíveis, inclusive infectados iniciais e recuperados. Trata-se de uma política baseada na rede, sem pressupor diagnóstico. Os alvos serão definidos na rede original e mantidos fixos, sem recálculo após o isolamento.
-
-Uma estratégia por pontos de articulação exigirá ordenar candidatos e definir o procedimento se seu número for menor que k. Não será incluída antes dessa definição.
-
-### 6.2. Controle das condições
-
-Cada bloco experimental manterá a mesma rede e pesos, βd, γd, unidade temporal, T_max, conjunto inicial, instante de intervenção e regras de atualização. Entre estratégias interventivas, será usado o mesmo k.
-
-Serão mantidos também o modo de peso, o mecanismo de isolamento e, quando aplicável, o fator ρ. βd só será comparado no modo intensidade. Alternar remoção, desativação e redução de pesos constituirá outra dimensão experimental, não uma troca implícita dentro da comparação entre estratégias. Na alternativa dinâmica, a política de entradas e saídas também precisará ser controlada entre cenários.
-
-Ausência de isolamento é a referência de orçamento zero. Igual número de pessoas não implica igual quantidade ou intensidade de contatos bloqueados; essas diferenças poderão ser registradas como informação auxiliar.
-
-### 6.3. Repetições e sementes
-
-Propõe-se iniciar com 50 repetições por cenário, sujeito ao custo computacional posterior. Em cada repetição, o conjunto inicial será sorteado e reutilizado nas estratégias. As sementes variarão entre repetições e serão registradas.
-
-A seleção do isolamento aleatório terá sequência própria, separada da seleção inicial e dos eventos epidemiológicos. Para maior controle, propõe-se associar os sorteios epidemiológicos à repetição, instante, indivíduo e tipo de evento, compartilhando números aleatórios para eventos correspondentes.
-
-Repetir somente a semente de um gerador sequencial não garante esse pareamento se os cenários consumirem quantidades diferentes de sorteios.
-
-Serão apresentados média, desvio-padrão e, quando útil, mediana e intervalo interquartil. Diferenças pareadas por repetição também poderão ser examinadas. A variabilidade não será confundida com falha de implementação e uma única execução não comprovará superioridade.
-
-### 6.4. Estrutura da rede
-
-Primeiro, as intervenções serão comparadas dentro de cada rede. Depois, poderão ser comparadas estruturas sintéticas com mesmo N, densidade semelhante e critérios compatíveis para pesos e condições iniciais.
-
-Serão necessárias várias realizações de cada estrutura, separando a variabilidade da geração da rede da variabilidade epidemiológica. A escolha dos geradores dependerá da definição dos algoritmos de geração. Diferenças entre bases de tamanhos, pesos e períodos distintos não serão atribuídas automaticamente à topologia.
+Famílias e parâmetros dos geradores devem ser definidos no escopo coletivo; não se promete implementar todas as famílias citadas no planejamento. Redes sintéticas permitem controlar N,densidade e pesos; múltiplas realizações ajudam a separar variabilidade topológica de variabilidade epidemiológica. Diferenças entre bases de tamanhos e períodos distintos não serão atribuídas automaticamente à topologia. Uma única execução não demonstra superioridade universal.
 
 ## 7. Levantamento de dados
+
 
 Foram consultadas documentações e publicações originais. Duas candidatas representam contatos presenciais e uma representa relações digitais. A busca incluiu Kaggle, mas a preferência pela plataforma não substitui a adequação dos dados.
 
@@ -365,64 +294,54 @@ Não se recomenda restringir automaticamente à maior componente: isso altera a 
 
 ## 8. Diagramas UML
 
-Os diagramas representam a proposta, sem indicar implementação concluída. A sintaxe segue a documentação oficial do PlantUML [10,11]. As fontes editáveis acompanham a entrega na pasta `../modelagem/simulador-epidemias/diagramas`.
+Os diagramas representam o projeto da execução; a existência de classes e operações no repositório não comprova o fluxo completo nem resultados experimentais. As fontes editáveis e as imagens são mantidas juntas nas pastas de cada diagrama. A sintaxe de casos de uso e estados segue a documentação PlantUML [10,11].
 
 ### 8.1. Casos de uso
 
 ![Diagrama de casos de uso](../modelagem/simulador-epidemias/diagramas/casos-de-uso/casos-de-uso.png)
 
-O ator é o usuário acadêmico que configura e executa a ferramenta. O retângulo delimita o sistema. A configuração inclui o modo de peso, a topologia e o mecanismo de isolamento, além dos parâmetros epidemiológicos. A configuração dinâmica dependerá da definição das regras correspondentes. Tanto a simulação individual quanto a comparação incluem a validação. Os resultados incluem curvas, métricas e motivo de término. A organização das telas dependerá do projeto da interface.
+O usuário seleciona a rede, configura modo de peso e parâmetros epidemiológicos, define condições iniciais, limite e sementes, configura o isolamento, executa e consulta resultados. A configuração anteriormente reunida em um único caso foi dividida em dois objetivos: modelo epidemiológico e preparo da execução. As condições iniciais admitem IDs manuais ou sorteio, conforme detalhado no texto. Execução e comparação incluem validação. Topologia dinâmica e política diária q são alternativas de menor prioridade; os mecanismos alternativos estão documentados, com oferta dependente de implementação. A interface deve distinguir opção planejada de disponível e não iniciar opção sem suporte. Formatos e geradores suportados ainda exigem definição coletiva.
 
 ### 8.2. Estados do indivíduo
 
 ![Diagrama de estados do indivíduo](../modelagem/simulador-epidemias/diagramas/estados-individuo/estados-individuo.png)
 
-As regiões separadas representam condições simultâneas e independentes. São possíveis suscetível isolado, infectado isolado e recuperado isolado. Na região epidemiológica, Uᵥ(t) sorteia infecção e Vᵥ(t) sorteia recuperação; ambos são uniformes em [0,1). A permanência quando uma transição não ocorre está implícita.
-
-R é absorvente na dinâmica epidemiológica especificada. A exclusão do vértice é uma operação sobre o grafo, não uma nova transição SIR. No protocolo de coorte fechada, o registro individual permanece disponível para as métricas. O efeito do isolamento depende do mecanismo escolhido; o diagrama não o restringe à desativação. A configuração de referência não prevê liberação.
+As regiões ortogonais representam estado SIR e isolamento simultâneos. Pessoas S,I ou R podem ser isoladas; isolamento não é um quarto estado. Na política padrão não há retorno de R a S nem liberação automática. A política diária alternativa é descrita separadamente e não é o ciclo representado nesta figura. A figura usa os eventos atualização [infecção] e atualização [recuperação], decididos pelos sorteios U e V definidos na seção 3, e mostra suas operações infectar(t+1) e recuperar(). As operações são efetivadas conjuntamente em t+1; a preparação de t_int aplica o mecanismo aos contatos antes desses sorteios. Passar a R mantém a pessoa no grafo.
 
 ### 8.3. Classes de projeto
 
-![Diagrama de classes de projeto](../modelagem/simulador-epidemias/diagramas/classes-dominio/classes-dominio.png)
+![Diagrama de classes](../modelagem/simulador-epidemias/diagramas/classes-dominio/classes-dominio.png)
 
-A rede especializada utiliza Individuo e Contato, com mapas de cadastro e adjacências. A busca por ID preserva a consulta a pessoas sem contatos. adicionarIndividuo(), contatosDe() e grau() pertencem à rede porque operam sobre suas coleções estruturais.
+O projeto reutiliza os conceitos RedeContatos,Contato,Individuo, com proposta de consultas encapsuladas e mapeamento para a API existente. MotorSIR aplica um passo síncrono; Simulacao controla tempo, intervenção e registro único. RegistroPasso contém S,I,R,Q; ResultadoSimulacao preserva o manifesto; as métricas usam sua população inicial. Classes futuras não são apresentadas como implementadas.
 
-As classes apresentam construtores e métodos de consulta com tipos Python. Valores ausentes são representados por None. Os estados iniciais, os geradores independentes e o mapa de graus são preparados antes das atualizações. O motor distingue a semente inicial do estado interno do gerador.
-
-O atributo privado ativa em Contato é recalculado por isAtiva() a partir do isolamento dos extremos. As duas estratégias mostram selecionar(). A configuração retorna mensagens de validação e calcula o orçamento e o instante da intervenção. O resultado mantém os registros e constrói suas métricas com a própria população inicial. picoProporcional() utiliza esse denominador, sem receber outra população.
-
-O recorte continua proposto com população fechada, topologia estática, intensidade normalizada e desativação lógica completa. As regras de transmissão e recuperação permanecem simultâneas. O motivo de término distingue extinção e limite com infectados, e a duração não observada permanece None.
-
-A imagem é uma visão geral. O [diagrama vetorial](../modelagem/simulador-epidemias/diagramas/classes-dominio/classes-dominio.svg) permite ampliar. A explicação consolidada está em [Modelagem de classes](../modelagem/simulador-epidemias/modelagem-de-classes.md), com todas as classes, atributos, métodos, inicialização, restrições, multiplicidades e fonte PlantUML. A convenção de tipos pressupõe Python 3.10 ou posterior.
+A [explicação consolidada](../modelagem/simulador-epidemias/modelagem-de-classes.md) detalha atributos, operações, relações, restrições e código PlantUML completo. Amplie o [SVG de classes](../modelagem/simulador-epidemias/diagramas/classes-dominio/classes-dominio.svg) para ler os detalhes; a imagem no PDF é uma visão geral.
 
 ## 9. Verificações futuras
 
-Antes dos experimentos da configuração de referência, deverão ser verificadas:
+As verificações abaixo são propostas, não resultados obtidos:
 
-- Conservação de S + I + R = N.
-- Monotonicidade: S não aumenta; R e A não diminuem.
-- Ausência de novas infecções quando βd = 0 no modo intensidade, ou quando todos os pesos forem zero no modo probabilidade.
-- Ausência de transmissão em rede sem arestas ou com todos isolados desde t = 0.
-- Com γd = 1, recuperação dos infectados do início do passo, sem recuperar recém-infectados nesse mesmo passo.
-- Impossibilidade de transmissão pelo recém-infectado no passo em que adquiriu a infecção.
-- Reprodutibilidade com configuração, implementação e sementes idênticas.
-- Ausência de transmissão entre componentes desconectadas; componente sem infectado inicial permanece sem infecção na ausência de contatos externos.
+- Conservação S+I+R=N e 0≤Q≤N; S não aumenta, R não diminui; isolamento mantém SIR.
+- Cadastro de indivíduos sem contatos; ausência de transmissão entre componentes sem contato.
+- β=0 no modo intensidade, ou probabilidades de contato zero no modo direto, sem novas infecções; peso zero sem transmissão nos dois modos; γ=0 sem recuperação; γ=1 recuperando apenas os infectados iniciais do passo.
+- Cadeia A–B–C, A inicialmente infectado, β=1, pesos 1 e γ=0: após uma transição, B infectado e C ainda suscetível.
+- Múltiplas exposições 0,2 e 0,4 produzindo P=0,52, com gerador controlado para verificar os limiares.
+- Intervenção t=0 refletida em Q(0), sem registro duplicado; orçamento zero sem efeito; orçamento total bloqueando contatos.
+- Empate do pico usando primeira ocorrência; duração ausente em censura; extinção prevalecendo se coincide com limite.
+- Seis resultados distintos para três cenários e duas repetições, sem contaminação de estado; reprodução do manifesto em processos compatíveis.
+- Redução de 50% em contato de peso 0,8 produzindo 0,4, com um ou dois extremos selecionados; contato inativo permanecendo inativo.
+- Remoção dos contatos preservando pessoa, histórico e N; desativação explícita impedindo transmissão.
+- Rejeição de configuração inválida antes de sorteios/mutação, com mensagens identificáveis.
 
-Essas verificações avaliam a correspondência com a especificação, não constituindo validação clínica.
-
-Nas alternativas, deverão ser verificadas também a aplicação única da probabilidade pronta, a distinção entre `ativa` e peso zero, a redução por ρ sem alteração do peso original, a independência entre R e exclusão de vértice e a preservação do histórico epidemiológico. Não se exigirá bloqueio completo do isolamento por redução quando ρ > 0.
+São testes de correspondência à especificação, não validação clínica. Correção, complexidade e desempenho deverão ser avaliados futuramente em conjunto, sem inferir desempenho de código ainda não implementado.
 
 ## 10. Conclusão parcial
 
-A modelagem estabelecida adota SIR e grafo simples, não direcionado e ponderado, representado principalmente por lista de adjacência. Os atributos definidos permitem separar estado epidemiológico, isolamento e disponibilidade dos contatos. Peso como probabilidade e peso como intensidade são interpretações alternativas, com regras de transmissão distintas.
+A referência proposta delimita SIR discreto em população fechada, com rede estática e intensidade normalizada como padrões, preservando probabilidade direta e mecanismos alternativos documentados. Topologia dinâmica e q diário têm menor prioridade; infectados iniciais podem ser manuais ou sorteados na interface. Recuperação probabilística, atualização síncrona, bloqueio lógico por orçamento e histórico com isolados formam uma especificação única para os procedimentos futuros.
 
-As possibilidades de topologia estática ou dinâmica e de isolamento lógico ou por remoção foram incorporadas sem tratá-las como uma única escolha. A referência operacional proposta mantém população fechada e desativação lógica para tornar parâmetros e métricas comparáveis. Sua seleção final e as regras das demais configurações ainda precisam ser confirmadas.
-
-A comparação por número de pessoas isoladas oferece um procedimento viável para avaliar seleção aleatória e por grau. Repetições, sementes e tratamento explícito do limite permitirão discutir variabilidade e limitações.
-
-Foram estabelecidas definições e procedimentos futuros. Implementação, verificação e resultados experimentais permanecem como atividades posteriores. A aprovação das propostas, a definição dos algoritmos e a integração com a interface permanecem pendentes de alinhamento coletivo.
+Comparações controlarão condições iniciais, parâmetros e orçamento das intervenções; repetições, manifesto e tratamento da censura permitirão discutir variabilidade e limites. A base final, o algoritmo pseudoaleatório, os parâmetros experimentais e a integração coletiva ainda dependem do grupo. Há módulos implementados de rede, carga, geração e isolamento; motor completo, integração e resultados não são certificados por esta documentação. Alterar a política exigirá atualizar conjuntamente esta especificação e os diagramas relacionados.
 
 ## Referências
+
 
 [1] NEWMAN, M. E. J. Spread of epidemic disease on networks. **Physical Review E**, v. 66, n. 1, 016128, 2002. DOI: 10.1103/PhysRevE.66.016128. Disponível em: [https://doi.org/10.1103/PhysRevE.66.016128](https://doi.org/10.1103/PhysRevE.66.016128). Acesso em: 7 nov. 2026.
 

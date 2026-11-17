@@ -87,7 +87,7 @@ Por exemplo, duas exposições com probabilidades 20% e 40% resultam em `1 - (0,
 - **Matriz de adjacência:** representação alternativa.
 - **Lista de arestas:** representação alternativa.
 
-A classe [`Grafo`](../../src/simulador/grafo.py) implementa a lista de adjacência com indivíduos indexados por identificador e vizinhanças indexadas pelos identificadores dos contatos. Cada aresta é compartilhada pelas duas direções da conexão e contabilizada uma única vez.
+A classe [`RedeContatos`](../../src/simulador/rede_contatos.py) implementa a lista de adjacência com indivíduos indexados por identificador e vizinhanças indexadas pelos identificadores dos contatos. Cada contato é compartilhado pelas duas direções da conexão e contabilizado uma única vez.
 
 ## Topologia
 
@@ -121,7 +121,7 @@ A probabilidade de recuperação permanece igual para infectados isolados e não
 
 O isolamento será avaliado pelos indicadores dos indivíduos, **sem sobrescrever `peso` ou `ativa`**. Assim, liberar um indivíduo não reativa uma aresta que estava inativa por outro motivo e não libera um contato cujo outro extremo ainda está isolado.
 
-O método `Grafo.vizinhos()` continuará retornando os vizinhos estruturais, incluindo contatos bloqueados. O motor filtrará os contatos permitidos. A redução parcial dos contatos poderá ser estudada como extensão futura; a regra da versão inicial é o bloqueio total.
+O método `RedeContatos.vizinhos()` continuará retornando os vizinhos estruturais, incluindo contatos bloqueados. O motor filtrará os contatos permitidos. A redução parcial dos contatos poderá ser estudada como extensão futura; a regra da versão inicial é o bloqueio total.
 
 ## Ciclo da simulação
 

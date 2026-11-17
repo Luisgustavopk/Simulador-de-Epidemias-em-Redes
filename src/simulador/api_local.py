@@ -25,6 +25,10 @@ from simulador.carga_rede import (
 )
 
 
+from simulador.configuracao import ErroConfiguracao
+from simulador.configuracao_api import validar_formulario
+
+
 MAX_CORPO = 8 * 1024 * 1024
 MAX_SESSOES = 16
 VALIDADE_SESSAO = 4 * 60 * 60
@@ -34,6 +38,7 @@ LIMITE_CONTATOS_PREVIA = 1200
 LOGGER = logging.getLogger(__name__)
 ROTAS = {
     "/api/rede": "GET",
+    "/api/rede/configuracao": "POST",
     "/api/rede/gerar": "POST",
     "/api/rede/importar": "POST",
     "/api/rede/confirmar": "POST",
@@ -99,11 +104,13 @@ def atender(
     servico: ServicoCargaRede, metodo: str, caminho: str,
     parametros: dict[str, list[str]], corpo: dict[str, object],
 ) -> dict[str, object]:
-    """Traduz rotas HTTP para o contrato de carga, sem regras epidemiológicas."""
+    """Delega carga e configuração aos serviços, sem executar passos SIR."""
     if caminho not in ROTAS:
         raise _erro("rota", "Operação não encontrada.")
     if metodo != ROTAS[caminho]:
         raise _erro("metodo", f"Use o método {ROTAS[caminho]} para esta operação.")
+    if caminho == "/api/rede/configuracao":
+        return validar_formulario(servico, corpo)
     if metodo == "GET" and caminho == "/api/rede":
         return servico.inspecionar()
     if metodo == "POST" and caminho == "/api/rede/gerar":
@@ -216,6 +223,8 @@ class ManipuladorCarga(BaseHTTPRequestHandler):
             with sessao.lock:
                 resultado = atender(sessao.servico, self.command, url.path, parse_qs(url.query), corpo)
             self._responder(200, resultado, identificador)
+        except ErroConfiguracao as erro:
+            self._responder(422, erro.para_dict(), identificador)
         except ErroCargaRede as erro:
             status_por_campo = {"revisao": 409, "rota": 404, "metodo": 405, "sessao": 503}
             status = next((status_por_campo[p.campo] for p in erro.problemas

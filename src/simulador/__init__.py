@@ -34,6 +34,7 @@ from simulador.isolamento import (
     ResultadoIsolamento,
     aplicar_isolamento,
 )
+from simulador.metricas import MetricasEpidemia
 from simulador.rede_contatos import RedeContatos
 from simulador.simulacao import RegistroPasso, Simulacao
 
@@ -45,6 +46,7 @@ __all__ = [
     "EstadoSIR",
     "Individuo",
     "MecanismoIsolamento",
+    "MetricasEpidemia",
     "ProblemaImportacao",
     "ProblemaCargaRede",
     "RedeContatos",

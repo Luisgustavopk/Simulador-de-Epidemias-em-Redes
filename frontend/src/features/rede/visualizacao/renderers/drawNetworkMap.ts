@@ -16,7 +16,6 @@ export class RenderizadorRedeMapa implements RenderizadorRede {
   private readonly nos: NoMapa[]
   private readonly contatos: [number, number][]
   private readonly terra = new Path2D()
-  private readonly maiorGrau: number
   private readonly vizinhos = new Set<string>()
   private pontos: Ponto[] = []
   private selecionado: string | null = null
@@ -42,7 +41,6 @@ export class RenderizadorRedeMapa implements RenderizadorRede {
     this.canvas = canvas
     this.contexto = contexto
     this.nos = nos
-    this.maiorGrau = Math.max(1, ...nos.map((no) => no.grau))
     const indices = new Map(nos.map((no, i) => [no.id, i]))
     this.contatos = previa.contatos.flatMap((contato) => {
       const a = indices.get(contato.origem),
@@ -130,7 +128,7 @@ export class RenderizadorRedeMapa implements RenderizadorRede {
     const pontos = this.nos.map((no) => ({
       ...no,
       ...projecao.projetar(no),
-      raio: raioDoNo(no.grau, this.maiorGrau, 0.95),
+      raio: raioDoNo(no.grau, 0.95),
       profundidade: 0,
     }))
     for (const diretos of [false, true]) {
@@ -164,7 +162,7 @@ export class RenderizadorRedeMapa implements RenderizadorRede {
     for (const no of this.pontos) {
       ctx.globalAlpha = this.filtrar && !this.vizinhos.has(no.id) ? 0.15 : 1
       ctx.fillStyle =
-        no.grau > this.maiorGrau * 0.55 ? this.paleta.destaque : this.paleta.no
+        no.id === this.selecionado ? this.paleta.destaque : this.paleta.no
       ctx.beginPath()
       ctx.arc(no.x, no.y, no.raio, 0, 2 * Math.PI)
       ctx.fill()

@@ -95,6 +95,14 @@
   .graph-bottom > .contact-lens {
     margin-inline-start: auto;
   }
+  .graph-bottom .graph-legend {
+    flex-wrap: wrap;
+    gap: 8px 14px;
+  }
+  .graph-legend .node-key,
+  .graph-legend .selection-key {
+    flex-shrink: 0;
+  }
   @media (hover: hover) and (pointer: fine) {
     .graph-navigation button:hover:not(:disabled) {
       background: var(--plot-hub);

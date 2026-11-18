@@ -46,4 +46,4 @@ def test_configuracao_http_valida_e_erros_retornam_422_por_campo(api):
     assert status == 422
     assert invalida['problemas'][0]['campo'] == 'gamma'
     status, _, _ = enviar(api, '/api/rede/configuracao', campos)
-    assert status == 422  # outra sessão não recebe a rede ou a validação anterior
+    assert status == 422

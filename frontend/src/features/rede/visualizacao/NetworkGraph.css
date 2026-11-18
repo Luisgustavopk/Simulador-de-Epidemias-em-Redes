@@ -1,0 +1,143 @@
+@layer components {
+  .graph-heading-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px 12px;
+    min-width: 0;
+    max-width: 100%;
+  }
+  .graph-fullscreen {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 36px;
+    padding: 6px 10px;
+    border: 1px solid var(--color-control-border);
+    border-radius: var(--radius-control);
+    font-size: 12px;
+  }
+  .graph-view-switch {
+    display: flex;
+    gap: 2px;
+    padding: 2px;
+    border: 1px solid var(--color-control-border);
+    border-radius: var(--radius-control);
+  }
+  .graph-view-switch button {
+    min-height: 32px;
+    padding: 6px 12px;
+    border-radius: var(--radius-control);
+    font-size: 12px;
+  }
+  .graph-view-switch button[aria-pressed='true'] {
+    background: var(--color-action);
+    color: var(--color-on-action);
+  }
+  .graph-panel {
+    --plot-land: color-mix(
+      in srgb,
+      var(--plot-background),
+      var(--plot-hub) 12%
+    );
+    --plot-coast: color-mix(
+      in srgb,
+      var(--plot-background),
+      var(--plot-hub) 30%
+    );
+  }
+  .graph-fullscreen-error {
+    color: var(--color-danger);
+    margin-bottom: 12px;
+    font-size: 12px;
+  }
+  .graph-fullscreen-selection {
+    display: flex;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 12px;
+    margin-bottom: 12px;
+    font-size: 12px;
+  }
+  .graph-fullscreen-selection select {
+    width: 240px;
+    max-width: 100%;
+    min-height: 36px;
+    padding-block: 6px;
+    font-size: 12px;
+  }
+  .network-inspection:fullscreen {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    padding: 16px;
+    overflow: auto;
+    background: var(--color-surface);
+    color: var(--color-text);
+  }
+  .network-inspection:fullscreen > .graph-heading {
+    flex-shrink: 0;
+    position: sticky;
+    top: -16px;
+    z-index: 1;
+    padding-block: 8px;
+    background: var(--color-surface);
+  }
+  .network-inspection:fullscreen > .graph-panel {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: min-content;
+  }
+  .network-inspection:fullscreen .graph-canvas-wrap {
+    flex: 1;
+    height: auto;
+    min-height: 160px;
+  }
+  .network-inspection:fullscreen .graph-viewport {
+    position: absolute;
+    inset: 0;
+  }
+  .network-inspection:fullscreen .graph-navigation,
+  .network-inspection:fullscreen .graph-navigation-help,
+  .network-inspection:fullscreen .graph-bottom,
+  .network-inspection:fullscreen .graph-caption {
+    flex-shrink: 0;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .graph-view-switch button[aria-pressed='false']:hover {
+      background: var(--color-surface-subtle);
+    }
+    .graph-fullscreen:hover:not(:disabled) {
+      background: var(--color-surface-subtle);
+    }
+  }
+  @media (pointer: coarse) {
+    .graph-fullscreen,
+    .graph-view-switch button {
+      min-height: 44px;
+    }
+  }
+  @media (max-width: 700px) {
+    .network-inspection > .graph-heading {
+      flex-wrap: wrap;
+    }
+    .graph-heading-actions {
+      justify-content: flex-start;
+      width: 100%;
+    }
+    .graph-heading-actions .graph-theme {
+      margin-inline-start: 0;
+    }
+    .network-inspection:fullscreen {
+      padding: 12px;
+    }
+    .network-inspection:fullscreen > .graph-heading {
+      top: -12px;
+    }
+  }
+}

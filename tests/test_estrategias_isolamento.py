@@ -122,7 +122,7 @@ def test_selecao_e_mecanismo_preservam_coorte_e_sir(rede, mecanismo):
     assert copia.numero_individuos == 6
     assert {p.id for p in copia.individuos if p.isolamento} == {1, 2}
     if mecanismo is MecanismoIsolamento.REDUCAO:
-        assert copia.obter_contato(1, 2).peso == .05  # compartilhado, reduz uma vez
+        assert copia.obter_contato(1, 2).peso == .05
     elif mecanismo is MecanismoIsolamento.DESATIVACAO:
         assert all(not c.ativa for c in copia.contatos)
     else:

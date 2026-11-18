@@ -1,10 +1,3 @@
-"""Adaptador HTTP de desenvolvimento para a tela de carga e inspeção.
-
-Execute ``python -m simulador.api_local`` e acesse a interface pelo Vite.
-Cada navegador recebe uma sessão independente. O servidor usa apenas a
-biblioteca padrão, escuta em loopback e não é um servidor de produção.
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -65,7 +58,6 @@ def _arquivo(valor: object, campo: str) -> ArquivoCSV:
 
 @dataclass
 class SessaoCarga:
-    """Estado e serialização das operações HTTP de uma sessão."""
 
     servico: ServicoCargaRede = field(default_factory=ServicoCargaRede)
     lock: RLock = field(default_factory=RLock)
@@ -73,7 +65,7 @@ class SessaoCarga:
 
 
 def _previa(servico: ServicoCargaRede, revisao: int) -> dict[str, object]:
-    """Recorta dados reais para desenho, sem recalcular métricas ou topologia."""
+
     pessoas = servico.listar_individuos(revisao, limite=LIMITE_NOS_PREVIA)
     ids = {pessoa["id"] for pessoa in pessoas["individuos"]}
     contatos: list[dict[str, object]] = []
@@ -104,7 +96,6 @@ def atender(
     servico: ServicoCargaRede, metodo: str, caminho: str,
     parametros: dict[str, list[str]], corpo: dict[str, object],
 ) -> dict[str, object]:
-    """Delega carga e configuração aos serviços, sem executar passos SIR."""
     if caminho not in ROTAS:
         raise _erro("rota", "Operação não encontrada.")
     if metodo != ROTAS[caminho]:
@@ -144,7 +135,6 @@ def atender(
 
 
 class ServidorCarga(ThreadingHTTPServer):
-    """Servidor local com sessões limitadas e expiração por inatividade."""
 
     daemon_threads = True
 
@@ -154,7 +144,6 @@ class ServidorCarga(ThreadingHTTPServer):
         super().__init__(("127.0.0.1", porta), ManipuladorCarga)
 
     def sessao(self, cookie: str) -> tuple[str, SessaoCarga]:
-        """Recupera uma sessão válida ou cria um novo contexto de carga."""
         biscoitos = SimpleCookie()
         try:
             biscoitos.load(cookie)
@@ -178,7 +167,6 @@ class ServidorCarga(ThreadingHTTPServer):
 
 
 class ManipuladorCarga(BaseHTTPRequestHandler):
-    """Recebe JSON e devolve diagnósticos compatíveis com o formulário React."""
 
     server: ServidorCarga
 
@@ -246,7 +234,6 @@ class ManipuladorCarga(BaseHTTPRequestHandler):
 
 
 def main() -> None:
-    """Inicia a API de desenvolvimento em loopback."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--porta", type=int, default=8000)
     argumentos = parser.parse_args()

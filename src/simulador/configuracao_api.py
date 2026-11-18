@@ -1,5 +1,3 @@
-"""Conversão explícita do formulário; a validação de domínio fica no backend."""
-
 from dataclasses import asdict
 import re
 
@@ -11,12 +9,6 @@ from simulador.isolamento import MecanismoIsolamento
 
 
 def validar_formulario(servico: ServicoCargaRede, campos: dict[str, object]) -> dict[str, object]:
-    """Valida uma revisão confirmada e prepara IDs sem aplicar estados.
-
-    IDs e sementes trafegam como texto para não arredondar inteiros no JS.
-    Não guarda uma validação reutilizável em servidor: cada pedido reconsulta
-    a revisão confirmada, impedindo o uso silencioso de uma rede substituída.
-    """
     problemas: list[ProblemaConfiguracao] = []
 
     def erro(campo: str, mensagem: str) -> None:
@@ -100,8 +92,6 @@ def validar_formulario(servico: ServicoCargaRede, campos: dict[str, object]) -> 
         ids_infectados_iniciais=ids, quantidade_infectados=quantidade, modo_peso=modo_peso,
         intervencao=intervencao,
     )
-    # Erros sintáticos de revisão não devem chegar ao serviço como uma revisão
-    # antiga; os demais campos continuam recebendo seus diagnósticos de domínio.
     if cfg.revisao_rede is None:
         raise ErroConfiguracao(problemas)
     disponivel = servico.obter_rede_confirmada(cfg.revisao_rede)

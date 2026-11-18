@@ -1,5 +1,3 @@
-"""Seleção de pessoas; a modificação de contatos pertence a isolamento.py."""
-
 from abc import ABC, abstractmethod
 
 from simulador.aleatoriedade import GeradorAleatorio
@@ -17,24 +15,19 @@ def _validar_quantidade(rede: RedeContatos, quantidade: int) -> None:
 
 
 class EstrategiaIsolamento(ABC):
-    """Contrato que devolve exatamente k IDs distintos, sem efeitos na rede."""
-
     def __init__(self, nome: str) -> None:
         self._nome = nome
 
     @property
     def nome(self) -> str:
-        """Identificação usada pela configuração e futura orquestração."""
         return self._nome
 
     @abstractmethod
     def selecionar(self, rede: RedeContatos, quantidade: int) -> tuple[int, ...]:
-        """Seleciona IDs cadastrados, independentemente do estado SIR."""
+        pass
 
 
 class IsolamentoAleatorio(EstrategiaIsolamento):
-    """Amostragem uniforme sem reposição, com gerador de isolamento privado."""
-
     def __init__(self, gerador: GeradorAleatorio) -> None:
         if not isinstance(gerador, GeradorAleatorio):
             raise TypeError("Informe o gerador do fluxo de isolamento.")
@@ -42,7 +35,6 @@ class IsolamentoAleatorio(EstrategiaIsolamento):
         self._gerador = gerador
 
     def selecionar(self, rede: RedeContatos, quantidade: int) -> tuple[int, ...]:
-        """Valida antes de consumir o fluxo; orçamento zero não sorteia."""
         _validar_quantidade(rede, quantidade)
         if quantidade == 0:
             return ()
@@ -52,8 +44,6 @@ class IsolamentoAleatorio(EstrategiaIsolamento):
 
 
 class IsolamentoPorGrau(EstrategiaIsolamento):
-    """Captura graus estruturais antes dos mecanismos; desempata pelo ID."""
-
     def __init__(self, rede_original: RedeContatos) -> None:
         _validar_quantidade(rede_original, 0)
         if any(p.isolamento for p in rede_original.iter_individuos()):
@@ -66,16 +56,9 @@ class IsolamentoPorGrau(EstrategiaIsolamento):
 
     @property
     def graus_originais(self) -> dict[int, int]:
-        """Cópia do snapshot; consultas externas não alteram o ranking."""
         return self._graus_originais.copy()
 
     def selecionar(self, rede: RedeContatos, quantidade: int) -> tuple[int, ...]:
-        """Usa o snapshot mesmo após mudar contatos numa cópia da mesma coorte.
-
-        A revisão de origem deve ser validada pela preparação. Ter os mesmos
-        IDs não comprova por si só que outra rede seja a referência correta.
-        Não guarda referências mutáveis aos indivíduos da rede original.
-        """
         _validar_quantidade(rede, quantidade)
         if {p.id for p in rede.iter_individuos()} != self._graus_originais.keys():
             raise ValueError("A população mudou. Prepare novamente os graus originais.")
@@ -89,12 +72,6 @@ def preparar_estrategia(
     rede_original: RedeContatos, configuracao: ConfiguracaoSimulacao,
     *, revisao_rede: int,
 ) -> EstrategiaIsolamento | None:
-    """Prepara uma estratégia por cenário, antes dos mecanismos, sem agendar.
-
-    A futura Simulacao conserva o objeto e o chama no instante configurado.
-    Em seguida delega os IDs a aplicar_isolamento(), uma única vez. Nenhuma
-    seleção, mecanismo, relógio ou histórico é executado por esta preparação.
-    """
     problemas = configuracao.validar(rede_original, revisao_rede)
     if problemas:
         raise ErroConfiguracao(problemas)

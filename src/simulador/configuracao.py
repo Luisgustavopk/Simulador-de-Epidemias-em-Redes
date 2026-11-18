@@ -1,5 +1,3 @@
-"""Parâmetros e preparo de uma execução, sem relógio, intervenções ou histórico."""
-
 from dataclasses import asdict, dataclass, replace
 from decimal import Decimal
 import math
@@ -12,21 +10,16 @@ from simulador.rede_contatos import RedeContatos
 
 @dataclass(frozen=True, slots=True)
 class ProblemaConfiguracao:
-    """Mensagem associada ao campo que o usuário precisa corrigir."""
-
     campo: str
     mensagem: str
 
 
 class ErroConfiguracao(ValueError):
-    """Falha de preparo; nenhuma transição deve ocorrer antes da validação."""
-
     def __init__(self, problemas: list[ProblemaConfiguracao]) -> None:
         self.problemas = tuple(problemas)
         super().__init__(" ".join(p.mensagem for p in problemas))
 
     def para_dict(self) -> dict[str, object]:
-        """Exporta somente os diagnósticos, sem objetos de domínio."""
         return {"problemas": [asdict(p) for p in self.problemas]}
 
 
@@ -43,13 +36,6 @@ def _probabilidade(valor: object) -> bool:
 
 @dataclass(frozen=True, slots=True)
 class ConfiguracaoIntervencao:
-    """Intervenção única: fração é a fonte do orçamento; não há k armazenado.
-
-    inicio é o instante t, antes da transição t→t+1, medido em dias do modelo.
-    Validar e configurar não aplica nem agenda o mecanismo. None no campo
-    intervencao da configuração principal representa ausência de intervenção.
-    """
-
     estrategia: str
     fracao: float
     inicio: int
@@ -57,7 +43,6 @@ class ConfiguracaoIntervencao:
     reducao: float | None = None
 
     def validar(self, limite_passos: int) -> list[ProblemaConfiguracao]:
-        """Valida modos e campos antes de preparar qualquer seleção."""
         problemas: list[ProblemaConfiguracao] = []
         if self.estrategia not in ("aleatoria", "grau"):
             problemas.append(ProblemaConfiguracao("intervencao.estrategia", "Escolha seleção aleatória ou por grau."))
@@ -77,12 +62,6 @@ class ConfiguracaoIntervencao:
         return problemas
 
     def quantidade_isolados(self, populacao: int) -> int:
-        """Calcula piso(f×N), usando a representação decimal da fração.
-
-        Evita perder uma pessoa em casos como 0.58×50, cujo produto binário
-        pode ficar abaixo de 29. A razão inteira também evita arredondamento
-        do contexto de Decimal. Não cria outra fonte de orçamento.
-        """
         if not _inteiro(populacao):
             raise TypeError("A população deve ser inteira.")
         if populacao <= 0 or not _probabilidade(self.fracao):
@@ -93,14 +72,6 @@ class ConfiguracaoIntervencao:
 
 @dataclass(frozen=True, slots=True)
 class ConfiguracaoSimulacao:
-    """Snapshot de parâmetros vinculado à revisão da rede confirmada.
-
-    IDs e quantidade são alternativas: informe uma tupla (inclusive vazia)
-    ou quantidade. preparar() resolve o sorteio sem modificar a rede. Sementes
-    são inteiros independentes e explícitos, sem derivação pelo hash do processo.
-    limite_passos é dado da futura orquestração, não um relógio do motor.
-    """
-
     beta: float | None
     gamma: float
     semente_epidemia: int
@@ -114,7 +85,6 @@ class ConfiguracaoSimulacao:
     intervencao: ConfiguracaoIntervencao | None = None
 
     def validar(self, rede: RedeContatos, revisao_rede: int) -> list[ProblemaConfiguracao]:
-        """Reúne erros por campo; não consome sorteios nem modifica a rede."""
         problemas: list[ProblemaConfiguracao] = []
 
         def erro(campo: str, mensagem: str) -> None:
@@ -167,11 +137,6 @@ class ConfiguracaoSimulacao:
         return problemas
 
     def preparar(self, rede: RedeContatos, revisao_rede: int) -> "ConfiguracaoSimulacao":
-        """Valida e devolve IDs resolvidos, sem mutar a referência ou a configuração.
-
-        Raises:
-            ErroConfiguracao: Se algum campo ou a revisão forem inválidos.
-        """
         problemas = self.validar(rede, revisao_rede)
         if problemas:
             raise ErroConfiguracao(problemas)
@@ -187,12 +152,6 @@ class ConfiguracaoSimulacao:
 def aplicar_condicoes_iniciais(
     rede_execucao: RedeContatos, configuracao: ConfiguracaoSimulacao, revisao_rede: int,
 ) -> None:
-    """Aplica I no instante zero sobre a cópia independente de uma execução.
-
-    É a única operação de inicialização: a preparação do formulário e o motor
-    não a repetem. A futura orquestração deve chamar uma vez por cópia nova.
-    Valida toda a população antes da primeira mutação; rejeita estados prévios.
-    """
     preparada = configuracao.preparar(rede_execucao, revisao_rede)
     if any(p.estado is not EstadoSIR.SUSCETIVEL for p in rede_execucao.iter_individuos()):
         raise ErroConfiguracao([ProblemaConfiguracao("rede", "Use uma cópia nova, com todos suscetíveis.")])

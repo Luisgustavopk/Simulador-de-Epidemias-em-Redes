@@ -30,17 +30,24 @@ export class RenderizadorRedeMapa implements RenderizadorRede {
     terra: '',
     costa: '',
     fonte: '',
+    suscetivel: '',
+    infectado: '',
+    recuperado: '',
+    isolado: '',
   }
+  private estadosPorNo: Record<string, 'S' | 'I' | 'R' | 'isolado'> = {}
 
   constructor(
     canvas: HTMLCanvasElement,
     contexto: CanvasRenderingContext2D,
     nos: NoMapa[],
     previa: PreviaRede,
+    estadosPorNo?: Record<string, 'S' | 'I' | 'R' | 'isolado'>,
   ) {
     this.canvas = canvas
     this.contexto = contexto
     this.nos = nos
+    this.estadosPorNo = estadosPorNo ?? {}
     const indices = new Map(nos.map((no, i) => [no.id, i]))
     this.contatos = previa.contatos.flatMap((contato) => {
       const a = indices.get(contato.origem),
@@ -71,6 +78,10 @@ export class RenderizadorRedeMapa implements RenderizadorRede {
       terra: cor('land'),
       costa: cor('coast'),
       fonte: css.getPropertyValue('--font-sans').trim(),
+      suscetivel: css.getPropertyValue('--color-susceptible').trim(),
+      infectado: css.getPropertyValue('--color-infected').trim(),
+      recuperado: css.getPropertyValue('--color-recovered').trim(),
+      isolado: '#c79a42',
     }
   }
 
@@ -161,8 +172,19 @@ export class RenderizadorRedeMapa implements RenderizadorRede {
       )
     for (const no of this.pontos) {
       ctx.globalAlpha = this.filtrar && !this.vizinhos.has(no.id) ? 0.15 : 1
+      const estado = this.estadosPorNo[no.id]
       ctx.fillStyle =
-        no.id === this.selecionado ? this.paleta.destaque : this.paleta.no
+        no.id === this.selecionado
+          ? this.paleta.destaque
+          : estado === 'I'
+            ? this.paleta.infectado
+            : estado === 'R'
+              ? this.paleta.recuperado
+              : estado === 'isolado'
+                ? this.paleta.isolado
+                : estado === 'S'
+                  ? this.paleta.suscetivel
+                  : this.paleta.no
       ctx.beginPath()
       ctx.arc(no.x, no.y, no.raio, 0, 2 * Math.PI)
       ctx.fill()

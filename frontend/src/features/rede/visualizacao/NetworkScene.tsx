@@ -19,6 +19,8 @@ interface Props {
   onSelecionar: (id: string) => void
   ocupado: boolean
   visualizacao: VisualizacaoRede
+  estadosPorNo?: Record<string, 'S' | 'I' | 'R' | 'isolado'>
+  compacto?: boolean
 }
 
 const direcoes = [
@@ -34,6 +36,8 @@ export function NetworkScene({
   onSelecionar,
   ocupado,
   visualizacao,
+  estadosPorNo,
+  compacto = false,
 }: Props) {
   const [modo3D, setModo] = useState<ModoNavegacao>('girar')
   const mapa = visualizacao === 'mapa'
@@ -58,8 +62,8 @@ export function NetworkScene({
       return
     }
     const desenho = mapa
-      ? new RenderizadorRedeMapa(elemento, contexto, locais, previa)
-      : new RenderizadorRede3D(elemento, contexto, nos, previa)
+      ? new RenderizadorRedeMapa(elemento, contexto, locais, previa, estadosPorNo)
+      : new RenderizadorRede3D(elemento, contexto, nos, previa, estadosPorNo)
     // O Canvas é reutilizado; remova somente a dica de hover da vista anterior.
     elemento.title = ''
     delete elemento.dataset.nodeHover
@@ -84,7 +88,7 @@ export function NetworkScene({
       observador.disconnect()
       renderizador.current = null
     }
-  }, [nos, locais, previa, mapa, redesenhar])
+  }, [nos, locais, previa, mapa, estadosPorNo, redesenhar])
 
   useLayoutEffect(() => {
     renderizador.current?.selecionar(selecionado, filtrar)
@@ -129,7 +133,7 @@ export function NetworkScene({
             : 'Disposição 3D · posições ilustrativas'}
         </span>
       </div>
-      <div className="graph-navigation">
+      {!compacto && <div className="graph-navigation">
         {!mapa && (
           <div
             className="graph-navigation-mode"
@@ -200,16 +204,16 @@ export function NetworkScene({
             <Icon nome="home" size={16} />
           </button>
         </div>
-      </div>
-      <p className="graph-navigation-help" id="graph-navigation-help">
+      </div>}
+      {!compacto && <p className="graph-navigation-help" id="graph-navigation-help">
         Arraste para {modo === 'girar' ? 'girar' : 'mover'} · role para
         aproximar. No toque, use dois dedos para mover e pinçar. Com foco na
         rede: setas navegam, Shift + setas movem, +/− ajustam o zoom e Home
         restaura.
         {mapa &&
           ' As posições no mapa são fictícias; distância e localização não alteram os contatos ou seus pesos.'}
-      </p>
-      <div className="graph-bottom">
+      </p>}
+      {!compacto && <div className="graph-bottom">
         <div className="graph-legend" role="group" aria-label="Legenda da rede">
           <span>
             <b className="node-key" aria-hidden="true" />
@@ -230,7 +234,7 @@ export function NetworkScene({
           <Icon nome="eye" size={15} />
           {filtrar ? 'Mostrar todos os contatos' : 'Contatos do nó'}
         </button>
-      </div>
+      </div>}
     </>
   )
 }

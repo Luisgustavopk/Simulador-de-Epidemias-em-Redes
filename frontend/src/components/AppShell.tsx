@@ -13,9 +13,13 @@ const etapas = [
 export function AppShell({
   children,
   conectado,
+  etapaAtiva = 1,
+  onNavegar,
 }: {
   children: ReactNode
   conectado: boolean
+  etapaAtiva?: number
+  onNavegar?: (etapa: number) => void
 }) {
   const [recolhida, setRecolhida] = useState(false)
   return (
@@ -83,16 +87,27 @@ export function AppShell({
               {etapas.map(([titulo, descricao], indice) => (
                 <li
                   key={titulo}
-                  className={indice === 0 ? 'current' : ''}
-                  aria-current={indice === 0 ? 'step' : undefined}
+                  className={indice + 1 === etapaAtiva ? 'current' : ''}
+                  aria-current={indice + 1 === etapaAtiva ? 'step' : undefined}
                 >
-                  <span className="step-number">{indice + 1}</span>
-                  <span className="step-copy">
-                    <strong>{titulo}</strong>
-                    <small>
-                      {indice === 0 ? descricao : 'Em desenvolvimento'}
-                    </small>
-                  </span>
+                  <button
+                    type="button"
+                    disabled={indice + 1 !== 1 && indice + 1 !== 3}
+                    onClick={() => onNavegar?.(indice + 1)}
+                    aria-label={`Etapa ${indice + 1}: ${titulo}`}
+                  >
+                    <span className="step-number">{indice + 1}</span>
+                    <span className="step-copy">
+                      <strong>{titulo}</strong>
+                      <small>
+                        {indice + 1 === etapaAtiva
+                          ? descricao
+                          : indice + 1 === 1
+                            ? descricao
+                            : 'Em desenvolvimento'}
+                      </small>
+                    </span>
+                  </button>
                 </li>
               ))}
             </ol>

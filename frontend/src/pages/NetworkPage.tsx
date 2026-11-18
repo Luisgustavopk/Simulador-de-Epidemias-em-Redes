@@ -112,7 +112,7 @@ export function NetworkPage() {
         </div>
         <div className="network-workbench">
           <NetworkGraph
-            versaoVisual={carga.versaoVisual}
+            c={carga.versaoVisual}
             rede={rede}
             previa={carga.previa}
             selecionado={selecionado}

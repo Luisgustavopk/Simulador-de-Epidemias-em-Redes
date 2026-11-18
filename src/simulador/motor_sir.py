@@ -44,15 +44,17 @@ class MotorSIR:
         recuperacoes: list[int] = []
         for pessoa in pessoas:
             if estados[pessoa.id] is EstadoSIR.SUSCETIVEL:
-                nao_transmitir = 1.0
+                probabilidade = 0.0
                 for contato in sorted(rede.contatos_de(pessoa), key=lambda c: c.outro_extremo(pessoa).id):
                     vizinho = contato.outro_extremo(pessoa)
                     if contato.ativa and estados[vizinho.id] is EstadoSIR.INFECTADO:
                         p = contato.peso
                         if configuracao.modo_peso == "intensidade":
                             p *= configuracao.beta
-                        nao_transmitir *= 1 - p
-                if self._gerador.uniforme() < 1 - nao_transmitir:
+                        # Equivale a 1-produto(1-p), sem perder exposições
+                        # muito pequenas na subtração final de números quase iguais.
+                        probabilidade += (1 - probabilidade) * p
+                if self._gerador.uniforme() < probabilidade:
                     novas_infecoes.append(pessoa.id)
             elif estados[pessoa.id] is EstadoSIR.INFECTADO:
                 if self._gerador.uniforme() < configuracao.gamma:

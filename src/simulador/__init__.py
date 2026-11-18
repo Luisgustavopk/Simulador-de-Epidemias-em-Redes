@@ -35,6 +35,7 @@ from simulador.isolamento import (
     aplicar_isolamento,
 )
 from simulador.rede_contatos import RedeContatos
+from simulador.simulacao import RegistroPasso, Simulacao
 
 __all__ = [
     "ArquivoCSV",
@@ -47,6 +48,8 @@ __all__ = [
     "ProblemaImportacao",
     "ProblemaCargaRede",
     "RedeContatos",
+    "RegistroPasso",
+    "Simulacao",
     "RedeDisponivel",
     "ServicoCargaRede",
     "ResumoEstrutural",

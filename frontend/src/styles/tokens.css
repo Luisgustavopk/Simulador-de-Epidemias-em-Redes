@@ -1,0 +1,76 @@
+:root {
+  color-scheme: light;
+  --font-sans: 'IBM Plex Sans', 'Segoe UI', sans-serif;
+  --color-background: #e9ede5;
+  --color-surface: #fcfdf9;
+  --color-surface-subtle: #f0f3eb;
+  --color-text: #20332a;
+  --color-text-secondary: #475443;
+  --color-text-muted: #5b6655;
+  --color-border: #dce1d5;
+  --color-control-border: #819077;
+  --color-accent: #d4f58c;
+  --color-on-accent: #20332a;
+  --color-accent-soft: #f0f5e5;
+  --color-action: #20332a;
+  --color-action-hover: #344b3b;
+  --color-on-action: #fcfdf9;
+  --color-focus: #415426;
+  --color-success: #3f6b46;
+  --color-danger: #9c392c;
+  --color-danger-surface: #fbebe6;
+  --color-susceptible: #315d88;
+  --color-infected: #ac4433;
+  --color-recovered: #487751;
+  --color-plot-background: #192d27;
+  --color-plot-text: #eff5e7;
+  --color-plot-muted: #bacbb1;
+  --color-plot-line: #829777;
+  --color-plot-node: #adc995;
+  --color-plot-hub: #d4f58c;
+  /* O grafo pode permanecer claro mesmo quando a interface fica escura. */
+  --color-plot-light-background: #f0f3eb;
+  --color-plot-light-text: #20332a;
+  --color-plot-light-muted: #475443;
+  --color-plot-light-line: #5b6655;
+  --color-plot-light-node: #487751;
+  --color-plot-light-hub: #415426;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --radius-control: 3px;
+  --radius-sheet: 12px;
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --color-background: #171a18;
+  --color-surface: #222723;
+  --color-surface-subtle: #2b312c;
+  --color-text: #e6eee7;
+  --color-text-secondary: #c0cec2;
+  --color-text-muted: #a1b0a4;
+  --color-border: #3c453e;
+  --color-control-border: #77877a;
+  --color-accent-soft: #37402f;
+  --color-action: #e3ebdf;
+  --color-action-hover: #cbd8c6;
+  --color-on-action: #1a281f;
+  --color-focus: #d4f58c;
+  --color-success: #9fcca6;
+  --color-danger: #ffb4a6;
+  --color-danger-surface: #3d2b27;
+  --color-susceptible: #9cc3e0;
+  --color-infected: #f29d88;
+  --color-recovered: #9fcca6;
+  --color-plot-background: #101c15;
+  --color-plot-text: #e4efe5;
+  --color-plot-muted: #a2b9a7;
+  --color-plot-line: #65896f;
+  --color-plot-node: #81b18c;
+}

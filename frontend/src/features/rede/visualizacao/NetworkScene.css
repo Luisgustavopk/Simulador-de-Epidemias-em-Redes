@@ -1,0 +1,123 @@
+@layer components {
+  .graph-viewport {
+    width: 100%;
+    height: 100%;
+    touch-action: none;
+    user-select: none;
+    cursor: grab;
+    contain: layout paint;
+  }
+  .graph-viewport:active {
+    cursor: grabbing;
+  }
+  .graph-viewport.graph-mode-mover {
+    cursor: move;
+  }
+  .graph-viewport:focus-visible {
+    outline-offset: -3px;
+  }
+  .network-canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    cursor: inherit;
+  }
+  .network-canvas[data-node-hover='true'] {
+    cursor: pointer;
+  }
+  .graph-viewport:active .network-canvas {
+    cursor: grabbing;
+  }
+  .graph-render-error {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    padding: 32px;
+    background: var(--plot-background);
+    color: var(--plot-text);
+    text-align: center;
+    pointer-events: none;
+  }
+  .graph-navigation {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 12px;
+    padding: 12px 14px 4px;
+  }
+  .graph-navigation-mode,
+  .graph-directions {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+  }
+  .graph-navigation-mode button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 36px;
+    padding: 6px 10px;
+    border-radius: var(--radius-control);
+    font-size: 12px;
+  }
+  .graph-navigation-mode button[aria-pressed='true'] {
+    background: var(--plot-hub);
+    color: var(--plot-background);
+  }
+  .graph-directions button {
+    width: 36px;
+    height: 36px;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--plot-line);
+    border-radius: var(--radius-control);
+  }
+  .graph-directions .direction-left svg {
+    transform: rotate(180deg);
+  }
+  .graph-directions .direction-up svg {
+    transform: rotate(-90deg);
+  }
+  .graph-directions .direction-down svg {
+    transform: rotate(90deg);
+  }
+  .graph-navigation > .graph-controls {
+    margin-inline-start: auto;
+  }
+  .graph-navigation-help {
+    padding: 4px 14px 0;
+    font-size: 11px;
+    line-height: 1.7;
+    color: var(--plot-muted);
+  }
+  .graph-bottom > .contact-lens {
+    margin-inline-start: auto;
+  }
+  .graph-bottom .graph-legend {
+    flex-wrap: wrap;
+    gap: 8px 14px;
+  }
+  .graph-legend .node-key,
+  .graph-legend .selection-key {
+    flex-shrink: 0;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .graph-navigation button:hover:not(:disabled) {
+      background: var(--plot-hub);
+      color: var(--plot-background);
+    }
+  }
+  @media (pointer: coarse) {
+    .graph-navigation-mode button,
+    .graph-directions button,
+    .graph-controls button {
+      min-width: 44px;
+      min-height: 44px;
+    }
+    .graph-bottom .contact-lens {
+      min-height: 44px;
+    }
+  }
+}

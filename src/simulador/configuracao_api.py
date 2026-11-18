@@ -4,7 +4,10 @@ from dataclasses import asdict
 import re
 
 from simulador.carga_rede import ServicoCargaRede
-from simulador.configuracao import ConfiguracaoSimulacao, ErroConfiguracao, ProblemaConfiguracao
+from simulador.configuracao import (
+    ConfiguracaoIntervencao, ConfiguracaoSimulacao, ErroConfiguracao, ProblemaConfiguracao,
+)
+from simulador.isolamento import MecanismoIsolamento
 
 
 def validar_formulario(servico: ServicoCargaRede, campos: dict[str, object]) -> dict[str, object]:
@@ -30,8 +33,8 @@ def validar_formulario(servico: ServicoCargaRede, campos: dict[str, object]) -> 
         erro(campo, "Informe um inteiro válido em texto, sem casas decimais.")
         return None
 
-    def probabilidade(campo: str) -> float | None:
-        valor = campos.get(campo)
+    def probabilidade(campo: str, fonte: dict[str, object] | None = None) -> float | None:
+        valor = (campos if fonte is None else fonte).get(campo.rsplit(".", 1)[-1])
         if not isinstance(valor, bool) and isinstance(valor, (str, int, float)):
             try:
                 return float(valor.replace(',', '.') if isinstance(valor, str) else valor)
@@ -43,7 +46,7 @@ def validar_formulario(servico: ServicoCargaRede, campos: dict[str, object]) -> 
     modo = campos.get('modo_iniciais')
     permitidos = {
         'beta', 'gamma', 'modo_peso', 'modo_iniciais', 'semente_epidemia',
-        'semente_iniciais', 'semente_isolamento', 'limite_passos', 'revisao_rede',
+        'semente_iniciais', 'semente_isolamento', 'limite_passos', 'revisao_rede', 'intervencao',
     }
     ids = None
     quantidade = None
@@ -64,6 +67,29 @@ def validar_formulario(servico: ServicoCargaRede, campos: dict[str, object]) -> 
             erro(campo, 'Este campo não se aplica ao modo escolhido.')
     modo_peso = campos.get('modo_peso')
     beta = None if modo_peso == 'probabilidade' and campos.get('beta') is None else probabilidade('beta')
+    intervencao = None
+    entrada_intervencao = campos.get('intervencao')
+    if entrada_intervencao is not None:
+        if not isinstance(entrada_intervencao, dict):
+            erro('intervencao', 'Informe os campos da intervenção ou null para nenhuma.')
+        else:
+            for campo in entrada_intervencao:
+                if campo not in ('estrategia', 'fracao', 'inicio', 'mecanismo', 'reducao'):
+                    erro(f'intervencao.{campo}', 'Este campo não faz parte da configuração; a quantidade é derivada da fração.')
+            mecanismo = None
+            try:
+                mecanismo = MecanismoIsolamento(entrada_intervencao.get('mecanismo'))
+            except (TypeError, ValueError):
+                erro('intervencao.mecanismo', 'Escolha desativação, redução ou exclusão de contatos.')
+            reducao = None
+            if entrada_intervencao.get('reducao') is not None:
+                reducao = probabilidade('intervencao.reducao', entrada_intervencao)
+            intervencao = ConfiguracaoIntervencao(
+                estrategia=entrada_intervencao.get('estrategia'),
+                fracao=probabilidade('intervencao.fracao', entrada_intervencao),
+                inicio=inteiro('intervencao.inicio', entrada_intervencao.get('inicio')),
+                mecanismo=mecanismo, reducao=reducao,
+            )
     cfg = ConfiguracaoSimulacao(
         beta=beta, gamma=probabilidade('gamma'),
         semente_epidemia=inteiro('semente_epidemia', campos.get('semente_epidemia'), textual=True),
@@ -72,6 +98,7 @@ def validar_formulario(servico: ServicoCargaRede, campos: dict[str, object]) -> 
         limite_passos=inteiro('limite_passos', campos.get('limite_passos')),
         revisao_rede=inteiro('revisao_rede', campos.get('revisao_rede')),
         ids_infectados_iniciais=ids, quantidade_infectados=quantidade, modo_peso=modo_peso,
+        intervencao=intervencao,
     )
     # Erros sintáticos de revisão não devem chegar ao serviço como uma revisão
     # antiga; os demais campos continuam recebendo seus diagnósticos de domínio.
@@ -86,6 +113,9 @@ def validar_formulario(servico: ServicoCargaRede, campos: dict[str, object]) -> 
     resumo['ids_infectados_iniciais'] = [str(id) for id in preparada.ids_infectados_iniciais]
     for campo in ('semente_epidemia', 'semente_iniciais', 'semente_isolamento'):
         resumo[campo] = str(resumo[campo])
+    if preparada.intervencao is not None:
+        resumo['intervencao']['mecanismo'] = preparada.intervencao.mecanismo.value
+        resumo['intervencao']['quantidade_isolados'] = preparada.intervencao.quantidade_isolados(disponivel.rede.numero_individuos)
     return {
         'configuracao': resumo, 'populacao': disponivel.rede.numero_individuos,
         'modo_iniciais': modo, 'origem_rede': disponivel.origem,

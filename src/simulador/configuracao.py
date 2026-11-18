@@ -1,10 +1,12 @@
 """Parâmetros e preparo de uma execução, sem relógio, intervenções ou histórico."""
 
 from dataclasses import asdict, dataclass, replace
+from decimal import Decimal
 import math
 
 from simulador.aleatoriedade import GeradorAleatorio
 from simulador.individuo import EstadoSIR
+from simulador.isolamento import MecanismoIsolamento
 from simulador.rede_contatos import RedeContatos
 
 
@@ -40,6 +42,56 @@ def _probabilidade(valor: object) -> bool:
 
 
 @dataclass(frozen=True, slots=True)
+class ConfiguracaoIntervencao:
+    """Intervenção única: fração é a fonte do orçamento; não há k armazenado.
+
+    inicio é o instante t, antes da transição t→t+1, medido em dias do modelo.
+    Validar e configurar não aplica nem agenda o mecanismo. None no campo
+    intervencao da configuração principal representa ausência de intervenção.
+    """
+
+    estrategia: str
+    fracao: float
+    inicio: int
+    mecanismo: MecanismoIsolamento
+    reducao: float | None = None
+
+    def validar(self, limite_passos: int) -> list[ProblemaConfiguracao]:
+        """Valida modos e campos antes de preparar qualquer seleção."""
+        problemas: list[ProblemaConfiguracao] = []
+        if self.estrategia not in ("aleatoria", "grau"):
+            problemas.append(ProblemaConfiguracao("intervencao.estrategia", "Escolha seleção aleatória ou por grau."))
+        if not _probabilidade(self.fracao):
+            problemas.append(ProblemaConfiguracao("intervencao.fracao", "Informe uma fração finita entre 0 e 1."))
+        if not _inteiro(self.inicio) or self.inicio < 0 or (
+            _inteiro(limite_passos) and limite_passos > 0 and self.inicio >= limite_passos
+        ):
+            problemas.append(ProblemaConfiguracao("intervencao.inicio", "Use um instante inteiro de 0 até limite de passos menos 1."))
+        if not isinstance(self.mecanismo, MecanismoIsolamento):
+            problemas.append(ProblemaConfiguracao("intervencao.mecanismo", "Escolha desativação, redução ou exclusão de contatos."))
+        if self.mecanismo is MecanismoIsolamento.REDUCAO:
+            if not _probabilidade(self.reducao):
+                problemas.append(ProblemaConfiguracao("intervencao.reducao", "Informe a redução finita entre 0 e 1."))
+        elif self.reducao is not None:
+            problemas.append(ProblemaConfiguracao("intervencao.reducao", "Informe redução somente no mecanismo de redução."))
+        return problemas
+
+    def quantidade_isolados(self, populacao: int) -> int:
+        """Calcula piso(f×N), usando a representação decimal da fração.
+
+        Evita perder uma pessoa em casos como 0.58×50, cujo produto binário
+        pode ficar abaixo de 29. A razão inteira também evita arredondamento
+        do contexto de Decimal. Não cria outra fonte de orçamento.
+        """
+        if not _inteiro(populacao):
+            raise TypeError("A população deve ser inteira.")
+        if populacao <= 0 or not _probabilidade(self.fracao):
+            raise ValueError("Use população positiva e fração finita entre 0 e 1.")
+        numerador, denominador = Decimal(str(self.fracao)).as_integer_ratio()
+        return numerador * populacao // denominador
+
+
+@dataclass(frozen=True, slots=True)
 class ConfiguracaoSimulacao:
     """Snapshot de parâmetros vinculado à revisão da rede confirmada.
 
@@ -59,6 +111,7 @@ class ConfiguracaoSimulacao:
     ids_infectados_iniciais: tuple[int, ...] | None = None
     quantidade_infectados: int | None = None
     modo_peso: str = "intensidade"
+    intervencao: ConfiguracaoIntervencao | None = None
 
     def validar(self, rede: RedeContatos, revisao_rede: int) -> list[ProblemaConfiguracao]:
         """Reúne erros por campo; não consome sorteios nem modifica a rede."""
@@ -106,6 +159,11 @@ class ConfiguracaoSimulacao:
             or (isinstance(rede, RedeContatos) and quantidade > rede.numero_individuos)
         ):
             erro("quantidade_infectados", "Informe uma quantidade inteira entre 0 e a população.")
+        if self.intervencao is not None:
+            if not isinstance(self.intervencao, ConfiguracaoIntervencao):
+                erro("intervencao", "Informe uma configuração de intervenção válida ou None.")
+            else:
+                problemas.extend(self.intervencao.validar(self.limite_passos))
         return problemas
 
     def preparar(self, rede: RedeContatos, revisao_rede: int) -> "ConfiguracaoSimulacao":

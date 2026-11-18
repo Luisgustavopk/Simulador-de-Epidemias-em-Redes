@@ -1,9 +1,16 @@
 import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
+import { InterventionFields } from '../components/InterventionFields'
 import { AppShell } from '../components/AppShell'
 import { problemasDoErro, redeApi } from '../services/redeApi'
-import { validarConfiguracao } from '../services/configuracaoApi'
-import type { ConfiguracaoValidada } from '../services/configuracaoApi'
+import {
+  prepararFormularioIntervencao,
+  validarConfiguracao,
+} from '../services/configuracaoApi'
+import type {
+  ConfiguracaoValidada,
+  EntradaIntervencao,
+} from '../services/configuracaoApi'
 import type { InspecaoRede, ProblemaCarga } from '../types/rede'
 import './ConfigurationPage.css'
 
@@ -22,6 +29,14 @@ const iniciais = {
 
 export function ConfigurationPage() {
   const [campos, setCampos] = useState(iniciais)
+  const [intervencao, setIntervencao] = useState<EntradaIntervencao>({
+    ativa: false,
+    estrategia: 'aleatoria',
+    fracao: '0.1',
+    inicio: '0',
+    mecanismo: 'desativacao',
+    reducao: '0.5',
+  })
   const [rede, setRede] = useState<InspecaoRede | null>(null)
   const [conectado, setConectado] = useState(false)
   const [problemas, setProblemas] = useState<ProblemaCarga[]>([])
@@ -94,6 +109,7 @@ export function ConfigurationPage() {
           semente_isolamento: campos.semente_isolamento,
           limite_passos: campos.limite_passos,
           revisao_rede: String(rede.revisao),
+          intervencao: prepararFormularioIntervencao(intervencao),
         },
         controlador.signal,
       )
@@ -216,17 +232,24 @@ export function ConfigurationPage() {
                 'Semente dos eventos epidemiológicos',
               )}
               {entrada('semente_iniciais', 'Semente dos infectados iniciais')}
-              {entrada(
-                'semente_isolamento',
-                'Semente de isolamento — integração futura',
-              )}
               {entrada('limite_passos', 'Limite de passos')}
             </div>
-            <p>
-              O fluxo de isolamento está reservado; nenhuma intervenção é
-              aplicada aqui.
-            </p>
           </fieldset>
+          <InterventionFields
+            campos={intervencao}
+            alterar={(novos) => {
+              setIntervencao(novos)
+              setResumo(null)
+              setProblemas([])
+            }}
+            disabled={!pronto || validando}
+            problemas={problemas}
+            quantidade={valido?.configuracao.intervencao?.quantidade_isolados}
+            campoSemente={entrada(
+              'semente_isolamento',
+              'Semente da seleção aleatória',
+            )}
+          />
           <button
             className="button-primary"
             disabled={!pronto || validando}
@@ -275,6 +298,26 @@ export function ConfigurationPage() {
               iniciais: {valido.configuracao.semente_iniciais}; isolamento:{' '}
               {valido.configuracao.semente_isolamento}.
             </p>
+            {valido.configuracao.intervencao ? (
+              <p>
+                Intervenção:{' '}
+                {valido.configuracao.intervencao.estrategia === 'grau'
+                  ? 'por grau'
+                  : 'aleatória'}
+                ; fração {valido.configuracao.intervencao.fracao};{' '}
+                {valido.configuracao.intervencao.quantidade_isolados}{' '}
+                {valido.configuracao.intervencao.quantidade_isolados === 1
+                  ? 'pessoa'
+                  : 'pessoas'}
+                ; dia {valido.configuracao.intervencao.inicio}; mecanismo{' '}
+                {valido.configuracao.intervencao.mecanismo}.
+                {valido.configuracao.intervencao.reducao !== null && (
+                  <> Redução: {valido.configuracao.intervencao.reducao}.</>
+                )}
+              </p>
+            ) : (
+              <p>Sem intervenção neste cenário.</p>
+            )}
             <p>
               A rede de referência continua intacta. A execução completa será
               integrada posteriormente.

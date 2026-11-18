@@ -40,3 +40,23 @@
     padding: 16px;
   }
 }
+
+.intervention-toggle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 32px;
+}
+.configuration-page output {
+  display: block;
+  padding: 12px;
+  border: 1px solid var(--color-border, #aaa);
+}
+
+.intervention-toggle input[type='checkbox'] {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+  margin: 0;
+  accent-color: #333;
+}

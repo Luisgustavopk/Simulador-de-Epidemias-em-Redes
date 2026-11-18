@@ -1,5 +1,35 @@
 import { solicitar } from './redeApi'
 
+export interface EntradaIntervencao {
+  ativa: boolean
+  estrategia: 'aleatoria' | 'grau'
+  fracao: string
+  inicio: string
+  mecanismo: 'desativacao' | 'reducao' | 'exclusao'
+  reducao: string
+}
+
+export interface FormularioIntervencao {
+  estrategia: EntradaIntervencao['estrategia']
+  fracao: string
+  inicio: string
+  mecanismo: EntradaIntervencao['mecanismo']
+  reducao?: string
+}
+
+export function prepararFormularioIntervencao(
+  campos: EntradaIntervencao,
+): FormularioIntervencao | null {
+  if (!campos.ativa) return null
+  return {
+    estrategia: campos.estrategia,
+    fracao: campos.fracao,
+    inicio: campos.inicio,
+    mecanismo: campos.mecanismo,
+    ...(campos.mecanismo === 'reducao' ? { reducao: campos.reducao } : {}),
+  }
+}
+
 export interface FormularioConfiguracao {
   beta: string | null
   gamma: string
@@ -12,6 +42,7 @@ export interface FormularioConfiguracao {
   semente_isolamento: string
   limite_passos: string
   revisao_rede: string
+  intervencao?: FormularioIntervencao | null
 }
 
 export interface ConfiguracaoValidada {
@@ -27,6 +58,14 @@ export interface ConfiguracaoValidada {
     semente_isolamento: string
     limite_passos: number
     revisao_rede: number
+    intervencao: {
+      estrategia: EntradaIntervencao['estrategia']
+      fracao: number
+      quantidade_isolados: number
+      inicio: number
+      mecanismo: EntradaIntervencao['mecanismo']
+      reducao: number | null
+    } | null
   }
 }
 

@@ -231,7 +231,7 @@ export function ConfigurationPage() {
   const camposDoFormulario = { campos, problemas, alterar }
 
   return (
-    <AppShell conectado={conectado} etapaAtiva={1}>
+    <AppShell conectado={conectado} etapaAtiva={2}>
       <main id="conteudo" className="configuration-page">
         <h1>Configuração epidemiológica</h1>
         <p>

@@ -70,3 +70,46 @@ def test_fracao_nao_numerica_gera_um_diagnostico_da_causa(servico, campos):
     with pytest.raises(ErroConfiguracao) as erro:
         atender(servico, 'POST', '/api/rede/configuracao', {}, campos)
     assert [p.campo for p in erro.value.problemas] == ['intervencao.fracao']
+
+
+def test_execucao_individual_retorna_historico_metricas_e_motivo(servico, campos):
+    resultado = atender(
+        servico,
+        'POST',
+        '/api/rede/simulacao/executar',
+        {},
+        campos,
+    )
+    assert resultado['revisao_rede'] == 1
+    assert resultado['populacao'] == 3
+    assert resultado['motivo_termino'] in ('extincao', 'limite_passos')
+    assert resultado['historico'][0]['passo'] == 0
+    assert set(resultado['historico'][0]) >= {
+        'passo', 'suscetiveis', 'infectados', 'recuperados', 'isolados',
+    }
+    assert set(resultado['metrica']) >= {
+        'pico_infectados', 'passo_pico', 'pico_proporcional',
+        'fracao_acumulada', 'horizonte_observado', 'duracao_extincao',
+    }
+
+
+def test_execucao_comparada_retorna_todos_cenarios_e_historicos(servico, campos):
+    resultado = atender(
+        servico,
+        'POST',
+        '/api/rede/comparacao/executar',
+        {},
+        {'configuracao': campos, 'repeticoes': '2'},
+    )
+    assert resultado['revisao_rede'] == 1
+    assert resultado['populacao'] == 3
+    assert len(resultado['execucoes']) == 6
+    pares = {(item['repeticao'], item['cenario']) for item in resultado['execucoes']}
+    assert pares == {
+        (repeticao, cenario)
+        for repeticao in (1, 2)
+        for cenario in ('sem_intervencao', 'aleatoria', 'grau')
+    }
+    for execucao in resultado['execucoes']:
+        assert execucao['motivo_termino'] in ('extincao', 'limite_passos')
+        assert execucao['historico'][0]['passo'] == 0

@@ -150,6 +150,7 @@ export interface ResultadoSimulacao {
     horizonte_observado: number
     duracao_extincao: number | null
   }
+  motivo_termino: 'extincao' | 'limite_passos'
   historico: RegistroResultado[]
 }
 
@@ -157,6 +158,7 @@ export interface ExecucaoComparadaResultado {
   repeticao: number
   cenario: 'sem_intervencao' | 'aleatoria' | 'grau'
   metrica: ResultadoSimulacao['metrica']
+  motivo_termino: ResultadoSimulacao['motivo_termino']
   historico: RegistroResultado[]
 }
 

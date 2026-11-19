@@ -106,8 +106,7 @@ def _executar_individual(referencia, configuracao) -> ResultadoIndividual:
     simulado = Simulacao(rede, configuracao.limite_passos)
     motor = MotorSIR(GeradorAleatorio(configuracao.semente_epidemia))
     while not simulado.finalizada:
-        passo = simulado.passo + 1
-        if intervencao is not None and passo == intervencao.inicio and passo > 0:
+        if intervencao is not None and simulado.passo == intervencao.inicio and simulado.passo > 0:
             if estrategia is not None:
                 ids = estrategia.selecionar(rede, intervencao.quantidade_isolados(rede.numero_individuos))
                 aplicar_isolamento(
@@ -115,7 +114,12 @@ def _executar_individual(referencia, configuracao) -> ResultadoIndividual:
                     orcamento=intervencao.quantidade_isolados(rede.numero_individuos),
                     reducao=intervencao.reducao,
                 )
-        motor.avancar(rede, configuracao, passo - 1, revisao_rede=referencia.revisao)
+        motor.avancar(
+            rede,
+            configuracao,
+            simulado.passo,
+            revisao_rede=referencia.revisao,
+        )
         simulado.executar_passo()
         if simulado.passo >= configuracao.limite_passos:
             break
@@ -153,6 +157,7 @@ def executar_simulacao_api(servico: ServicoCargaRede, campos: dict[str, object])
             'horizonte_observado': resultado.horizonte_observado,
             'duracao_extincao': resultado.duracao_extincao,
         },
+        'motivo_termino': resultado.motivo_termino,
         'historico': historico,
     }
 
@@ -193,6 +198,7 @@ def executar_comparacao_api(servico: ServicoCargaRede, campos: dict[str, object]
                 'horizonte_observado': execucao.resultado.horizonte_observado,
                 'duracao_extincao': execucao.resultado.duracao_extincao,
             },
+            'motivo_termino': execucao.resultado.motivo_termino,
             'historico': _serializar_historico(execucao.resultado.historico),
         }
         for execucao in resultado.execucoes

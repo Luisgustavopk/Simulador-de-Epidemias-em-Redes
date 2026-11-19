@@ -3,37 +3,39 @@ hide empty description
 skinparam monochrome true
 skinparam dpi 170
 skinparam shadowing false
+skinparam linetype ortho
+skinparam nodesep 80
+skinparam ranksep 90
+skinparam ArrowFontSize 13
 skinparam defaultFontName Arial
 skinparam backgroundColor white
 skinparam stateBackgroundColor #F1F1F1
 skinparam stateBorderColor #555555
+header SIMULADOR DE EPIDEMIAS EM REDES - UML
 state "Indivíduo" as Individuo {
   state "Condição epidemiológica" as Epidemiologia {
-    state "Configuração inicial" as Inicio <<choice>>
+    state Inicio <<choice>>
     state "Suscetível (S)" as S
     state "Infectado (I)" as I
-    state "Recuperado ou removido (R)" as R
+    state "Recuperado ou\nremovido (R)" as R
     [*] --> Inicio
-    Inicio --> I : [infectado inicial]
-    Inicio --> S : [demais indivíduos]
-    S --> I : atualização t -> t+1\n[U_v(t) < P_v(t)]
-    I --> R : atualização t -> t+1\n[V_v(t) < gamma_d]
+    Inicio --> S : [demais]
+    Inicio --> I : [infectado inicial]\n/ infectar(0)
+    S --> I : atualização [infecção]\n/ infectar(t+1)
+    I --> R : atualização [recuperação]\n/ recuperar()
   }
-  --
+  ||
   state "Condição de isolamento" as CondicaoIsolamento {
     state "Não isolado" as Livre
     state "Isolado" as Isolado
     [*] --> Livre
-    Livre --> Isolado : início do passo t_int\n[indivíduo selecionado]
+    Livre --> Isolado : início em t_int\n[selecionado] / isolar()
   }
 }
 note bottom of Individuo
-  Regiões independentes e simultâneas.
-  Isolar não altera S, I ou R.
-  Efeito conforme mecanismo: desativação, redução ou exclusão.
-  Passar para R não exclui automaticamente o vértice.
-  Na coorte fechada, a exclusão preserva o registro epidemiológico.
-  Sem liberação na configuração de referência.
-  Transições SIR usam os estados existentes em t.
+  CONVENÇÃO ADOTADA NESTA VERSÃO
+  A recuperação preserva o isolamento até o encerramento da execução.
+  Decisões epidemiológicas usam o estado em t e são efetivadas juntas em t+1.
+  Alvos fixos, sem substituição; isolamento independente do estado SIR.
 end note
 @enduml

@@ -4,10 +4,22 @@ import { Icon } from './Icon'
 import { ThemeToggle } from './ThemeToggle'
 
 const etapas = [
-  ['Rede de contatos', 'Carga e inspeção'],
-  ['Configuração', 'Modelo SIR e intervenção'],
-  ['Simulação', 'Execução do cenário'],
-  ['Resultados', 'Histórico e métricas'],
+  {
+    titulo: 'Rede de contatos',
+    descricao: 'Carga e inspeção',
+    destino: '#rede',
+  },
+  {
+    titulo: 'Configuração',
+    descricao: 'Modelo SIR e intervenção',
+    destino: '#configuracao',
+  },
+  {
+    titulo: 'Simulação',
+    descricao: 'Ensaio epidemiológico',
+    destino: '#simulacao',
+  },
+  { titulo: 'Resultados', descricao: 'Em desenvolvimento' },
 ]
 
 export function AppShell({
@@ -84,30 +96,34 @@ export function AppShell({
           </button>
           <nav id="workflow-nav" aria-label="Etapas do estudo">
             <ol>
-              {etapas.map(([titulo, descricao], indice) => (
+              {etapas.map(({ titulo, descricao, destino }, indice) => (
                 <li
                   key={titulo}
                   className={indice + 1 === etapaAtiva ? 'current' : ''}
                   aria-current={indice + 1 === etapaAtiva ? 'step' : undefined}
                 >
-                  <button
-                    type="button"
-                    disabled={indice + 1 !== 1 && indice + 1 !== 3}
-                    onClick={() => onNavegar?.(indice + 1)}
-                    aria-label={`Etapa ${indice + 1}: ${titulo}`}
-                  >
-                    <span className="step-number">{indice + 1}</span>
-                    <span className="step-copy">
-                      <strong>{titulo}</strong>
-                      <small>
-                        {indice + 1 === etapaAtiva
-                          ? descricao
-                          : indice + 1 === 1
-                            ? descricao
-                            : 'Em desenvolvimento'}
-                      </small>
-                    </span>
-                  </button>
+                  {destino ? (
+                    <a href={destino}>
+                      <span className="step-number">{indice + 1}</span>
+                      <span className="step-copy">
+                        <strong>{titulo}</strong>
+                        <small>{descricao}</small>
+                      </span>
+                    </a>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled
+                      onClick={() => onNavegar?.(indice + 1)}
+                      aria-label={`Etapa ${indice + 1}: ${titulo}`}
+                    >
+                      <span className="step-number">{indice + 1}</span>
+                      <span className="step-copy">
+                        <strong>{titulo}</strong>
+                        <small>{descricao}</small>
+                      </span>
+                    </button>
+                  )}
                 </li>
               ))}
             </ol>

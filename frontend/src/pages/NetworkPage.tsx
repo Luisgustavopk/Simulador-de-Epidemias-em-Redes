@@ -248,8 +248,8 @@ export function NetworkPage({ onNavegar }: { onNavegar?: () => void } = {}) {
         </div>
         {rede?.confirmada && (
           <p className="next-step-note">
-            A rede está disponível no serviço de carga. A tela de configuração
-            será integrada na próxima etapa.
+            A rede está disponível para configurar.{' '}
+            <a href="#configuracao">Abrir configuração epidemiológica</a>.
           </p>
         )}
       </main>

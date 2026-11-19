@@ -129,12 +129,15 @@
     position: relative;
     color: var(--color-text-muted);
   }
+  .workflow-sidebar li > a,
   .workflow-sidebar li > button {
-    width: 100%;
     display: flex;
-    gap: 12px;
     align-items: flex-start;
+    gap: 12px;
+    width: 100%;
+    color: inherit;
     text-align: left;
+    text-decoration: none;
   }
   .workflow-sidebar li:not(:last-child)::after {
     content: '';

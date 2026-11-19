@@ -1,23 +1,34 @@
-import { useState } from 'react'
-import { NetworkPage } from './pages/NetworkPage'
+import { lazy, Suspense, useEffect, useState } from 'react'
+import { ConfigurationPage } from './pages/ConfigurationPage'
 import { SimulationPage } from './pages/SimulationPage'
 import './App.css'
 
+const Rede = lazy(() =>
+  import('./pages/NetworkPage').then((m) => ({ default: m.NetworkPage })),
+)
+
 export default function App() {
-  const [pagina, setPagina] = useState<'rede' | 'simulacao'>(
-    window.location.hash === '#rede' ? 'rede' : 'simulacao',
+  const [pagina, setPagina] = useState(() =>
+    window.location.hash || '#rede',
   )
 
-  function navegar(destino: 'rede' | 'simulacao') {
-    window.history.replaceState(null, '', `#${destino}`)
-    setPagina(destino)
+  useEffect(() => {
+    const mudar = () => setPagina(window.location.hash)
+    window.addEventListener('hashchange', mudar)
+    return () => window.removeEventListener('hashchange', mudar)
+  }, [])
+
+  if (pagina === '#configuracao') {
+    return <ConfigurationPage />
   }
 
-  return pagina === 'rede' ? (
-    <NetworkPage onNavegar={() => navegar('simulacao')} />
-  ) : (
-    <SimulationPage
-      onNavegarRede={() => navegar('rede')}
-    />
+  if (pagina === '#simulacao') {
+    return <SimulationPage onNavegarRede={() => { window.location.hash = '#rede' }} />
+  }
+
+  return (
+    <Suspense fallback={<p role="status">Carregando rede…</p>}>
+      <Rede onNavegar={() => { window.location.hash = '#simulacao' }} />
+    </Suspense>
   )
 }

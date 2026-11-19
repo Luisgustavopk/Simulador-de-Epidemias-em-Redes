@@ -1,10 +1,3 @@
-"""Adaptador HTTP de desenvolvimento para a tela de carga e inspeção.
-
-Execute ``python -m simulador.api_local`` e acesse a interface pelo Vite.
-Cada navegador recebe uma sessão independente. O servidor usa apenas a
-biblioteca padrão, escuta em loopback e não é um servidor de produção.
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -25,6 +18,11 @@ from simulador.carga_rede import (
 )
 
 
+from simulador.comparacao_api import validar_comparacao
+from simulador.configuracao import ErroConfiguracao
+from simulador.configuracao_api import validar_formulario
+
+
 MAX_CORPO = 8 * 1024 * 1024
 MAX_SESSOES = 16
 VALIDADE_SESSAO = 4 * 60 * 60
@@ -34,6 +32,8 @@ LIMITE_CONTATOS_PREVIA = 1200
 LOGGER = logging.getLogger(__name__)
 ROTAS = {
     "/api/rede": "GET",
+    "/api/rede/configuracao": "POST",
+    "/api/rede/comparacao/validar": "POST",
     "/api/rede/gerar": "POST",
     "/api/rede/importar": "POST",
     "/api/rede/confirmar": "POST",
@@ -42,6 +42,8 @@ ROTAS = {
     "/api/rede/individuos": "GET",
     "/api/rede/contatos": "GET",
 }
+
+ROTAS_COM_RETRATO = {"/api/rede", "/api/rede/gerar", "/api/rede/importar", "/api/rede/confirmar"}
 
 
 def _erro(campo: str, mensagem: str) -> ErroCargaRede:
@@ -60,7 +62,6 @@ def _arquivo(valor: object, campo: str) -> ArquivoCSV:
 
 @dataclass
 class SessaoCarga:
-    """Estado e serialização das operações HTTP de uma sessão."""
 
     servico: ServicoCargaRede = field(default_factory=ServicoCargaRede)
     lock: RLock = field(default_factory=RLock)
@@ -68,7 +69,7 @@ class SessaoCarga:
 
 
 def _previa(servico: ServicoCargaRede, revisao: int) -> dict[str, object]:
-    """Recorta dados reais para desenho, sem recalcular métricas ou topologia."""
+
     pessoas = servico.listar_individuos(revisao, limite=LIMITE_NOS_PREVIA)
     ids = {pessoa["id"] for pessoa in pessoas["individuos"]}
     contatos: list[dict[str, object]] = []
@@ -99,11 +100,14 @@ def atender(
     servico: ServicoCargaRede, metodo: str, caminho: str,
     parametros: dict[str, list[str]], corpo: dict[str, object],
 ) -> dict[str, object]:
-    """Traduz rotas HTTP para o contrato de carga, sem regras epidemiológicas."""
     if caminho not in ROTAS:
         raise _erro("rota", "Operação não encontrada.")
     if metodo != ROTAS[caminho]:
         raise _erro("metodo", f"Use o método {ROTAS[caminho]} para esta operação.")
+    if caminho == "/api/rede/comparacao/validar":
+        return validar_comparacao(servico, corpo)
+    if caminho == "/api/rede/configuracao":
+        return validar_formulario(servico, corpo)
     if metodo == "GET" and caminho == "/api/rede":
         return servico.inspecionar()
     if metodo == "POST" and caminho == "/api/rede/gerar":
@@ -137,7 +141,6 @@ def atender(
 
 
 class ServidorCarga(ThreadingHTTPServer):
-    """Servidor local com sessões limitadas e expiração por inatividade."""
 
     daemon_threads = True
 
@@ -147,7 +150,6 @@ class ServidorCarga(ThreadingHTTPServer):
         super().__init__(("127.0.0.1", porta), ManipuladorCarga)
 
     def sessao(self, cookie: str) -> tuple[str, SessaoCarga]:
-        """Recupera uma sessão válida ou cria um novo contexto de carga."""
         biscoitos = SimpleCookie()
         try:
             biscoitos.load(cookie)
@@ -171,7 +173,6 @@ class ServidorCarga(ThreadingHTTPServer):
 
 
 class ManipuladorCarga(BaseHTTPRequestHandler):
-    """Recebe JSON e devolve diagnósticos compatíveis com o formulário React."""
 
     server: ServidorCarga
 
@@ -215,7 +216,11 @@ class ManipuladorCarga(BaseHTTPRequestHandler):
             url = urlsplit(self.path)
             with sessao.lock:
                 resultado = atender(sessao.servico, self.command, url.path, parse_qs(url.query), corpo)
+                if url.path in ROTAS_COM_RETRATO:
+                    resultado["contexto_rede"] = sessao.servico.contexto_rede
             self._responder(200, resultado, identificador)
+        except ErroConfiguracao as erro:
+            self._responder(422, erro.para_dict(), identificador)
         except ErroCargaRede as erro:
             status_por_campo = {"revisao": 409, "rota": 404, "metodo": 405, "sessao": 503}
             status = next((status_por_campo[p.campo] for p in erro.problemas
@@ -237,8 +242,7 @@ class ManipuladorCarga(BaseHTTPRequestHandler):
 
 
 def main() -> None:
-    """Inicia a API de desenvolvimento em loopback."""
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = argparse.ArgumentParser(description="Executa a API local do Simulador de Epidemias em Redes.")
     parser.add_argument("--porta", type=int, default=8000)
     argumentos = parser.parse_args()
     with ServidorCarga(argumentos.porta) as servidor:

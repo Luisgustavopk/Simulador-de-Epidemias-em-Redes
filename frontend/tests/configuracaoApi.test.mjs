@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import { carregarConfiguracaoApi } from './carregarConfiguracaoApi.mjs'
 
-const { validarComparacao, validarConfiguracao } =
+const { validarComparacao, validarConfiguracao, executarSimulacao } =
   await carregarConfiguracaoApi()
 
 test('configuração conserva IDs e sementes textuais e inclui a revisão', async () => {
@@ -62,7 +62,7 @@ test('comparação envia a quantidade original do sorteio e a revisão', async (
         semente_epidemia: '9007199254740993',
       },
     })
-    return Response.json({ execucao_disponivel: false })
+    return Response.json({ execucao_disponivel: true })
   }
   try {
     const resultado = await validarComparacao('2', {
@@ -71,7 +71,43 @@ test('comparação envia a quantidade original do sorteio e a revisão', async (
       revisao_rede: '7',
       semente_epidemia: '9007199254740993',
     })
-    assert.equal(resultado.execucao_disponivel, false)
+    assert.equal(resultado.execucao_disponivel, true)
+  } finally {
+    globalThis.fetch = anterior
+  }
+})
+
+test('execução individual usa a rota do motor SIR', async () => {
+  const anterior = globalThis.fetch
+  globalThis.fetch = async (caminho, opcoes) => {
+    assert.equal(caminho, '/api/rede/simulacao/executar')
+    assert.equal(opcoes.method, 'POST')
+    assert.deepEqual(JSON.parse(opcoes.body), { limite_passos: '20' })
+    return Response.json({
+      populacao: 3,
+      metrica: {
+        pico_infectados: 2,
+        passo_pico: 1,
+        pico_proporcional: 2 / 3,
+        fracao_acumulada: 1,
+        horizonte_observado: 2,
+        duracao_extincao: 2,
+      },
+      historico: [
+        {
+          passo: 0,
+          suscetiveis: 1,
+          infectados: 2,
+          recuperados: 0,
+          isolados: 0,
+        },
+      ],
+    })
+  }
+  try {
+    const resultado = await executarSimulacao({ limite_passos: '20' })
+    assert.equal(resultado.populacao, 3)
+    assert.equal(resultado.historico[0].passo, 0)
   } finally {
     globalThis.fetch = anterior
   }

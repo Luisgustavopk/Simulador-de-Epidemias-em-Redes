@@ -18,7 +18,11 @@ from simulador.carga_rede import (
 )
 
 
-from simulador.comparacao_api import executar_comparacao_api, validar_comparacao
+from simulador.comparacao_api import (
+    executar_comparacao_api,
+    executar_simulacao_api,
+    validar_comparacao,
+)
 from simulador.configuracao import ErroConfiguracao
 from simulador.configuracao_api import validar_formulario
 
@@ -111,7 +115,6 @@ def atender(
     if caminho == "/api/rede/comparacao/executar":
         return executar_comparacao_api(servico, corpo)
     if caminho == "/api/rede/simulacao/executar":
-        from simulador.comparacao_api import executar_simulacao_api
         return executar_simulacao_api(servico, corpo)
     if caminho == "/api/rede/configuracao":
         return validar_formulario(servico, corpo)

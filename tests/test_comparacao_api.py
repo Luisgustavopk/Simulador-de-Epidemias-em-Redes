@@ -45,7 +45,7 @@ def test_preparo_preserva_sorteio_e_nao_publica_resultados(servico, campos):
     assert resposta['quantidade_infectados'] == 2
     assert resposta['modo_iniciais'] == 'sorteio'
     assert resposta['sementes_base']['epidemia'] == '900719925474099312345'
-    assert resposta['execucao_disponivel'] is False
+    assert resposta['execucao_disponivel'] is True
     assert 'resultados' not in resposta
     assert all(p.estado.value == 'S' and not p.isolamento for p in servico.obter_rede_confirmada(1).rede.individuos)
 

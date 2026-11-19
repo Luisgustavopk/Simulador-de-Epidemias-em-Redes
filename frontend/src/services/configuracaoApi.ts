@@ -114,7 +114,7 @@ export interface ComparacaoValidada {
     iniciais: string
     isolamento: string
   }
-  execucao_disponivel: false
+  execucao_disponivel: boolean
 }
 
 export function validarComparacao(

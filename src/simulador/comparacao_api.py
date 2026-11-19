@@ -70,7 +70,7 @@ def validar_comparacao(servico: ServicoCargaRede, campos: dict[str, object]) -> 
             'iniciais': str(configuracao.semente_iniciais),
             'isolamento': str(configuracao.semente_isolamento),
         },
-        'execucao_disponivel': False,
+        'execucao_disponivel': True,
     }
 
 

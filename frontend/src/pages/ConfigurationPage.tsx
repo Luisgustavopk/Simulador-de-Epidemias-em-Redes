@@ -5,10 +5,13 @@ import { AppShell } from '../components/AppShell'
 import { problemasDoErro, redeApi } from '../services/redeApi'
 import {
   prepararFormularioIntervencao,
+  validarComparacao,
   validarConfiguracao,
 } from '../services/configuracaoApi'
 import type {
+  ComparacaoValidada,
   ConfiguracaoValidada,
+  FormularioConfiguracao,
   EntradaIntervencao,
 } from '../services/configuracaoApi'
 import type { InspecaoRede, ProblemaCarga } from '../types/rede'
@@ -27,6 +30,18 @@ const iniciais = {
   limite_passos: '200',
 }
 
+const rotulosCenarios = {
+  sem_intervencao: 'Sem intervenção',
+  aleatoria: 'Seleção aleatória',
+  grau: 'Seleção por grau',
+}
+
+const rotulosMecanismos = {
+  desativacao: 'Desativação dos contatos',
+  reducao: 'Redução da intensidade',
+  exclusao: 'Exclusão dos contatos',
+}
+
 export function ConfigurationPage() {
   const [campos, setCampos] = useState(iniciais)
   const [intervencao, setIntervencao] = useState<EntradaIntervencao>({
@@ -38,23 +53,36 @@ export function ConfigurationPage() {
     reducao: '0.5',
   })
   const [rede, setRede] = useState<InspecaoRede | null>(null)
-  const [conectado, setConectado] = useState(false)
+  const [estadoConexao, setEstadoConexao] = useState<
+    'inicial' | 'conectada' | 'falhou'
+  >('inicial')
+  const [problemasConexao, setProblemasConexao] = useState<ProblemaCarga[]>([])
+  const conectado = estadoConexao === 'conectada'
+  const [repeticoes, setRepeticoes] = useState('2')
+  const [comparacao, setComparacao] = useState<ComparacaoValidada | null>(null)
   const [problemas, setProblemas] = useState<ProblemaCarga[]>([])
   const [resumo, setResumo] = useState<ConfiguracaoValidada | null>(null)
   const [validando, setValidando] = useState(false)
   const pedido = useRef<AbortController | null>(null)
   const erros = useRef<HTMLDivElement | null>(null)
+  const consultaRede = useRef(0)
 
   useEffect(() => {
     const controlador = new AbortController()
     async function consultar() {
+      const consulta = ++consultaRede.current
       try {
         const atual = await redeApi.inspecionar(controlador.signal)
-        if (controlador.signal.aborted) return
+        if (controlador.signal.aborted || consulta !== consultaRede.current)
+          return
         setRede(atual)
-        setConectado(true)
-      } catch {
-        if (!controlador.signal.aborted) setConectado(false)
+        setEstadoConexao('conectada')
+        setProblemasConexao([])
+      } catch (erro) {
+        if (controlador.signal.aborted || consulta !== consultaRede.current)
+          return
+        setEstadoConexao('falhou')
+        setProblemasConexao(problemasDoErro(erro))
       }
     }
     void consultar()
@@ -74,61 +102,83 @@ export function ConfigurationPage() {
       ? resumo
       : null
 
-  function alterar(campo: keyof typeof iniciais, valor: string) {
+  const comparacaoValida =
+    pronto && comparacao?.revisao_rede === rede?.revisao ? comparacao : null
+  const errosRepeticoes = problemas.filter((p) => p.campo === 'repeticoes')
+
+  function invalidarValidacao() {
+    pedido.current?.abort()
+    pedido.current = null
     setValidando(false)
     setResumo(null)
+    setComparacao(null)
     setProblemas([])
+  }
+
+  function alterar(campo: keyof typeof iniciais, valor: string) {
+    invalidarValidacao()
     setCampos((atual) => ({ ...atual, [campo]: valor }))
   }
 
-  async function validar(evento: FormEvent) {
+  function enviar(evento: FormEvent) {
     evento.preventDefault()
-    if (!pronto || !rede) return
-    pedido.current?.abort()
+    void validar('individual')
+  }
+
+  async function validar(tipo: 'individual' | 'comparacao') {
+    if (!pronto || !rede || pedido.current) return
     const controlador = new AbortController()
     pedido.current = controlador
     setResumo(null)
+    setComparacao(null)
     setProblemas([])
     setValidando(true)
     try {
-      const resultado = await validarConfiguracao(
-        {
-          beta: campos.modo_peso === 'intensidade' ? campos.beta : null,
-          gamma: campos.gamma,
-          modo_peso: campos.modo_peso as 'intensidade' | 'probabilidade',
-          modo_iniciais: campos.modo_iniciais as 'ids' | 'sorteio',
-          ...(campos.modo_iniciais === 'ids'
-            ? {
-                ids_infectados_iniciais: campos.ids.trim()
-                  ? campos.ids.trim().split(/[\s,;]+/)
-                  : [],
-              }
-            : { quantidade_infectados: campos.quantidade }),
-          semente_epidemia: campos.semente_epidemia,
-          semente_iniciais: campos.semente_iniciais,
-          semente_isolamento: campos.semente_isolamento,
-          limite_passos: campos.limite_passos,
-          revisao_rede: String(rede.revisao),
-          intervencao: prepararFormularioIntervencao(intervencao),
-        },
-        controlador.signal,
-      )
+      const formulario: FormularioConfiguracao = {
+        beta: campos.modo_peso === 'intensidade' ? campos.beta : null,
+        gamma: campos.gamma,
+        modo_peso: campos.modo_peso as 'intensidade' | 'probabilidade',
+        modo_iniciais: campos.modo_iniciais as 'ids' | 'sorteio',
+        ...(campos.modo_iniciais === 'ids'
+          ? {
+              ids_infectados_iniciais: campos.ids.trim()
+                ? campos.ids.trim().split(/[\s,;]+/)
+                : [],
+            }
+          : { quantidade_infectados: campos.quantidade }),
+        semente_epidemia: campos.semente_epidemia,
+        semente_iniciais: campos.semente_iniciais,
+        semente_isolamento: campos.semente_isolamento,
+        limite_passos: campos.limite_passos,
+        revisao_rede: String(rede.revisao),
+        intervencao: prepararFormularioIntervencao(intervencao),
+      }
+      const consulta = ++consultaRede.current
+      const resultado =
+        tipo === 'comparacao'
+          ? await validarComparacao(repeticoes, formulario, controlador.signal)
+          : await validarConfiguracao(formulario, controlador.signal)
       const atual = await redeApi.inspecionar(controlador.signal)
       if (controlador.signal.aborted) return
-      setRede(atual)
-      if (
-        !atual.confirmada ||
-        atual.revisao !== resultado.configuracao.revisao_rede
-      )
+      if (consulta === consultaRede.current) setRede(atual)
+      const revisao =
+        'configuracao' in resultado
+          ? resultado.configuracao.revisao_rede
+          : resultado.revisao_rede
+      if (!atual.confirmada || atual.revisao !== revisao)
         throw new Error('A rede mudou. Valide a configuração novamente.')
-      setResumo(resultado)
+      if ('configuracao' in resultado) setResumo(resultado)
+      else setComparacao(resultado)
     } catch (erro) {
       if (!controlador.signal.aborted) {
         setProblemas(problemasDoErro(erro))
         requestAnimationFrame(() => erros.current?.focus())
       }
     } finally {
-      if (!controlador.signal.aborted) setValidando(false)
+      if (pedido.current === controlador) {
+        pedido.current = null
+        setValidando(false)
+      }
     }
   }
 
@@ -168,14 +218,16 @@ export function ConfigurationPage() {
           do modelo, sem calibração para previsão real.
         </p>
         <p role="status">
-          {!conectado
+          {estadoConexao === 'inicial'
             ? 'Conectando à API local…'
-            : pronto
-              ? `Rede confirmada · revisão ${rede?.revisao} · ${rede?.resumo?.numero_individuos} indivíduos`
-              : 'Gere ou importe e confirme uma rede antes de validar.'}
+            : estadoConexao === 'falhou'
+              ? problemasConexao.map((problema) => problema.mensagem).join(' ')
+              : pronto
+                ? `Rede confirmada · revisão ${rede?.revisao} · ${rede?.resumo?.numero_individuos} indivíduos`
+                : 'Gere ou importe e confirme uma rede antes de validar.'}
         </p>
         <a href="#rede">Voltar à rede de contatos</a>
-        <form onSubmit={(e) => void validar(e)} noValidate>
+        <form onSubmit={enviar} noValidate>
           <fieldset disabled={!pronto || validando}>
             <legend>Transmissão e recuperação</legend>
             <div className="field">
@@ -238,9 +290,8 @@ export function ConfigurationPage() {
           <InterventionFields
             campos={intervencao}
             alterar={(novos) => {
+              invalidarValidacao()
               setIntervencao(novos)
-              setResumo(null)
-              setProblemas([])
             }}
             disabled={!pronto || validando}
             problemas={problemas}
@@ -257,6 +308,39 @@ export function ConfigurationPage() {
           >
             {validando ? 'Validando…' : 'Validar configuração'}
           </button>
+          <fieldset disabled={!pronto || validando}>
+            <legend>Comparação com repetições</legend>
+            <p>
+              Compare a rede sem intervenção com seleção aleatória e por grau.
+              Ative a intervenção para definir o orçamento, o dia e o mecanismo
+              das duas estratégias.
+            </p>
+            <div className="field">
+              <label htmlFor="cfg-repeticoes">Número de repetições</label>
+              <input
+                id="cfg-repeticoes"
+                inputMode="numeric"
+                value={repeticoes}
+                onChange={(e) => {
+                  invalidarValidacao()
+                  setRepeticoes(e.target.value)
+                }}
+                aria-invalid={errosRepeticoes.length > 0}
+                aria-describedby={
+                  errosRepeticoes.length ? 'erro-repeticoes' : undefined
+                }
+              />
+              {errosRepeticoes.length > 0 && (
+                <p id="erro-repeticoes" className="field-error">
+                  {errosRepeticoes.map((p) => p.mensagem).join(' ')}
+                </p>
+              )}
+            </div>
+            <p>A comparação usa as três sementes informadas acima como base.</p>
+            <button type="button" onClick={() => void validar('comparacao')}>
+              Validar comparação
+            </button>
+          </fieldset>
         </form>
         {problemas.length > 0 && (
           <div role="alert" className="error-summary" ref={erros} tabIndex={-1}>
@@ -269,6 +353,55 @@ export function ConfigurationPage() {
               ))}
             </ul>
           </div>
+        )}
+        {comparacaoValida && (
+          <section
+            className="configuration-summary"
+            aria-label="Comparação validada"
+            aria-live="polite"
+          >
+            <h2>Comparação validada</h2>
+            <p>
+              {comparacaoValida.repeticoes} repetições · revisão{' '}
+              {comparacaoValida.revisao_rede} · {comparacaoValida.populacao}{' '}
+              indivíduos
+            </p>
+            <ul>
+              {comparacaoValida.cenarios.map((cenario) => (
+                <li key={cenario}>{rotulosCenarios[cenario]}</li>
+              ))}
+            </ul>
+            <p>
+              Orçamento por intervenção: {comparacaoValida.quantidade_isolados}.
+              Dia {comparacaoValida.intervencao.inicio} ·{' '}
+              {rotulosMecanismos[comparacaoValida.intervencao.mecanismo]}.
+              {comparacaoValida.intervencao.reducao !== null && (
+                <> Fração de redução: {comparacaoValida.intervencao.reducao}.</>
+              )}
+            </p>
+            <p>
+              {comparacaoValida.modo_iniciais === 'sorteio'
+                ? `Infectados iniciais por sorteio em cada repetição: ${comparacaoValida.quantidade_infectados}.`
+                : `Infectados iniciais por IDs informados: ${comparacaoValida.quantidade_infectados}.`}
+            </p>
+            <p>
+              Sementes base — epidemia:{' '}
+              {comparacaoValida.sementes_base.epidemia}; iniciais:{' '}
+              {comparacaoValida.sementes_base.iniciais}; isolamento:{' '}
+              {comparacaoValida.sementes_base.isolamento}.
+            </p>
+            <p id="execucao-comparacao-pendente">
+              A execução da comparação será liberada quando a simulação
+              individual estiver integrada.
+            </p>
+            <button
+              type="button"
+              disabled
+              aria-describedby="execucao-comparacao-pendente"
+            >
+              Executar comparação
+            </button>
+          </section>
         )}
         {valido && (
           <section

@@ -80,3 +80,38 @@ export function validarConfiguracao(
     signal,
   })
 }
+
+export interface ComparacaoValidada {
+  repeticoes: string
+  cenarios: ('sem_intervencao' | 'aleatoria' | 'grau')[]
+  revisao_rede: number
+  populacao: number
+  modo_iniciais: 'ids' | 'sorteio'
+  quantidade_infectados: number
+  quantidade_isolados: number
+  intervencao: {
+    fracao: number
+    inicio: number
+    mecanismo: EntradaIntervencao['mecanismo']
+    reducao: number | null
+  }
+  sementes_base: {
+    epidemia: string
+    iniciais: string
+    isolamento: string
+  }
+  execucao_disponivel: false
+}
+
+export function validarComparacao(
+  repeticoes: string,
+  configuracao: FormularioConfiguracao,
+  signal?: AbortSignal,
+): Promise<ComparacaoValidada> {
+  return solicitar<ComparacaoValidada>('/comparacao/validar', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ repeticoes, configuracao }),
+    signal,
+  })
+}

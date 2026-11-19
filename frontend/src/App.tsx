@@ -4,15 +4,37 @@ import { SimulationPage } from './pages/SimulationPage'
 import { ResultsPage } from './pages/ResultsPage'
 import './App.css'
 
+const HASHES_PERMITIDOS = new Set([
+  '',
+  '#rede',
+  '#configuracao',
+  '#simulacao',
+  '#resultados',
+])
+
 const Rede = lazy(() =>
   import('./pages/NetworkPage').then((m) => ({ default: m.NetworkPage })),
 )
 
 export default function App() {
-  const [pagina, setPagina] = useState(() => window.location.hash || '#rede')
+  const hashInicial = window.location.hash
+  if (!HASHES_PERMITIDOS.has(hashInicial)) {
+    window.history.replaceState(null, '', '#rede')
+  }
+  const [pagina, setPagina] = useState(() =>
+    HASHES_PERMITIDOS.has(hashInicial) && hashInicial ? hashInicial : '#rede',
+  )
 
   useEffect(() => {
-    const mudar = () => setPagina(window.location.hash)
+    const mudar = () => {
+      const hash = window.location.hash
+      if (!HASHES_PERMITIDOS.has(hash) || hash === '') {
+        window.history.replaceState(null, '', '#rede')
+        setPagina('#rede')
+        return
+      }
+      setPagina(hash)
+    }
     window.addEventListener('hashchange', mudar)
     return () => window.removeEventListener('hashchange', mudar)
   }, [])

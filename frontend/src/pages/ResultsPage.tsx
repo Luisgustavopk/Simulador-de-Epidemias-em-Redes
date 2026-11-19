@@ -5,6 +5,7 @@ import { useCargaRede } from '../hooks/useCargaRede'
 import {
   executarComparacao,
   executarSimulacao,
+  type ExecucaoComparadaResultado,
   type RegistroResultado,
   type ResultadoComparacaoExecutada,
   type ResultadoSimulacao,
@@ -12,36 +13,8 @@ import {
 } from '../services/configuracaoApi'
 import './ResultsPage.css'
 
-const CHAVE_HISTORICO = 'observatorio-historico-ensaio'
 const CHAVE_CONFIGURACAO = 'observatorio-configuracao'
-
-interface RegistroLocal {
-  passo: number
-  suscetiveis: number
-  infectados: number
-  recuperados: number
-  isolados: number
-}
-
-function lerHistoricoLocal(total: number): RegistroLocal[] {
-  try {
-    const registros = JSON.parse(
-      sessionStorage.getItem(CHAVE_HISTORICO) ?? '[]',
-    ) as RegistroLocal[]
-    if (Array.isArray(registros) && registros.length) return registros
-  } catch {
-    // A demonstração permanece disponível mesmo sem histórico persistido.
-  }
-  return [
-    {
-      passo: 0,
-      suscetiveis: Math.max(total - 4, 0),
-      infectados: Math.min(4, total),
-      recuperados: 0,
-      isolados: 0,
-    },
-  ]
-}
+const CHAVE_RESULTADO = 'observatorio-resultado-execucao'
 
 function formatarPercentual(valor: number) {
   return `${(valor * 100).toLocaleString('pt-BR', {
@@ -70,45 +43,75 @@ export function ResultsPage() {
       setCarregando(true)
       setErro('')
       try {
-        const salvo = JSON.parse(
-          sessionStorage.getItem(CHAVE_CONFIGURACAO) ?? 'null',
-        ) as {
-          repeticoes: string | null
-          formulario: FormularioConfiguracao
-        } | null
+        const concluido = JSON.parse(
+          sessionStorage.getItem(CHAVE_RESULTADO) ?? 'null',
+        ) as
+          | {
+              tipo: 'individual'
+              resultado: ResultadoSimulacao
+            }
+          | {
+              tipo: 'comparacao'
+              comparacao: ResultadoComparacaoExecutada
+            }
+          | null
 
-        if (salvo?.formulario) {
-          if (salvo.repeticoes) {
-            const lote = await executarComparacao(
-              salvo.repeticoes,
-              salvo.formulario,
-              controlador.signal,
-            )
-            setComparacao(lote)
-            const principal =
-              lote.execucoes.find((execucao) => execucao.cenario === 'grau') ??
-              lote.execucoes.find(
-                (execucao) => execucao.cenario === 'aleatoria',
-              ) ??
-              lote.execucoes[0]
-            if (principal) setHistorico(principal.historico)
-          } else {
-            const ensaio = await executarSimulacao(
-              salvo.formulario,
-              controlador.signal,
-            )
-            setResultado(ensaio)
-            setHistorico(ensaio.historico)
-          }
+        if (concluido?.tipo === 'individual') {
+          setResultado(concluido.resultado)
+          setHistorico(concluido.resultado.historico)
+        } else if (concluido?.tipo === 'comparacao') {
+          setComparacao(concluido.comparacao)
+          const principal =
+            concluido.comparacao.execucoes.find(
+              (execucao) => execucao.cenario === 'grau',
+            ) ??
+            concluido.comparacao.execucoes.find(
+              (execucao) => execucao.cenario === 'aleatoria',
+            ) ??
+            concluido.comparacao.execucoes[0]
+          if (principal) setHistorico(principal.historico)
         } else {
-          setHistorico(lerHistoricoLocal(totalRede))
+          const salvo = JSON.parse(
+            sessionStorage.getItem(CHAVE_CONFIGURACAO) ?? 'null',
+          ) as {
+            repeticoes: string | null
+            formulario: FormularioConfiguracao
+          } | null
+
+          if (salvo?.formulario) {
+            if (salvo.repeticoes) {
+              const lote = await executarComparacao(
+                salvo.repeticoes,
+                salvo.formulario,
+                controlador.signal,
+              )
+              setComparacao(lote)
+              const principal =
+                lote.execucoes.find(
+                  (execucao) => execucao.cenario === 'grau',
+                ) ??
+                lote.execucoes.find(
+                  (execucao) => execucao.cenario === 'aleatoria',
+                ) ??
+                lote.execucoes[0]
+              if (principal) setHistorico(principal.historico)
+            } else {
+              const ensaio = await executarSimulacao(
+                salvo.formulario,
+                controlador.signal,
+              )
+              setResultado(ensaio)
+              setHistorico(ensaio.historico)
+            }
+          } else {
+            setErro('Nenhum ensaio concluído. Execute a simulação na Tela 03.')
+            setHistorico([])
+          }
         }
       } catch {
         if (!controlador.signal.aborted) {
-          setErro(
-            'O backend não pôde executar o resultado. Exibindo o ensaio registrado localmente.',
-          )
-          setHistorico(lerHistoricoLocal(totalRede))
+          setErro('Não foi possível carregar os resultados do backend.')
+          setHistorico([])
         }
       } finally {
         if (!controlador.signal.aborted) setCarregando(false)
@@ -134,17 +137,22 @@ export function ResultsPage() {
   const isolados =
     atual?.isolados ??
     historico.reduce((maior, registro) => Math.max(maior, registro.isolados), 0)
+  const horizonteObservado =
+    resultado?.metrica.horizonte_observado ??
+    (comparacao
+      ? comparacao.execucoes.reduce(
+          (maior, execucao) =>
+            Math.max(maior, execucao.metrica.horizonte_observado),
+          0,
+        )
+      : passoAtual)
+  const motivoTermino =
+    resultado?.motivo_termino ??
+    (comparacao ? (comparacao.execucoes[0]?.motivo_termino ?? null) : null)
 
   const trajetoriasComparadas = useMemo(() => {
     if (!comparacao) return []
-    return (['sem_intervencao', 'aleatoria', 'grau'] as const)
-      .map((cenario) => {
-        const execucao = comparacao.execucoes.find(
-          (item) => item.cenario === cenario,
-        )
-        return execucao ? { cenario, historico: execucao.historico } : null
-      })
-      .filter((item): item is NonNullable<typeof item> => item !== null)
+    return comparacao.execucoes
   }, [comparacao])
 
   function exportarCsv() {
@@ -192,6 +200,25 @@ export function ResultsPage() {
       .join(' ')
   }
 
+  function linhaComparada(
+    execucao: ExecucaoComparadaResultado,
+    campo: 'suscetiveis' | 'infectados' | 'recuperados',
+  ) {
+    return execucao.historico
+      .map((registro, indice) => {
+        const passoMaximo = Math.max(
+          1,
+          ...execucao.historico.map((item) => item.passo),
+        )
+        const pontoX =
+          margem.esquerda +
+          (registro.passo / Math.max(ultimoPasso, passoMaximo)) *
+            (largura - margem.esquerda - margem.direita)
+        return `${indice ? 'L' : 'M'} ${pontoX} ${y(registro[campo])}`
+      })
+      .join(' ')
+  }
+
   return (
     <AppShell conectado={carga.conexao === 'online'} etapaAtiva={4}>
       <main id="conteudo" className="workspace results-workspace" tabIndex={-1}>
@@ -200,8 +227,7 @@ export function ResultsPage() {
             <p className="page-eyebrow">04 / Evidências do cenário</p>
             <h1>Leitura do experimento</h1>
             <p>
-              Compare trajetórias e examine os registros do cenário
-              demonstrativo.
+              Compare trajetórias e examine os registros do cenário observado.
             </p>
           </div>
           <div className="sir-model" role="img" aria-label="Modelo SIR">
@@ -238,7 +264,22 @@ export function ResultsPage() {
             <strong>
               {carregando ? 'Calculando…' : `Ensaio em t = ${passoAtual}`}
             </strong>
-            <small>Estado registrado no passo t = {passoAtual}</small>
+            <small>Horizonte observado: t = {horizonteObservado}</small>
+          </article>
+          <article>
+            <span>Motivo do término</span>
+            <strong>
+              {motivoTermino === 'extincao'
+                ? 'Extinção da epidemia'
+                : motivoTermino === 'limite_passos'
+                  ? 'Limite máximo de passos'
+                  : 'Aguardando execução'}
+            </strong>
+            <small>
+              {motivoTermino
+                ? `Resultado registrado em t = ${horizonteObservado}`
+                : 'Execute o ensaio na Tela 03'}
+            </small>
           </article>
           <article>
             <span>Pico de infectados</span>
@@ -318,13 +359,16 @@ export function ResultsPage() {
             >
               <i className="curve-r" /> Recuperados (R)
             </button>
-            {trajetoriasComparadas.map(({ cenario }) => (
-              <span key={cenario} className="comparison-key">
-                {cenario === 'sem_intervencao'
-                  ? 'Sem intervenção'
-                  : cenario === 'aleatoria'
-                    ? 'Intervenção aleatória'
-                    : 'Intervenção por grau'}
+            {trajetoriasComparadas.map((execucao) => (
+              <span
+                key={`${execucao.cenario}-${execucao.repeticao}`}
+                className="comparison-key"
+              >
+                {execucao.cenario === 'sem_intervencao'
+                  ? `Sem intervenção · r${execucao.repeticao}`
+                  : execucao.cenario === 'aleatoria'
+                    ? `Aleatória · r${execucao.repeticao}`
+                    : `Por grau · r${execucao.repeticao}`}
               </span>
             ))}
           </div>
@@ -380,6 +424,35 @@ export function ResultsPage() {
                 {visiveis.recuperados && (
                   <path d={linha('recuperados')} className="chart-r" />
                 )}
+                {trajetoriasComparadas.map((execucao, indice) => (
+                  <g
+                    key={`${execucao.cenario}-${execucao.repeticao}`}
+                    className={`comparison-series comparison-${execucao.cenario}`}
+                    opacity={0.72}
+                  >
+                    {visiveis.suscetiveis && (
+                      <path
+                        d={linhaComparada(execucao, 'suscetiveis')}
+                        className="comparison-s"
+                        strokeDasharray={indice % 2 ? '7 4' : undefined}
+                      />
+                    )}
+                    {visiveis.infectados && (
+                      <path
+                        d={linhaComparada(execucao, 'infectados')}
+                        className="comparison-i"
+                        strokeDasharray={indice % 2 ? '7 4' : undefined}
+                      />
+                    )}
+                    {visiveis.recuperados && (
+                      <path
+                        d={linhaComparada(execucao, 'recuperados')}
+                        className="comparison-r"
+                        strokeDasharray={indice % 2 ? '7 4' : undefined}
+                      />
+                    )}
+                  </g>
+                ))}
               </svg>
             ) : (
               <p className="chart-empty">Nenhum registro disponível.</p>

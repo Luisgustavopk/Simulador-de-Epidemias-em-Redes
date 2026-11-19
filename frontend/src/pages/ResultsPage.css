@@ -12,7 +12,7 @@
   }
   .result-metrics {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
     gap: 12px;
     margin: 18px 0;
   }
@@ -133,6 +133,19 @@
   .trajectory-chart path {
     fill: none;
     stroke-width: 2.5;
+  }
+  .comparison-series path {
+    fill: none;
+    stroke-width: 1.5;
+  }
+  .comparison-s {
+    stroke: #4c78a8;
+  }
+  .comparison-i {
+    stroke: #c94d4d;
+  }
+  .comparison-r {
+    stroke: #4c9a72;
   }
   .chart-grid {
     stroke: var(--color-border);

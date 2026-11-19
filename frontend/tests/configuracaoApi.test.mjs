@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import { carregarConfiguracaoApi } from './carregarConfiguracaoApi.mjs'
 
-const { validarComparacao, validarConfiguracao, executarSimulacao } =
+const { validarComparacao, validarConfiguracao, executarComparacao, executarSimulacao } =
   await carregarConfiguracaoApi()
 
 test('configuração conserva IDs e sementes textuais e inclui a revisão', async () => {
@@ -108,6 +108,38 @@ test('execução individual usa a rota do motor SIR', async () => {
     const resultado = await executarSimulacao({ limite_passos: '20' })
     assert.equal(resultado.populacao, 3)
     assert.equal(resultado.historico[0].passo, 0)
+  } finally {
+    globalThis.fetch = anterior
+  }
+})
+
+test('execução de comparação preserva lote e cenários separados', async () => {
+  const anterior = globalThis.fetch
+  globalThis.fetch = async (caminho, opcoes) => {
+    assert.equal(caminho, '/api/rede/comparacao/executar')
+    assert.equal(opcoes.method, 'POST')
+    assert.deepEqual(JSON.parse(opcoes.body), {
+      repeticoes: '3',
+      configuracao: { revisao_rede: '4', semente_epidemia: '42' },
+    })
+    return Response.json({
+      contexto_rede: 'rede-a',
+      revisao_rede: 4,
+      populacao: 10,
+      execucoes: [
+        { cenario: 'grau', repeticao: 1, historico: [{ passo: 0 }] },
+        { cenario: 'aleatoria', repeticao: 1, historico: [{ passo: 0 }] },
+      ],
+      resumo: {},
+    })
+  }
+  try {
+    const lote = await executarComparacao('3', {
+      revisao_rede: '4',
+      semente_epidemia: '42',
+    })
+    assert.equal(lote.revisao_rede, 4)
+    assert.deepEqual(lote.execucoes.map((item) => item.cenario), ['grau', 'aleatoria'])
   } finally {
     globalThis.fetch = anterior
   }

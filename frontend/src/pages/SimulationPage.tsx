@@ -60,12 +60,40 @@ export function SimulationPage({
     'Pausado',
   )
   const [erro, setErro] = useState('')
+  const [requisicao, setRequisicao] = useState<
+    'ociosa' | 'carregando' | 'concluida' | 'falhou'
+  >('ociosa')
   const [historico, setHistorico] = useState<RegistroResultado[]>([])
   const [resultadoIndividual, setResultadoIndividual] =
     useState<ResultadoSimulacao | null>(null)
   const [passo, setPasso] = useState(0)
   const [tema, setTema] = useState<'dark' | 'light'>('dark')
   const [visualizacao, setVisualizacao] = useState<'mapa' | '3d'>('mapa')
+
+  useEffect(() => {
+    if (!carga.rede || !historico.length) return
+    const configuracao = lerConfiguracao()
+    const resultadoContextualizado =
+      resultadoIndividual?.contexto_rede === carga.rede.contexto_rede &&
+      resultadoIndividual.revisao_rede === carga.rede.revisao
+    const configuracaoAtual =
+      configuracao?.formulario.contexto_rede === carga.rede.contexto_rede &&
+      Number(configuracao?.formulario.revisao_rede) === carga.rede.revisao
+    if (!resultadoContextualizado && !configuracaoAtual) {
+      const tarefa = window.setTimeout(() => {
+        setHistorico([])
+        setResultadoIndividual(null)
+        setPasso(0)
+        setStatus('Pausado')
+        setErro(
+          'O resultado foi invalidado porque a revisão ou o contexto da rede mudou.',
+        )
+        sessionStorage.removeItem(CHAVE_HISTORICO)
+        sessionStorage.removeItem(CHAVE_RESULTADO)
+      }, 0)
+      return () => window.clearTimeout(tarefa)
+    }
+  }, [carga.rede, historico.length, resultadoIndividual])
 
   const atual = historico.at(-1) ?? {
     passo: 0,
@@ -105,14 +133,27 @@ export function SimulationPage({
     return estados
   }, [previa.individuos, recuperados, infectados, isolados, total])
 
-  async function executarBackend() {
+  async function executarBackend(): Promise<boolean> {
     setErro('')
     const configuracao = lerConfiguracao()
     if (!configuracao) {
       setErro('Valide uma configuração na Tela 02 antes de executar o ensaio.')
-      return
+      setRequisicao('falhou')
+      return false
+    }
+    if (
+      !carga.rede ||
+      configuracao.formulario.contexto_rede !== carga.rede.contexto_rede ||
+      Number(configuracao.formulario.revisao_rede) !== carga.rede.revisao
+    ) {
+      setErro(
+        'A rede mudou desde a validação. Volte à Tela 02 e valide a configuração novamente.',
+      )
+      setRequisicao('falhou')
+      return false
     }
 
+    setRequisicao('carregando')
     try {
       if (modo === 'repeticoes') {
         const lote = await executarComparacao(
@@ -136,7 +177,8 @@ export function SimulationPage({
           }),
         )
         setStatus('Pausado')
-        return
+        setRequisicao('concluida')
+        return registros.length > 0
       }
 
       const resultado = await executarSimulacao(configuracao.formulario)
@@ -152,18 +194,25 @@ export function SimulationPage({
         JSON.stringify({ tipo: 'individual', resultado }),
       )
       setStatus('Pausado')
+      setRequisicao('concluida')
+      return resultado.historico.length > 0
     } catch (falha) {
+      if (falha instanceof DOMException && falha.name === 'AbortError')
+        return false
       setErro(
         falha instanceof Error
           ? falha.message
           : 'Não foi possível executar o ensaio no backend.',
       )
+      setRequisicao('falhou')
+      return false
     }
   }
 
   async function iniciar() {
     if (!historico.length) {
-      await executarBackend()
+      const executado = await executarBackend()
+      if (!executado) return
     }
     setStatus('Executando')
   }
@@ -190,6 +239,7 @@ export function SimulationPage({
   async function reiniciar() {
     setPasso(0)
     setStatus('Pausado')
+    setRequisicao('ociosa')
     sessionStorage.removeItem(CHAVE_HISTORICO)
     sessionStorage.removeItem(CHAVE_RESULTADO)
     setHistorico([])
@@ -329,9 +379,13 @@ export function SimulationPage({
                 type="button"
                 className="button-primary full-width"
                 onClick={() => void iniciar()}
-                disabled={status === 'Executando'}
+                disabled={
+                  status === 'Executando' || requisicao === 'carregando'
+                }
               >
-                ▶ Iniciar / Continuar Simulação
+                {requisicao === 'carregando'
+                  ? 'Consultando backend…'
+                  : '▶ Iniciar / Continuar Simulação'}
               </button>
               <button
                 type="button"
@@ -410,7 +464,8 @@ export function SimulationPage({
                 <div>
                   <h3 id="network-title">Estados na rede</h3>
                   <p>
-                    Estado obtido do backend -{' '}
+                    Estado individual inferido a partir das contagens do
+                    histórico (o backend não fornece snapshots por ID) -{' '}
                     {previa.total_individuos.toLocaleString('pt-BR')} nós - t ={' '}
                     {passo}
                   </p>

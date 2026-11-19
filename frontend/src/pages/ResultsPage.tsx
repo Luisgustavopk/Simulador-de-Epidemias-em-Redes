@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { AppShell } from '../components/AppShell'
 import { Icon } from '../components/Icon'
 import { useCargaRede } from '../hooks/useCargaRede'
@@ -16,10 +16,26 @@ import './ResultsPage.css'
 const CHAVE_CONFIGURACAO = 'observatorio-configuracao'
 const CHAVE_RESULTADO = 'observatorio-resultado-execucao'
 
+function execucaoPrincipal(
+  comparacao: ResultadoComparacaoExecutada,
+): ExecucaoComparadaResultado | undefined {
+  return (
+    comparacao.execucoes.find((execucao) => execucao.cenario === 'grau') ??
+    comparacao.execucoes.find((execucao) => execucao.cenario === 'aleatoria') ??
+    comparacao.execucoes[0]
+  )
+}
+
 function formatarPercentual(valor: number) {
   return `${(valor * 100).toLocaleString('pt-BR', {
     maximumFractionDigits: 1,
   })}%`
+}
+
+type CampoCurva = 'suscetiveis' | 'infectados' | 'recuperados' | 'isolados'
+type RegistroAgregado = Record<CampoCurva, number> & {
+  passo: number
+  desvios: Record<CampoCurva, number>
 }
 
 export function ResultsPage() {
@@ -35,7 +51,9 @@ export function ResultsPage() {
     suscetiveis: true,
     infectados: true,
     recuperados: true,
+    isolados: true,
   })
+  const grafico = useRef<SVGSVGElement | null>(null)
 
   useEffect(() => {
     const controlador = new AbortController()
@@ -43,6 +61,9 @@ export function ResultsPage() {
       setCarregando(true)
       setErro('')
       try {
+        setResultado(null)
+        setComparacao(null)
+        setHistorico([])
         const concluido = JSON.parse(
           sessionStorage.getItem(CHAVE_RESULTADO) ?? 'null',
         ) as
@@ -56,19 +77,33 @@ export function ResultsPage() {
             }
           | null
 
+        const contextoAtual = carga.rede?.contexto_rede
+        const revisaoAtual = carga.rede?.revisao
+        const resultadoRede =
+          concluido?.tipo === 'individual'
+            ? concluido.resultado
+            : concluido?.tipo === 'comparacao'
+              ? concluido.comparacao
+              : null
+        if (
+          resultadoRede &&
+          contextoAtual &&
+          (resultadoRede.contexto_rede !== contextoAtual ||
+            resultadoRede.revisao_rede !== revisaoAtual)
+        ) {
+          sessionStorage.removeItem(CHAVE_RESULTADO)
+          sessionStorage.removeItem('observatorio-historico-ensaio')
+          throw new Error(
+            'O resultado foi invalidado porque a revisão ou o contexto da rede mudou.',
+          )
+        }
+
         if (concluido?.tipo === 'individual') {
           setResultado(concluido.resultado)
           setHistorico(concluido.resultado.historico)
         } else if (concluido?.tipo === 'comparacao') {
           setComparacao(concluido.comparacao)
-          const principal =
-            concluido.comparacao.execucoes.find(
-              (execucao) => execucao.cenario === 'grau',
-            ) ??
-            concluido.comparacao.execucoes.find(
-              (execucao) => execucao.cenario === 'aleatoria',
-            ) ??
-            concluido.comparacao.execucoes[0]
+          const principal = execucaoPrincipal(concluido.comparacao)
           if (principal) setHistorico(principal.historico)
         } else {
           const salvo = JSON.parse(
@@ -79,6 +114,15 @@ export function ResultsPage() {
           } | null
 
           if (salvo?.formulario) {
+            if (
+              !carga.rede ||
+              salvo.formulario.contexto_rede !== carga.rede.contexto_rede ||
+              Number(salvo.formulario.revisao_rede) !== carga.rede.revisao
+            ) {
+              throw new Error(
+                'A configuração foi invalidada porque a revisão ou o contexto da rede mudou.',
+              )
+            }
             if (salvo.repeticoes) {
               const lote = await executarComparacao(
                 salvo.repeticoes,
@@ -86,14 +130,7 @@ export function ResultsPage() {
                 controlador.signal,
               )
               setComparacao(lote)
-              const principal =
-                lote.execucoes.find(
-                  (execucao) => execucao.cenario === 'grau',
-                ) ??
-                lote.execucoes.find(
-                  (execucao) => execucao.cenario === 'aleatoria',
-                ) ??
-                lote.execucoes[0]
+              const principal = execucaoPrincipal(lote)
               if (principal) setHistorico(principal.historico)
             } else {
               const ensaio = await executarSimulacao(
@@ -108,9 +145,13 @@ export function ResultsPage() {
             setHistorico([])
           }
         }
-      } catch {
+      } catch (falha) {
         if (!controlador.signal.aborted) {
-          setErro('Não foi possível carregar os resultados do backend.')
+          setErro(
+            falha instanceof Error
+              ? falha.message
+              : 'Não foi possível carregar os resultados do backend.',
+          )
           setHistorico([])
         }
       } finally {
@@ -119,7 +160,7 @@ export function ResultsPage() {
     }
     void carregar()
     return () => controlador.abort()
-  }, [totalRede])
+  }, [carga.rede, totalRede])
 
   const atual = historico.at(-1)
   const passoAtual = atual?.passo ?? 0
@@ -146,14 +187,71 @@ export function ResultsPage() {
           0,
         )
       : passoAtual)
-  const motivoTermino =
-    resultado?.motivo_termino ??
-    (comparacao ? (comparacao.execucoes[0]?.motivo_termino ?? null) : null)
-
   const trajetoriasComparadas = useMemo(() => {
     if (!comparacao) return []
     return comparacao.execucoes
   }, [comparacao])
+
+  const curvasAgregadas = useMemo(() => {
+    if (!comparacao) return []
+    return (['sem_intervencao', 'aleatoria', 'grau'] as const).flatMap(
+      (cenario) => {
+        const execucoes = comparacao.execucoes.filter(
+          (execucao) => execucao.cenario === cenario,
+        )
+        if (!execucoes.length) return []
+        const horizonte = Math.max(
+          ...execucoes.map((execucao) =>
+            Math.max(...execucao.historico.map((registro) => registro.passo)),
+          ),
+        )
+        const registros: RegistroAgregado[] = []
+        for (let passo = 0; passo <= horizonte; passo += 1) {
+          const observacoes = execucoes
+            .map((execucao) => {
+              const anteriores = execucao.historico.filter(
+                (registro) => registro.passo <= passo,
+              )
+              return anteriores.at(-1)
+            })
+            .filter((registro): registro is RegistroResultado => !!registro)
+          if (!observacoes.length) continue
+          const media = (campo: CampoCurva) =>
+            observacoes.reduce((soma, registro) => soma + registro[campo], 0) /
+            observacoes.length
+          const desvios = {} as Record<CampoCurva, number>
+          const valores = {} as Record<CampoCurva, number>
+          for (const campo of [
+            'suscetiveis',
+            'infectados',
+            'recuperados',
+            'isolados',
+          ] as const) {
+            valores[campo] = media(campo)
+            desvios[campo] = Math.sqrt(
+              observacoes.reduce(
+                (soma, registro) => soma + (registro[campo] - valores[campo]) ** 2,
+                0,
+              ) / observacoes.length,
+            )
+          }
+          registros.push({ passo, ...valores, desvios })
+        }
+        return [{ cenario, registros }]
+      },
+    )
+  }, [comparacao])
+
+  const execucaoSelecionada = comparacao
+    ? execucaoPrincipal(comparacao)
+    : undefined
+  const descricaoCenario = execucaoSelecionada
+    ? `${execucaoSelecionada.cenario === 'sem_intervencao' ? 'Sem intervenção' : execucaoSelecionada.cenario === 'aleatoria' ? 'Intervenção aleatória' : 'Intervenção por grau'} · repetição ${execucaoSelecionada.repeticao}`
+    : resultado
+      ? 'Execução única'
+      : null
+  const motivoTermino =
+    resultado?.motivo_termino ?? execucaoSelecionada?.motivo_termino ?? null
 
   function exportarCsv() {
     const linhas = [
@@ -177,12 +275,87 @@ export function ResultsPage() {
     URL.revokeObjectURL(url)
   }
 
+  function baixar(conteudo: BlobPart, nome: string, tipo: string) {
+    const url = URL.createObjectURL(new Blob([conteudo], { type: tipo }))
+    const link = document.createElement('a')
+    link.href = url
+    link.download = nome
+    link.click()
+    URL.revokeObjectURL(url)
+  }
+
+  function exportarCsvAgregado() {
+    if (!comparacao) return
+    const linhas = [['repeticao', 'cenario', 'passo', 'S', 'I', 'R', 'Isolados']]
+    for (const execucao of comparacao.execucoes) {
+      for (const registro of execucao.historico) {
+        linhas.push([
+          execucao.repeticao,
+          execucao.cenario,
+          registro.passo,
+          registro.suscetiveis,
+          registro.infectados,
+          registro.recuperados,
+          registro.isolados,
+        ].map(String))
+      }
+    }
+    baixar(
+      `\ufeff${linhas.map((linha) => linha.join(';')).join('\n')}`,
+      'trajetorias-comparacao.csv',
+      'text/csv;charset=utf-8',
+    )
+  }
+
+  function exportarJson() {
+    const salvo = sessionStorage.getItem(CHAVE_RESULTADO)
+    if (salvo) baixar(salvo, 'metadados-ensaio.json', 'application/json')
+  }
+
+  function exportarSvg() {
+    if (!grafico.current) return
+    const clone = grafico.current.cloneNode(true) as SVGSVGElement
+    clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg')
+    baixar(
+      new XMLSerializer().serializeToString(clone),
+      'trajetorias-epidemia.svg',
+      'image/svg+xml;charset=utf-8',
+    )
+  }
+
+  function exportarPng() {
+    if (!grafico.current) return
+    const svg = new XMLSerializer().serializeToString(grafico.current)
+    const imagem = new Image()
+    imagem.onload = () => {
+      const canvas = document.createElement('canvas')
+      canvas.width = largura * 2
+      canvas.height = altura * 2
+      const contexto = canvas.getContext('2d')
+      if (!contexto) {
+        setErro('Não foi possível preparar a exportação PNG.')
+        return
+      }
+      contexto.scale(2, 2)
+      contexto.drawImage(imagem, 0, 0, largura, altura)
+      canvas.toBlob((blob) => {
+        if (blob) baixar(blob, 'trajetorias-epidemia.png', 'image/png')
+        else setErro('Não foi possível gerar o arquivo PNG.')
+      }, 'image/png')
+    }
+    imagem.onerror = () => setErro('Não foi possível gerar o arquivo PNG.')
+    imagem.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`
+  }
+
   const largura = 760
   const altura = 280
   const margem = { esquerda: 46, direita: 18, superior: 18, inferior: 32 }
   const ultimoPasso = Math.max(
     1,
     ...historico.map((registro) => registro.passo),
+    ...(comparacao?.execucoes.flatMap((execucao) =>
+      execucao.historico.map((registro) => registro.passo),
+    ) ?? []),
   )
   const maximo = Math.max(total, 1)
   const x = (passo: number) =>
@@ -191,7 +364,9 @@ export function ResultsPage() {
   const y = (valor: number) =>
     margem.superior +
     (1 - valor / maximo) * (altura - margem.superior - margem.inferior)
-  function linha(campo: 'suscetiveis' | 'infectados' | 'recuperados') {
+  function linha(
+    campo: 'suscetiveis' | 'infectados' | 'recuperados' | 'isolados',
+  ) {
     return historico
       .map(
         (registro, indice) =>
@@ -202,7 +377,7 @@ export function ResultsPage() {
 
   function linhaComparada(
     execucao: ExecucaoComparadaResultado,
-    campo: 'suscetiveis' | 'infectados' | 'recuperados',
+    campo: 'suscetiveis' | 'infectados' | 'recuperados' | 'isolados',
   ) {
     return execucao.historico
       .map((registro, indice) => {
@@ -217,6 +392,33 @@ export function ResultsPage() {
         return `${indice ? 'L' : 'M'} ${pontoX} ${y(registro[campo])}`
       })
       .join(' ')
+  }
+
+  function linhaAgregada(
+    registros: RegistroAgregado[],
+    campo: CampoCurva,
+  ) {
+    return registros
+      .map(
+        (registro, indice) =>
+          `${indice ? 'L' : 'M'} ${x(registro.passo)} ${y(registro[campo])}`,
+      )
+      .join(' ')
+  }
+
+  function areaDesvio(registros: RegistroAgregado[], campo: CampoCurva) {
+    const superior = registros.map(
+      (registro, indice) =>
+        `${indice ? 'L' : 'M'} ${x(registro.passo)} ${y(
+          Math.min(maximo, registro[campo] + registro.desvios[campo]),
+        )}`,
+    )
+    const inferior = [...registros].reverse().map((registro) =>
+      `L ${x(registro.passo)} ${y(
+        Math.max(0, registro[campo] - registro.desvios[campo]),
+      )}`,
+    )
+    return `${superior.join(' ')} ${inferior.join(' ')} Z`
   }
 
   return (
@@ -264,7 +466,10 @@ export function ResultsPage() {
             <strong>
               {carregando ? 'Calculando…' : `Ensaio em t = ${passoAtual}`}
             </strong>
-            <small>Horizonte observado: t = {horizonteObservado}</small>
+            <small>
+              {descricaoCenario ?? 'Nenhum cenário selecionado'} · Horizonte
+              observado: t = {horizonteObservado}
+            </small>
           </article>
           <article>
             <span>Motivo do término</span>
@@ -294,6 +499,16 @@ export function ResultsPage() {
             <small>
               {Math.round(fracaoAcumulada * total)} nós ao menos uma vez
             </small>
+          </article>
+          <article>
+            <span>Fração final recuperada</span>
+            <strong>
+              {formatarPercentual(
+                resultado?.metrica.fracao_final_recuperados ??
+                  (atual ? atual.recuperados / Math.max(total, 1) : 0),
+              )}
+            </strong>
+            <small>Recuperados no último registro</small>
           </article>
           <article>
             <span>Nós sob intervenção</span>
@@ -359,6 +574,19 @@ export function ResultsPage() {
             >
               <i className="curve-r" /> Recuperados (R)
             </button>
+            <button
+              type="button"
+              className={visiveis.isolados ? 'active' : ''}
+              aria-pressed={visiveis.isolados}
+              onClick={() =>
+                setVisiveis((atual) => ({
+                  ...atual,
+                  isolados: !atual.isolados,
+                }))
+              }
+            >
+              <i className="curve-q" /> Isolados (Q)
+            </button>
             {trajetoriasComparadas.map((execucao) => (
               <span
                 key={`${execucao.cenario}-${execucao.repeticao}`}
@@ -371,10 +599,16 @@ export function ResultsPage() {
                     : `Por grau · r${execucao.repeticao}`}
               </span>
             ))}
+            {curvasAgregadas.length > 0 && (
+              <span className="comparison-key">
+                    Linhas grossas: média · faixas: desvio-padrão
+              </span>
+            )}
           </div>
           <div className="trajectory-chart">
             {historico.length ? (
               <svg
+                ref={grafico}
                 viewBox={`0 0 ${largura} ${altura}`}
                 role="img"
                 aria-label="Curvas SIR ao longo do tempo"
@@ -424,6 +658,9 @@ export function ResultsPage() {
                 {visiveis.recuperados && (
                   <path d={linha('recuperados')} className="chart-r" />
                 )}
+                {visiveis.isolados && (
+                  <path d={linha('isolados')} className="chart-q" />
+                )}
                 {trajetoriasComparadas.map((execucao, indice) => (
                   <g
                     key={`${execucao.cenario}-${execucao.repeticao}`}
@@ -451,6 +688,58 @@ export function ResultsPage() {
                         strokeDasharray={indice % 2 ? '7 4' : undefined}
                       />
                     )}
+                    {visiveis.isolados && (
+                      <path
+                        d={linhaComparada(execucao, 'isolados')}
+                        className="comparison-q"
+                        strokeDasharray={indice % 2 ? '7 4' : undefined}
+                      />
+                    )}
+                  </g>
+                ))}
+                {curvasAgregadas.map(({ cenario, registros }, indice) => (
+                  <g
+                    key={`media-${cenario}`}
+                    className={`comparison-series comparison-mean comparison-${cenario}`}
+                    aria-label={`Média e desvio-padrão do cenário ${cenario}`}
+                  >
+                    {(
+                      ['suscetiveis', 'infectados', 'recuperados', 'isolados'] as const
+                    ).map((campo) => (
+                      <path
+                        key={`${cenario}-${campo}-desvio`}
+                        d={areaDesvio(registros, campo)}
+                        className={`comparison-band band-${campo}`}
+                      />
+                    ))}
+                    {visiveis.suscetiveis && (
+                      <path
+                        d={linhaAgregada(registros, 'suscetiveis')}
+                        className="comparison-s"
+                        strokeDasharray={indice % 2 ? '3 3' : undefined}
+                      />
+                    )}
+                    {visiveis.infectados && (
+                      <path
+                        d={linhaAgregada(registros, 'infectados')}
+                        className="comparison-i"
+                        strokeDasharray={indice % 2 ? '3 3' : undefined}
+                      />
+                    )}
+                    {visiveis.recuperados && (
+                      <path
+                        d={linhaAgregada(registros, 'recuperados')}
+                        className="comparison-r"
+                        strokeDasharray={indice % 2 ? '3 3' : undefined}
+                      />
+                    )}
+                    {visiveis.isolados && (
+                      <path
+                        d={linhaAgregada(registros, 'isolados')}
+                        className="comparison-q"
+                        strokeDasharray={indice % 2 ? '3 3' : undefined}
+                      />
+                    )}
                   </g>
                 ))}
               </svg>
@@ -476,6 +765,22 @@ export function ResultsPage() {
             >
               ↓ Exportar histórico (.CSV)
             </button>
+            <div className="export-actions">
+              <button type="button" onClick={exportarSvg} disabled={!historico.length}>
+                SVG
+              </button>
+              <button type="button" onClick={exportarPng} disabled={!historico.length}>
+                PNG
+              </button>
+              {comparacao && (
+                <button type="button" onClick={exportarCsvAgregado}>
+                  CSV agregado
+                </button>
+              )}
+              <button type="button" onClick={exportarJson} disabled={!sessionStorage.getItem(CHAVE_RESULTADO)}>
+                JSON
+              </button>
+            </div>
           </div>
           <div className="history-table-wrap">
             <table className="history-table">

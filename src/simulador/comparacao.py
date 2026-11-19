@@ -149,16 +149,20 @@ def _consolidar(execucoes: list[ExecucaoComparada]) -> dict[Cenario, ResumoCenar
 
 
 def _conferir_resultado(resultado: ResultadoIndividual, populacao: int, limite: int) -> None:
-    if resultado.populacao_inicial != populacao:
+    if type(resultado.populacao_inicial) is not int or resultado.populacao_inicial != populacao:
         raise ValueError('O resultado deve corresponder à população inicial da comparação.')
+    campos_inteiros = (resultado.pico_infectados, resultado.passo_pico, resultado.horizonte_observado)
+    if any(type(valor) is not int for valor in campos_inteiros):
+        raise ValueError('O pico de infectados e os passos observados devem ser inteiros.')
     if not (
         0 <= resultado.pico_infectados <= populacao
+        and type(resultado.fracao_acumulada) in (int, float)
         and 0 <= resultado.fracao_acumulada <= 1
         and 0 <= resultado.passo_pico <= resultado.horizonte_observado <= limite
     ):
         raise ValueError('O resultado contém indicadores fora do domínio.')
     if resultado.motivo_termino == 'extincao':
-        if resultado.duracao_extincao != resultado.horizonte_observado:
+        if type(resultado.duracao_extincao) is not int or resultado.duracao_extincao != resultado.horizonte_observado:
             raise ValueError('A extinção deve estar registrada no último passo observado.')
     elif resultado.motivo_termino == 'limite_passos':
         if resultado.duracao_extincao is not None or resultado.horizonte_observado != limite:
@@ -172,26 +176,28 @@ def executar_comparacao(
     pedido: PedidoComparacao,
     executar_individual: Callable[[RedeContatos, ConfiguracaoSimulacao], ResultadoIndividual],
 ) -> ResultadoComparacao:
-    intervencao = pedido.validar(referencia)
+    intervencao_validada = pedido.validar(referencia)
     configuracao = pedido.configuracao
     populacao = referencia.rede.numero_individuos
     execucoes: list[ExecucaoComparada] = []
     for indice in range(pedido.repeticoes):
-        preparada = replace(
+        configuracao_repeticao = replace(
             configuracao,
             semente_epidemia=configuracao.semente_epidemia + indice,
             semente_iniciais=configuracao.semente_iniciais + indice,
             semente_isolamento=configuracao.semente_isolamento + indice,
         ).preparar(referencia.rede, referencia.revisao)
         for cenario in CENARIOS:
-            condicao = None if cenario == 'sem_intervencao' else replace(intervencao, estrategia=cenario)
-            efetiva = replace(preparada, intervencao=condicao)
+            intervencao_cenario = (
+                None if cenario == 'sem_intervencao' else replace(intervencao_validada, estrategia=cenario)
+            )
+            configuracao_cenario = replace(configuracao_repeticao, intervencao=intervencao_cenario)
             try:
-                resultado = executar_individual(referencia.rede.copiar(), efetiva)
-                _conferir_resultado(resultado, populacao, efetiva.limite_passos)
+                resultado = executar_individual(referencia.rede.copiar(), configuracao_cenario)
+                _conferir_resultado(resultado, populacao, configuracao_cenario.limite_passos)
             except Exception as erro:
                 raise ErroExecucaoComparacao(indice + 1, cenario) from erro
-            execucoes.append(ExecucaoComparada(indice + 1, cenario, efetiva, resultado))
+            execucoes.append(ExecucaoComparada(indice + 1, cenario, configuracao_cenario, resultado))
     return ResultadoComparacao(
         pedido, referencia.revisao, deepcopy(referencia.origem), tuple(execucoes), _consolidar(execucoes),
     )

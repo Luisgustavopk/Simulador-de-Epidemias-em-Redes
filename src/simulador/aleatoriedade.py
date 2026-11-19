@@ -17,4 +17,6 @@ class GeradorAleatorio:
         return self._gerador.random()
 
     def amostrar_ids(self, ids: Sequence[int], quantidade: int) -> tuple[int, ...]:
-        return tuple(sorted(self._gerador.sample(sorted(ids), quantidade)))
+        candidatos = sorted(ids)
+        selecionados = self._gerador.sample(candidatos, quantidade)
+        return tuple(sorted(selecionados))

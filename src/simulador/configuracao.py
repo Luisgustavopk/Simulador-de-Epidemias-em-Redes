@@ -111,29 +111,39 @@ class ConfiguracaoSimulacao:
                 erro(campo, "Informe uma semente inteira.")
         if not _inteiro(self.limite_passos) or self.limite_passos <= 0:
             erro("limite_passos", "Informe um limite de passos inteiro positivo.")
-        ids, quantidade = self.ids_infectados_iniciais, self.quantidade_infectados
-        if ids is not None:
-            if not isinstance(ids, tuple) or any(not _inteiro(id) for id in ids):
-                erro("ids_infectados_iniciais", "Informe uma tupla de IDs inteiros.")
-            else:
-                if len(set(ids)) != len(ids):
-                    erro("ids_infectados_iniciais", "Não repita os IDs iniciais.")
-                if isinstance(rede, RedeContatos):
-                    ausentes = [id for id in ids if rede.buscar_individuo(id) is None]
-                    if ausentes:
-                        erro("ids_infectados_iniciais", f"IDs inexistentes: {ausentes}.")
-            if quantidade is not None:
-                erro("quantidade_infectados", "Use IDs ou quantidade para sorteio, não ambos.")
-        elif (
-            not _inteiro(quantidade) or quantidade < 0
-            or (isinstance(rede, RedeContatos) and quantidade > rede.numero_individuos)
-        ):
-            erro("quantidade_infectados", "Informe uma quantidade inteira entre 0 e a população.")
+        problemas.extend(self._validar_condicoes_iniciais(rede))
         if self.intervencao is not None:
             if not isinstance(self.intervencao, ConfiguracaoIntervencao):
                 erro("intervencao", "Informe uma configuração de intervenção válida ou None.")
             else:
                 problemas.extend(self.intervencao.validar(self.limite_passos))
+        return problemas
+
+    def _validar_condicoes_iniciais(self, rede: RedeContatos) -> list[ProblemaConfiguracao]:
+        problemas = []
+
+        def erro(campo: str, mensagem: str) -> None:
+            problemas.append(ProblemaConfiguracao(campo, mensagem))
+
+        ids_iniciais = self.ids_infectados_iniciais
+        quantidade_sorteada = self.quantidade_infectados
+        if ids_iniciais is not None:
+            if not isinstance(ids_iniciais, tuple) or any(not _inteiro(id) for id in ids_iniciais):
+                erro("ids_infectados_iniciais", "Informe uma tupla de IDs inteiros.")
+            else:
+                if len(set(ids_iniciais)) != len(ids_iniciais):
+                    erro("ids_infectados_iniciais", "Não repita os IDs iniciais.")
+                if isinstance(rede, RedeContatos):
+                    ausentes = [id for id in ids_iniciais if rede.buscar_individuo(id) is None]
+                    if ausentes:
+                        erro("ids_infectados_iniciais", f"IDs inexistentes: {ausentes}.")
+            if quantidade_sorteada is not None:
+                erro("quantidade_infectados", "Use IDs ou quantidade para sorteio, não ambos.")
+        elif (
+            not _inteiro(quantidade_sorteada) or quantidade_sorteada < 0
+            or (isinstance(rede, RedeContatos) and quantidade_sorteada > rede.numero_individuos)
+        ):
+            erro("quantidade_infectados", "Informe uma quantidade inteira entre 0 e a população.")
         return problemas
 
     def preparar(self, rede: RedeContatos, revisao_rede: int) -> "ConfiguracaoSimulacao":

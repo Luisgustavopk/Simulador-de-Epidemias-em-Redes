@@ -20,22 +20,24 @@ class MotorSIR:
         if problemas:
             raise ErroConfiguracao(problemas)
         pessoas = sorted(rede.iter_individuos(), key=lambda p: p.id)
-        estados = {p.id: p.estado for p in pessoas}
+        estados_no_inicio = {p.id: p.estado for p in pessoas}
         novas_infecoes: list[int] = []
         recuperacoes: list[int] = []
         for pessoa in pessoas:
-            if estados[pessoa.id] is EstadoSIR.SUSCETIVEL:
-                probabilidade = 0.0
-                for contato in sorted(rede.contatos_de(pessoa), key=lambda c: c.outro_extremo(pessoa).id):
+            if estados_no_inicio[pessoa.id] is EstadoSIR.SUSCETIVEL:
+                probabilidade_infeccao = 0.0
+                contatos = sorted(rede.contatos_de(pessoa), key=lambda c: c.outro_extremo(pessoa).id)
+                for contato in contatos:
                     vizinho = contato.outro_extremo(pessoa)
-                    if contato.ativa and estados[vizinho.id] is EstadoSIR.INFECTADO:
-                        p = contato.peso
-                        if configuracao.modo_peso == "intensidade":
-                            p *= configuracao.beta
-                        probabilidade += (1 - probabilidade) * p
-                if self._gerador.uniforme() < probabilidade:
+                    if not contato.ativa or estados_no_inicio[vizinho.id] is not EstadoSIR.INFECTADO:
+                        continue
+                    probabilidade_contato = contato.peso
+                    if configuracao.modo_peso == "intensidade":
+                        probabilidade_contato *= configuracao.beta
+                    probabilidade_infeccao += (1 - probabilidade_infeccao) * probabilidade_contato
+                if self._gerador.uniforme() < probabilidade_infeccao:
                     novas_infecoes.append(pessoa.id)
-            elif estados[pessoa.id] is EstadoSIR.INFECTADO:
+            elif estados_no_inicio[pessoa.id] is EstadoSIR.INFECTADO:
                 if self._gerador.uniforme() < configuracao.gamma:
                     recuperacoes.append(pessoa.id)
         for id_individuo in novas_infecoes:

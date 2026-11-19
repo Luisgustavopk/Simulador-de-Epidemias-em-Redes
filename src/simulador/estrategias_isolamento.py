@@ -5,9 +5,13 @@ from simulador.configuracao import ConfiguracaoSimulacao, ErroConfiguracao, Prob
 from simulador.rede_contatos import RedeContatos
 
 
-def _validar_quantidade(rede: RedeContatos, quantidade: int) -> None:
+def _validar_rede(rede: RedeContatos) -> None:
     if not isinstance(rede, RedeContatos):
         raise TypeError("A rede deve ser uma instância de RedeContatos.")
+
+
+def _validar_quantidade(rede: RedeContatos, quantidade: int) -> None:
+    _validar_rede(rede)
     if isinstance(quantidade, bool) or not isinstance(quantidade, int):
         raise TypeError("A quantidade de pessoas deve ser inteira.")
     if not 0 <= quantidade <= rede.numero_individuos:
@@ -45,7 +49,7 @@ class IsolamentoAleatorio(EstrategiaIsolamento):
 
 class IsolamentoPorGrau(EstrategiaIsolamento):
     def __init__(self, rede_original: RedeContatos) -> None:
-        _validar_quantidade(rede_original, 0)
+        _validar_rede(rede_original)
         if any(p.isolamento for p in rede_original.iter_individuos()):
             raise ValueError("Capture os graus na referência anterior à intervenção.")
         super().__init__("grau")
@@ -62,10 +66,11 @@ class IsolamentoPorGrau(EstrategiaIsolamento):
         _validar_quantidade(rede, quantidade)
         if {p.id for p in rede.iter_individuos()} != self._graus_originais.keys():
             raise ValueError("A população mudou. Prepare novamente os graus originais.")
-        return tuple(sorted(
+        ids_ordenados = sorted(
             self._graus_originais,
             key=lambda id_individuo: (-self._graus_originais[id_individuo], id_individuo),
-        )[:quantidade])
+        )
+        return tuple(ids_ordenados[:quantidade])
 
 
 def preparar_estrategia(

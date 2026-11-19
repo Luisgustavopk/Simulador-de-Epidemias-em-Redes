@@ -20,6 +20,12 @@ def _ler_repeticoes(valor: object) -> int:
 
 
 def validar_comparacao(servico: ServicoCargaRede, campos: dict[str, object]) -> dict[str, object]:
+    problemas = [
+        ProblemaConfiguracao(campo, 'Este campo não faz parte da comparação.')
+        for campo in campos if campo not in ('configuracao', 'repeticoes')
+    ]
+    if problemas:
+        raise ErroConfiguracao(problemas)
     entrada = campos.get('configuracao')
     if not isinstance(entrada, dict):
         raise ErroConfiguracao([ProblemaConfiguracao('configuracao', 'Informe os parâmetros da comparação.')])

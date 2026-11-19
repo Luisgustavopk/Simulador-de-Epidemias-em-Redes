@@ -14,7 +14,7 @@ from simulador.metricas import MetricasEpidemia
 from simulador.motor_sir import MotorSIR
 from simulador.simulacao import Simulacao
 
-from simulador.carga_rede import ServicoCargaRede
+from simulador.carga_rede import RedeDisponivel, ServicoCargaRede
 from simulador.configuracao import ErroConfiguracao, ProblemaConfiguracao
 from simulador.configuracao_api import ler_configuracao
 
@@ -87,8 +87,67 @@ def _serializar_historico(historico):
     ]
 
 
-def _executar_individual(referencia, configuracao) -> ResultadoIndividual:
-    rede = referencia.copiar()
+def _serializar_metrica(resultado: ResultadoIndividual) -> dict[str, object]:
+    return {
+        'pico_infectados': resultado.pico_infectados,
+        'passo_pico': resultado.passo_pico,
+        'pico_proporcional': resultado.pico_proporcional,
+        'fracao_acumulada': resultado.fracao_acumulada,
+        'fracao_final_recuperados': resultado.fracao_final_recuperados,
+        'ocorreu_infeccao': resultado.ocorreu_infeccao,
+        'horizonte_observado': resultado.horizonte_observado,
+        'duracao_extincao': resultado.duracao_extincao,
+    }
+
+
+def _serializar_configuracao(configuracao) -> dict[str, object]:
+    intervencao = configuracao.intervencao
+    return {
+        'beta': configuracao.beta,
+        'gamma': configuracao.gamma,
+        'modo_peso': configuracao.modo_peso,
+        'limite_passos': configuracao.limite_passos,
+        'revisao_rede': configuracao.revisao_rede,
+        'ids_infectados_iniciais': (
+            list(configuracao.ids_infectados_iniciais)
+            if configuracao.ids_infectados_iniciais is not None else None
+        ),
+        'quantidade_infectados': configuracao.quantidade_infectados,
+        'sementes': {
+            'epidemia': str(configuracao.semente_epidemia),
+            'iniciais': str(configuracao.semente_iniciais),
+            'isolamento': str(configuracao.semente_isolamento),
+        },
+        'intervencao': None if intervencao is None else {
+            'estrategia': intervencao.estrategia,
+            'fracao': intervencao.fracao,
+            'inicio': intervencao.inicio,
+            'mecanismo': intervencao.mecanismo.value,
+            'reducao': intervencao.reducao,
+        },
+    }
+
+
+def _criar_manifesto(
+    referencia: RedeDisponivel, configuracao, contexto: str | None = None,
+) -> dict[str, object]:
+    preparada = configuracao.preparar(referencia.rede, referencia.revisao)
+    return {
+        'rede': {
+            'contexto': contexto,
+            'revisao': referencia.revisao,
+            'origem': referencia.origem,
+        },
+        'configuracao': _serializar_configuracao(preparada),
+        'algoritmo': {
+            'aleatoriedade': 'GeradorAleatorio',
+            'derivacao_sementes': 'base + índice da repetição',
+        },
+    }
+
+
+def _executar_individual(referencia: RedeDisponivel, configuracao) -> ResultadoIndividual:
+    rede = referencia.rede.copiar()
     preparada = configuracao.preparar(rede, referencia.revisao)
     aplicar_condicoes_iniciais(rede, preparada, referencia.revisao)
 
@@ -105,24 +164,12 @@ def _executar_individual(referencia, configuracao) -> ResultadoIndividual:
 
     simulado = Simulacao(rede, configuracao.limite_passos)
     motor = MotorSIR(GeradorAleatorio(configuracao.semente_epidemia))
-    while not simulado.finalizada:
-        if intervencao is not None and simulado.passo == intervencao.inicio and simulado.passo > 0:
-            if estrategia is not None:
-                ids = estrategia.selecionar(rede, intervencao.quantidade_isolados(rede.numero_individuos))
-                aplicar_isolamento(
-                    rede, ids, intervencao.mecanismo,
-                    orcamento=intervencao.quantidade_isolados(rede.numero_individuos),
-                    reducao=intervencao.reducao,
-                )
-        motor.avancar(
-            rede,
-            configuracao,
-            simulado.passo,
-            revisao_rede=referencia.revisao,
-        )
-        simulado.executar_passo()
-        if simulado.passo >= configuracao.limite_passos:
-            break
+    simulado.executar_motor(
+        motor,
+        preparada,
+        referencia.revisao,
+        estrategia,
+    )
 
     historico = simulado.registros
     metricas = MetricasEpidemia(list(historico), rede.numero_individuos)
@@ -149,16 +196,10 @@ def executar_simulacao_api(servico: ServicoCargaRede, campos: dict[str, object])
         'contexto_rede': servico.contexto_rede,
         'revisao_rede': referencia.revisao,
         'populacao': resultado.populacao_inicial,
-        'metrica': {
-            'pico_infectados': resultado.pico_infectados,
-            'passo_pico': resultado.passo_pico,
-            'pico_proporcional': resultado.pico_proporcional,
-            'fracao_acumulada': resultado.fracao_acumulada,
-            'horizonte_observado': resultado.horizonte_observado,
-            'duracao_extincao': resultado.duracao_extincao,
-        },
+        'metrica': _serializar_metrica(resultado),
         'motivo_termino': resultado.motivo_termino,
         'historico': historico,
+        'manifesto': _criar_manifesto(referencia, configuracao, servico.contexto_rede),
     }
 
 
@@ -177,29 +218,25 @@ def executar_comparacao_api(servico: ServicoCargaRede, campos: dict[str, object]
         referencia,
         PedidoComparacao(configuracao, repeticoes),
         lambda rede, cfg: _executar_individual(
-            type('ReferenciaExecucao', (), {
-                'rede': rede,
-                'revisao': referencia.revisao,
-                'copiar': lambda self: rede.copiar(),
-                'origem': referencia.origem,
-            })(),
-            cfg,
+            RedeDisponivel(rede, referencia.revisao, referencia.origem), cfg,
         ),
     )
     execucoes = [
         {
             'repeticao': execucao.repeticao,
             'cenario': execucao.cenario,
-            'metrica': {
-                'pico_infectados': execucao.resultado.pico_infectados,
-                'passo_pico': execucao.resultado.passo_pico,
-                'pico_proporcional': execucao.resultado.pico_proporcional,
-                'fracao_acumulada': execucao.resultado.fracao_acumulada,
-                'horizonte_observado': execucao.resultado.horizonte_observado,
-                'duracao_extincao': execucao.resultado.duracao_extincao,
-            },
+            'metrica': _serializar_metrica(execucao.resultado),
             'motivo_termino': execucao.resultado.motivo_termino,
             'historico': _serializar_historico(execucao.resultado.historico),
+            'manifesto': {
+                **_criar_manifesto(
+                    RedeDisponivel(referencia.rede, referencia.revisao, referencia.origem),
+                    execucao.configuracao,
+                    servico.contexto_rede,
+                ),
+                'cenario': execucao.cenario,
+                'repeticao': execucao.repeticao,
+            },
         }
         for execucao in resultado.execucoes
     ]
@@ -212,7 +249,33 @@ def executar_comparacao_api(servico: ServicoCargaRede, campos: dict[str, object]
             cenario: {
                 'censuradas': resumo.censuradas,
                 'proporcao_censuradas': resumo.proporcao_censuradas,
+                'metricas': {
+                    nome: {
+                        'n': estatistica.n,
+                        'ausentes': estatistica.ausentes,
+                        'media': estatistica.media,
+                        'desvio_padrao': estatistica.desvio_padrao,
+                    }
+                    for nome, estatistica in resumo.metricas.items()
+                },
+                'motivos_termino': resumo.motivos_termino,
             }
             for cenario, resumo in resultado.resumo.items()
+        },
+        'manifesto': {
+            'rede': {
+                'contexto': servico.contexto_rede,
+                'revisao': referencia.revisao,
+                'origem': referencia.origem,
+            },
+            'configuracao': _serializar_configuracao(
+                configuracao.preparar(referencia.rede, referencia.revisao),
+            ),
+            'sementes_base': {
+                'epidemia': str(configuracao.semente_epidemia),
+                'iniciais': str(configuracao.semente_iniciais),
+                'isolamento': str(configuracao.semente_isolamento),
+            },
+            'repeticoes': repeticoes,
         },
     }

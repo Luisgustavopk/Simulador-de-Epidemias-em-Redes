@@ -91,6 +91,10 @@ def test_execucao_individual_retorna_historico_metricas_e_motivo(servico, campos
         'pico_infectados', 'passo_pico', 'pico_proporcional',
         'fracao_acumulada', 'horizonte_observado', 'duracao_extincao',
     }
+    assert resultado['manifesto']['configuracao']['sementes']['epidemia'] == (
+        '900719925474099312345'
+    )
+    assert resultado['manifesto']['configuracao']['ids_infectados_iniciais']
 
 
 def test_execucao_comparada_retorna_todos_cenarios_e_historicos(servico, campos):
@@ -113,3 +117,4 @@ def test_execucao_comparada_retorna_todos_cenarios_e_historicos(servico, campos)
     for execucao in resultado['execucoes']:
         assert execucao['motivo_termino'] in ('extincao', 'limite_passos')
         assert execucao['historico'][0]['passo'] == 0
+        assert execucao['manifesto']['cenario'] == execucao['cenario']

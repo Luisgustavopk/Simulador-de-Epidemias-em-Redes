@@ -84,6 +84,10 @@ class RedeDisponivel:
     revisao: int
     origem: dict[str, object]
 
+    def copiar(self) -> "RedeDisponivel":
+        """Entrega um snapshot independente para uma execução."""
+        return RedeDisponivel(self.rede.copiar(), self.revisao, deepcopy(self.origem))
+
 
 def _falhar(campo: str, mensagem: str) -> NoReturn:
     raise ErroCargaRede((ProblemaCargaRede(campo, mensagem),))

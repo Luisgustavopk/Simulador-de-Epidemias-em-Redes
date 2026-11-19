@@ -30,6 +30,8 @@ def test_calcula_metricas_e_resumo(historico: tuple[RegistroPasso, ...]) -> None
         "total_afetados": 6,
         "taxa_ataque": 0.6,
         "duracao_surto": 3,
+        "fracao_final_recuperados": 0.6,
+        "ocorreu_infeccao": True,
     }
 
 
@@ -81,8 +83,11 @@ def test_validacoes_de_populacao_passos_e_consistencia() -> None:
         MetricasEpidemia(historico, True)
     with pytest.raises(ValueError):
         MetricasEpidemia(historico, -1)
-    with pytest.raises(ValueError):
-        MetricasEpidemia(historico, 0)
+    metricas_zero = MetricasEpidemia(
+        (RegistroPasso(passo=0, s=0, i=0, r=0),),
+        0,
+    )
+    assert metricas_zero.taxa_ataque == 0
     with pytest.raises(ValueError):
         MetricasEpidemia(historico, 11)
     with pytest.raises(ValueError):
@@ -92,3 +97,22 @@ def test_validacoes_de_populacao_passos_e_consistencia() -> None:
             ),
             10,
         )
+
+
+def test_populacao_zero_produz_metricas_nulas() -> None:
+    metricas = MetricasEpidemia((RegistroPasso(passo=0, s=0, i=0, r=0),), 0)
+
+    assert metricas.pico_infectados == 0
+    assert metricas.pico_proporcional == 0.0
+    assert metricas.taxa_ataque == 0.0
+    assert metricas.duracao_extincao == 0
+
+
+def test_registros_e_metricas_sao_imutaveis() -> None:
+    registro = RegistroPasso(passo=0, s=1, i=0, r=0)
+    metricas = MetricasEpidemia((registro,), 1)
+
+    with pytest.raises((AttributeError, TypeError)):
+        registro.infectados = 1
+    with pytest.raises(AttributeError):
+        metricas.pico_infectados = 2

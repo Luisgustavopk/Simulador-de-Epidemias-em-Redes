@@ -6,7 +6,7 @@ from simulador.individuo import EstadoSIR
 from simulador.rede_contatos import RedeContatos
 
 
-@dataclass(init=False)
+@dataclass(frozen=True, init=False)
 class RegistroPasso:
     """Fotografia dos estados epidemiológicos em um passo."""
 
@@ -51,11 +51,11 @@ class RegistroPasso:
         if any(valor < 0 for valor in valores):
             raise ValueError("As quantidades do registro não podem ser negativas.")
 
-        self.passo = passo
-        self.suscetiveis = suscetiveis
-        self.infectados = infectados
-        self.recuperados = recuperados
-        self.isolados = isolados
+        object.__setattr__(self, "passo", passo)
+        object.__setattr__(self, "suscetiveis", suscetiveis)
+        object.__setattr__(self, "infectados", infectados)
+        object.__setattr__(self, "recuperados", recuperados)
+        object.__setattr__(self, "isolados", isolados)
 
     @property
     def s(self) -> int:
@@ -189,6 +189,51 @@ class Simulacao:
         while not self.finalizada:
             self.executar_passo()
         return list(self.historico)
+
+    def executar_motor(
+        self,
+        motor: object,
+        configuracao: object,
+        revisao_rede: int,
+        estrategia: object = None,
+    ) -> tuple[RegistroPasso, ...]:
+        """Executa o ciclo SIR usando a configuração e o motor fornecidos.
+
+        A preparação dos infectados iniciais e da intervenção no passo zero
+        ocorre antes da criação desta instância. A partir do registro inicial,
+        este método concentra a evolução, a intervenção agendada e a parada.
+        """
+        from simulador.isolamento import aplicar_isolamento
+
+        intervencao = configuracao.intervencao
+        while not self.finalizada:
+            if (
+                intervencao is not None
+                and self.passo == intervencao.inicio
+                and self.passo > 0
+                and estrategia is not None
+            ):
+                ids = estrategia.selecionar(
+                    self.rede,
+                    intervencao.quantidade_isolados(self.rede.numero_individuos),
+                )
+                aplicar_isolamento(
+                    self.rede,
+                    ids,
+                    intervencao.mecanismo,
+                    orcamento=intervencao.quantidade_isolados(
+                        self.rede.numero_individuos,
+                    ),
+                    reducao=intervencao.reducao,
+                )
+            motor.avancar(
+                self.rede,
+                configuracao,
+                self.passo,
+                revisao_rede=revisao_rede,
+            )
+            self.executar_passo()
+        return self.registros
 
     def getPassoAtual(self) -> int:
         return self.passo_atual

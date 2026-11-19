@@ -61,3 +61,21 @@ def test_extincao_finaliza_sem_avancar_o_relogio() -> None:
     assert registro.passo == 0
     assert registro.infectados == 0
     assert len(simulacao.historico) == 1
+
+
+def test_executar_motor_concentra_evolucao_e_parada(rede: RedeContatos) -> None:
+    class MotorFalso:
+        def avancar(self, rede, configuracao, passo_atual, *, revisao_rede):
+            rede.obter_individuo(1).recuperar()
+
+    class ConfiguracaoFalsa:
+        intervencao = None
+
+    simulacao = Simulacao(rede, limite_passos=2)
+    historico = simulacao.executar_motor(
+        MotorFalso(),
+        ConfiguracaoFalsa(),
+        revisao_rede=1,
+    )
+
+    assert historico[-1].infectados == 0

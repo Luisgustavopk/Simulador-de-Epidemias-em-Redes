@@ -43,6 +43,8 @@ ROTAS = {
     "/api/rede/contatos": "GET",
 }
 
+ROTAS_COM_RETRATO = {"/api/rede", "/api/rede/gerar", "/api/rede/importar", "/api/rede/confirmar"}
+
 
 def _erro(campo: str, mensagem: str) -> ErroCargaRede:
     return ErroCargaRede((ProblemaCargaRede(campo, mensagem),))
@@ -214,6 +216,8 @@ class ManipuladorCarga(BaseHTTPRequestHandler):
             url = urlsplit(self.path)
             with sessao.lock:
                 resultado = atender(sessao.servico, self.command, url.path, parse_qs(url.query), corpo)
+                if url.path in ROTAS_COM_RETRATO:
+                    resultado["contexto_rede"] = sessao.servico.contexto_rede
             self._responder(200, resultado, identificador)
         except ErroConfiguracao as erro:
             self._responder(422, erro.para_dict(), identificador)
@@ -238,7 +242,7 @@ class ManipuladorCarga(BaseHTTPRequestHandler):
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = argparse.ArgumentParser(description="Executa a API local do Simulador de Epidemias em Redes.")
     parser.add_argument("--porta", type=int, default=8000)
     argumentos = parser.parse_args()
     with ServidorCarga(argumentos.porta) as servidor:

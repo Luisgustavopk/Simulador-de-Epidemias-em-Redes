@@ -2,6 +2,10 @@ import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { InterventionFields } from '../components/InterventionFields'
 import { AppShell } from '../components/AppShell'
+import {
+  ResumoComparacao,
+  ResumoConfiguracao,
+} from '../components/ConfigurationSummaries'
 import { problemasDoErro, redeApi } from '../services/redeApi'
 import {
   prepararFormularioIntervencao,
@@ -30,16 +34,37 @@ const iniciais = {
   limite_passos: '200',
 }
 
-const rotulosCenarios = {
-  sem_intervencao: 'Sem intervenção',
-  aleatoria: 'Seleção aleatória',
-  grau: 'Seleção por grau',
+const rotulosCampos: Record<string, string> = {
+  beta: 'Contágio (β)',
+  gamma: 'Recuperação (γ)',
+  modo_peso: 'Interpretação do peso',
+  modo_iniciais: 'Escolha dos infectados iniciais',
+  ids_infectados_iniciais: 'IDs iniciais',
+  quantidade_infectados: 'Quantidade de infectados iniciais',
+  semente_epidemia: 'Semente dos eventos epidemiológicos',
+  semente_iniciais: 'Semente dos infectados iniciais',
+  semente_isolamento: 'Semente da seleção aleatória',
+  limite_passos: 'Limite de passos',
+  intervencao: 'Intervenção por isolamento',
+  'intervencao.estrategia': 'Estratégia de seleção',
+  'intervencao.fracao': 'Fração de pessoas a isolar',
+  'intervencao.inicio': 'Dia de início da intervenção',
+  'intervencao.mecanismo': 'Mecanismo sobre os contatos',
+  'intervencao.reducao': 'Fração de redução dos pesos',
+  repeticoes: 'Número de repetições',
+  rede: 'Rede de contatos',
+  revisao: 'Revisão da rede',
+  revisao_rede: 'Revisão da rede',
 }
 
-const rotulosMecanismos = {
-  desativacao: 'Desativação dos contatos',
-  reducao: 'Redução da intensidade',
-  exclusao: 'Exclusão dos contatos',
+type TipoValidacao = 'individual' | 'comparacao'
+
+function revisaoDaValidacao(
+  resultado: ConfiguracaoValidada | ComparacaoValidada,
+) {
+  return 'configuracao' in resultado
+    ? resultado.configuracao.revisao_rede
+    : resultado.revisao_rede
 }
 
 export function ConfigurationPage() {
@@ -59,10 +84,14 @@ export function ConfigurationPage() {
   const [problemasConexao, setProblemasConexao] = useState<ProblemaCarga[]>([])
   const conectado = estadoConexao === 'conectada'
   const [repeticoes, setRepeticoes] = useState('2')
-  const [comparacao, setComparacao] = useState<ComparacaoValidada | null>(null)
   const [problemas, setProblemas] = useState<ProblemaCarga[]>([])
-  const [resumo, setResumo] = useState<ConfiguracaoValidada | null>(null)
-  const [validando, setValidando] = useState(false)
+  const [resultado, setResultado] = useState<
+    ConfiguracaoValidada | ComparacaoValidada | null
+  >(null)
+  const [validacaoAtiva, setValidacaoAtiva] = useState<TipoValidacao | null>(
+    null,
+  )
+  const validando = validacaoAtiva !== null
   const pedido = useRef<AbortController | null>(null)
   const erros = useRef<HTMLDivElement | null>(null)
   const consultaRede = useRef(0)
@@ -97,21 +126,24 @@ export function ConfigurationPage() {
   }, [])
 
   const pronto = conectado && !!rede?.confirmada
-  const valido =
-    pronto && resumo?.configuracao.revisao_rede === rede?.revisao
-      ? resumo
+  const resultadoAtual =
+    pronto &&
+    resultado &&
+    resultado.contexto_rede === rede?.contexto_rede &&
+    revisaoDaValidacao(resultado) === rede?.revisao
+      ? resultado
       : null
-
+  const configuracaoValida =
+    resultadoAtual && 'configuracao' in resultadoAtual ? resultadoAtual : null
   const comparacaoValida =
-    pronto && comparacao?.revisao_rede === rede?.revisao ? comparacao : null
+    resultadoAtual && 'cenarios' in resultadoAtual ? resultadoAtual : null
   const errosRepeticoes = problemas.filter((p) => p.campo === 'repeticoes')
 
   function invalidarValidacao() {
     pedido.current?.abort()
     pedido.current = null
-    setValidando(false)
-    setResumo(null)
-    setComparacao(null)
+    setValidacaoAtiva(null)
+    setResultado(null)
     setProblemas([])
   }
 
@@ -120,37 +152,44 @@ export function ConfigurationPage() {
     setCampos((atual) => ({ ...atual, [campo]: valor }))
   }
 
-  function enviar(evento: FormEvent) {
+  function enviar(evento: FormEvent, tipo: TipoValidacao) {
     evento.preventDefault()
-    void validar('individual')
+    void validar(tipo)
   }
 
-  async function validar(tipo: 'individual' | 'comparacao') {
+  async function validar(tipo: TipoValidacao) {
     if (!pronto || !rede || pedido.current) return
     const controlador = new AbortController()
     pedido.current = controlador
-    setResumo(null)
-    setComparacao(null)
+    setResultado(null)
     setProblemas([])
-    setValidando(true)
+    setValidacaoAtiva(tipo)
     try {
-      const formulario: FormularioConfiguracao = {
-        beta: campos.modo_peso === 'intensidade' ? campos.beta : null,
-        gamma: campos.gamma,
-        modo_peso: campos.modo_peso as 'intensidade' | 'probabilidade',
-        modo_iniciais: campos.modo_iniciais as 'ids' | 'sorteio',
-        ...(campos.modo_iniciais === 'ids'
+      const condicoesIniciais =
+        campos.modo_iniciais === 'ids'
           ? {
+              modo_iniciais: 'ids' as const,
               ids_infectados_iniciais: campos.ids.trim()
                 ? campos.ids.trim().split(/[\s,;]+/)
                 : [],
             }
-          : { quantidade_infectados: campos.quantidade }),
+          : {
+              modo_iniciais: 'sorteio' as const,
+              quantidade_infectados: campos.quantidade,
+            }
+      const modoPeso =
+        campos.modo_peso === 'intensidade' ? 'intensidade' : 'probabilidade'
+      const formulario: FormularioConfiguracao = {
+        beta: modoPeso === 'intensidade' ? campos.beta : null,
+        gamma: campos.gamma,
+        modo_peso: modoPeso,
+        ...condicoesIniciais,
         semente_epidemia: campos.semente_epidemia,
         semente_iniciais: campos.semente_iniciais,
         semente_isolamento: campos.semente_isolamento,
         limite_passos: campos.limite_passos,
         revisao_rede: String(rede.revisao),
+        contexto_rede: rede.contexto_rede,
         intervencao: prepararFormularioIntervencao(intervencao),
       }
       const consulta = ++consultaRede.current
@@ -161,14 +200,14 @@ export function ConfigurationPage() {
       const atual = await redeApi.inspecionar(controlador.signal)
       if (controlador.signal.aborted) return
       if (consulta === consultaRede.current) setRede(atual)
-      const revisao =
-        'configuracao' in resultado
-          ? resultado.configuracao.revisao_rede
-          : resultado.revisao_rede
-      if (!atual.confirmada || atual.revisao !== revisao)
+      if (
+        !atual.confirmada ||
+        atual.contexto_rede !== resultado.contexto_rede ||
+        atual.revisao !== revisaoDaValidacao(resultado)
+      ) {
         throw new Error('A rede mudou. Valide a configuração novamente.')
-      if ('configuracao' in resultado) setResumo(resultado)
-      else setComparacao(resultado)
+      }
+      setResultado(resultado)
     } catch (erro) {
       if (!controlador.signal.aborted) {
         setProblemas(problemasDoErro(erro))
@@ -177,37 +216,12 @@ export function ConfigurationPage() {
     } finally {
       if (pedido.current === controlador) {
         pedido.current = null
-        setValidando(false)
+        setValidacaoAtiva(null)
       }
     }
   }
 
-  function entrada(campo: keyof typeof iniciais, titulo: string) {
-    const nomeErro =
-      campo === 'ids'
-        ? 'ids_infectados_iniciais'
-        : campo === 'quantidade'
-          ? 'quantidade_infectados'
-          : campo
-    const erro = problemas.filter((p) => p.campo === nomeErro)
-    return (
-      <div className="field">
-        <label htmlFor={`cfg-${campo}`}>{titulo}</label>
-        <input
-          id={`cfg-${campo}`}
-          value={campos[campo]}
-          onChange={(e) => alterar(campo, e.target.value)}
-          aria-invalid={erro.length > 0}
-          aria-describedby={erro.length ? `erro-${campo}` : undefined}
-        />
-        {erro.length > 0 && (
-          <p className="field-error" id={`erro-${campo}`}>
-            {erro.map((p) => p.mensagem).join(' ')}
-          </p>
-        )}
-      </div>
-    )
-  }
+  const camposDoFormulario = { campos, problemas, alterar }
 
   return (
     <AppShell conectado={conectado} etapaAtiva={1}>
@@ -227,7 +241,7 @@ export function ConfigurationPage() {
                 : 'Gere ou importe e confirme uma rede antes de validar.'}
         </p>
         <a href="#rede">Voltar à rede de contatos</a>
-        <form onSubmit={enviar} noValidate>
+        <form onSubmit={(e) => enviar(e, 'individual')} noValidate>
           <fieldset disabled={!pronto || validando}>
             <legend>Transmissão e recuperação</legend>
             <div className="field">
@@ -245,11 +259,19 @@ export function ConfigurationPage() {
             </div>
             <div className="fields-grid">
               {campos.modo_peso === 'intensidade' ? (
-                entrada('beta', 'β — contágio por contato unitário')
+                <CampoConfiguracao
+                  {...camposDoFormulario}
+                  campo="beta"
+                  titulo="β — contágio por contato unitário"
+                />
               ) : (
                 <p>β não se aplica ao modo de probabilidade direta.</p>
               )}
-              {entrada('gamma', 'γ — recuperação por passo')}
+              <CampoConfiguracao
+                {...camposDoFormulario}
+                campo="gamma"
+                titulo="γ — recuperação por passo"
+              />
             </div>
           </fieldset>
           <fieldset disabled={!pronto || validando}>
@@ -269,9 +291,19 @@ export function ConfigurationPage() {
                 </option>
               </select>
             </div>
-            {campos.modo_iniciais === 'ids'
-              ? entrada('ids', 'IDs iniciais — separe por espaço ou vírgula')
-              : entrada('quantidade', 'Quantidade de infectados iniciais')}
+            {campos.modo_iniciais === 'ids' ? (
+              <CampoConfiguracao
+                {...camposDoFormulario}
+                campo="ids"
+                titulo="IDs iniciais — separe por espaço ou vírgula"
+              />
+            ) : (
+              <CampoConfiguracao
+                {...camposDoFormulario}
+                campo="quantidade"
+                titulo="Quantidade de infectados iniciais"
+              />
+            )}
             <p>
               Lista vazia ou quantidade zero representam ausência de infectados.
             </p>
@@ -279,12 +311,21 @@ export function ConfigurationPage() {
           <fieldset disabled={!pronto || validando}>
             <legend>Reprodução e horizonte</legend>
             <div className="fields-grid">
-              {entrada(
-                'semente_epidemia',
-                'Semente dos eventos epidemiológicos',
-              )}
-              {entrada('semente_iniciais', 'Semente dos infectados iniciais')}
-              {entrada('limite_passos', 'Limite de passos')}
+              <CampoConfiguracao
+                {...camposDoFormulario}
+                campo="semente_epidemia"
+                titulo="Semente dos eventos epidemiológicos"
+              />
+              <CampoConfiguracao
+                {...camposDoFormulario}
+                campo="semente_iniciais"
+                titulo="Semente dos infectados iniciais"
+              />
+              <CampoConfiguracao
+                {...camposDoFormulario}
+                campo="limite_passos"
+                titulo="Limite de passos"
+              />
             </div>
           </fieldset>
           <InterventionFields
@@ -295,19 +336,28 @@ export function ConfigurationPage() {
             }}
             disabled={!pronto || validando}
             problemas={problemas}
-            quantidade={valido?.configuracao.intervencao?.quantidade_isolados}
-            campoSemente={entrada(
-              'semente_isolamento',
-              'Semente da seleção aleatória',
-            )}
+            quantidade={
+              configuracaoValida?.configuracao.intervencao?.quantidade_isolados
+            }
+            campoSemente={
+              <CampoConfiguracao
+                {...camposDoFormulario}
+                campo="semente_isolamento"
+                titulo="Semente da seleção aleatória"
+              />
+            }
           />
           <button
             className="button-primary"
             disabled={!pronto || validando}
             type="submit"
           >
-            {validando ? 'Validando…' : 'Validar configuração'}
+            {validacaoAtiva === 'individual'
+              ? 'Validando…'
+              : 'Validar configuração'}
           </button>
+        </form>
+        <form onSubmit={(e) => enviar(e, 'comparacao')} noValidate>
           <fieldset disabled={!pronto || validando}>
             <legend>Comparação com repetições</legend>
             <p>
@@ -337,8 +387,10 @@ export function ConfigurationPage() {
               )}
             </div>
             <p>A comparação usa as três sementes informadas acima como base.</p>
-            <button type="button" onClick={() => void validar('comparacao')}>
-              Validar comparação
+            <button type="submit">
+              {validacaoAtiva === 'comparacao'
+                ? 'Validando…'
+                : 'Validar comparação'}
             </button>
           </fieldset>
         </form>
@@ -348,116 +400,57 @@ export function ConfigurationPage() {
             <ul>
               {problemas.map((p, i) => (
                 <li key={i}>
-                  {p.campo}: {p.mensagem}
+                  {rotulosCampos[p.campo] ? rotulosCampos[p.campo] + ': ' : ''}
+                  {p.mensagem}
                 </li>
               ))}
             </ul>
           </div>
         )}
-        {comparacaoValida && (
-          <section
-            className="configuration-summary"
-            aria-label="Comparação validada"
-            aria-live="polite"
-          >
-            <h2>Comparação validada</h2>
-            <p>
-              {comparacaoValida.repeticoes} repetições · revisão{' '}
-              {comparacaoValida.revisao_rede} · {comparacaoValida.populacao}{' '}
-              indivíduos
-            </p>
-            <ul>
-              {comparacaoValida.cenarios.map((cenario) => (
-                <li key={cenario}>{rotulosCenarios[cenario]}</li>
-              ))}
-            </ul>
-            <p>
-              Orçamento por intervenção: {comparacaoValida.quantidade_isolados}.
-              Dia {comparacaoValida.intervencao.inicio} ·{' '}
-              {rotulosMecanismos[comparacaoValida.intervencao.mecanismo]}.
-              {comparacaoValida.intervencao.reducao !== null && (
-                <> Fração de redução: {comparacaoValida.intervencao.reducao}.</>
-              )}
-            </p>
-            <p>
-              {comparacaoValida.modo_iniciais === 'sorteio'
-                ? `Infectados iniciais por sorteio em cada repetição: ${comparacaoValida.quantidade_infectados}.`
-                : `Infectados iniciais por IDs informados: ${comparacaoValida.quantidade_infectados}.`}
-            </p>
-            <p>
-              Sementes base — epidemia:{' '}
-              {comparacaoValida.sementes_base.epidemia}; iniciais:{' '}
-              {comparacaoValida.sementes_base.iniciais}; isolamento:{' '}
-              {comparacaoValida.sementes_base.isolamento}.
-            </p>
-            <p id="execucao-comparacao-pendente">
-              A execução da comparação será liberada quando a simulação
-              individual estiver integrada.
-            </p>
-            <button
-              type="button"
-              disabled
-              aria-describedby="execucao-comparacao-pendente"
-            >
-              Executar comparação
-            </button>
-          </section>
-        )}
-        {valido && (
-          <section
-            className="configuration-summary"
-            aria-label="Configuração validada"
-            aria-live="polite"
-          >
-            <h2>Configuração validada</h2>
-            <p>
-              Revisão {valido.configuracao.revisao_rede}; população{' '}
-              {valido.populacao}.
-            </p>
-            <p>
-              Modo {valido.configuracao.modo_peso}; β{' '}
-              {valido.configuracao.beta ?? 'não aplicável'}; γ{' '}
-              {valido.configuracao.gamma}.
-            </p>
-            <p>
-              IDs iniciais:{' '}
-              {valido.configuracao.ids_infectados_iniciais.join(', ') ||
-                'nenhum'}
-              .
-            </p>
-            <p>Limite: {valido.configuracao.limite_passos} passos.</p>
-            <p>
-              Sementes — epidemia: {valido.configuracao.semente_epidemia};
-              iniciais: {valido.configuracao.semente_iniciais}; isolamento:{' '}
-              {valido.configuracao.semente_isolamento}.
-            </p>
-            {valido.configuracao.intervencao ? (
-              <p>
-                Intervenção:{' '}
-                {valido.configuracao.intervencao.estrategia === 'grau'
-                  ? 'por grau'
-                  : 'aleatória'}
-                ; fração {valido.configuracao.intervencao.fracao};{' '}
-                {valido.configuracao.intervencao.quantidade_isolados}{' '}
-                {valido.configuracao.intervencao.quantidade_isolados === 1
-                  ? 'pessoa'
-                  : 'pessoas'}
-                ; dia {valido.configuracao.intervencao.inicio}; mecanismo{' '}
-                {valido.configuracao.intervencao.mecanismo}.
-                {valido.configuracao.intervencao.reducao !== null && (
-                  <> Redução: {valido.configuracao.intervencao.reducao}.</>
-                )}
-              </p>
-            ) : (
-              <p>Sem intervenção neste cenário.</p>
-            )}
-            <p>
-              A rede de referência continua intacta. A execução completa será
-              integrada posteriormente.
-            </p>
-          </section>
+        {comparacaoValida && <ResumoComparacao resultado={comparacaoValida} />}
+        {configuracaoValida && (
+          <ResumoConfiguracao resultado={configuracaoValida} />
         )}
       </main>
     </AppShell>
+  )
+}
+
+function CampoConfiguracao({
+  campo,
+  titulo,
+  campos,
+  problemas,
+  alterar,
+}: {
+  campo: keyof typeof iniciais
+  titulo: string
+  campos: typeof iniciais
+  problemas: ProblemaCarga[]
+  alterar: (campo: keyof typeof iniciais, valor: string) => void
+}) {
+  const nomeErro =
+    campo === 'ids'
+      ? 'ids_infectados_iniciais'
+      : campo === 'quantidade'
+        ? 'quantidade_infectados'
+        : campo
+  const erro = problemas.filter((p) => p.campo === nomeErro)
+  return (
+    <div className="field">
+      <label htmlFor={`cfg-${campo}`}>{titulo}</label>
+      <input
+        id={`cfg-${campo}`}
+        value={campos[campo]}
+        onChange={(e) => alterar(campo, e.target.value)}
+        aria-invalid={erro.length > 0}
+        aria-describedby={erro.length ? `erro-${campo}` : undefined}
+      />
+      {erro.length > 0 && (
+        <p className="field-error" id={`erro-${campo}`}>
+          {erro.map((p) => p.mensagem).join(' ')}
+        </p>
+      )}
+    </div>
   )
 }

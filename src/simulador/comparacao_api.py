@@ -38,6 +38,8 @@ def validar_comparacao(servico: ServicoCargaRede, campos: dict[str, object]) -> 
         'repeticoes': str(repeticoes),
         'cenarios': list(CENARIOS),
         'revisao_rede': referencia.revisao,
+        'contexto_rede': servico.contexto_rede,
+        'limite_passos': configuracao.limite_passos,
         'populacao': populacao,
         'modo_iniciais': modo,
         'quantidade_infectados': (

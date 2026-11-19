@@ -17,25 +17,30 @@ export function InterventionFields({
   quantidade: number | undefined
   campoSemente: ReactNode
 }) {
-  function erro(campo: string) {
-    return problemas.filter((p) => p.campo === `intervencao.${campo}`)
-  }
-  function mensagem(campo: string) {
-    const erros = erro(campo)
-    return erros.length ? (
-      <p id={`erro-intervencao-${campo}`} className="field-error">
-        {erros.map((p) => p.mensagem).join(' ')}
-      </p>
-    ) : null
-  }
-  function acessibilidade(campo: string) {
+  function erroDoCampo(campo: string) {
+    const texto = problemas
+      .filter((problema) => problema.campo === 'intervencao.' + campo)
+      .map((problema) => problema.mensagem)
+      .join(' ')
+    const id = 'erro-intervencao-' + campo
     return {
-      'aria-invalid': erro(campo).length > 0,
-      'aria-describedby': erro(campo).length
-        ? `erro-intervencao-${campo}`
-        : undefined,
+      atributos: {
+        'aria-invalid': Boolean(texto),
+        'aria-describedby': texto ? id : undefined,
+      },
+      mensagem: texto ? (
+        <p id={id} className="field-error">
+          {texto}
+        </p>
+      ) : null,
     }
   }
+
+  const erroEstrategia = erroDoCampo('estrategia')
+  const erroFracao = erroDoCampo('fracao')
+  const erroInicio = erroDoCampo('inicio')
+  const erroMecanismo = erroDoCampo('mecanismo')
+  const erroReducao = erroDoCampo('reducao')
   return (
     <fieldset disabled={disabled}>
       <legend>Intervenção por isolamento</legend>
@@ -59,7 +64,7 @@ export function InterventionFields({
           <div className="fields-grid">
             <div className="field">
               <label htmlFor="intervencao-estrategia">
-                Estratégia de seleção
+                Estratégia de seleção no cenário individual
               </label>
               <select
                 id="intervencao-estrategia"
@@ -71,12 +76,12 @@ export function InterventionFields({
                       .value as EntradaIntervencao['estrategia'],
                   })
                 }
-                {...acessibilidade('estrategia')}
+                {...erroEstrategia.atributos}
               >
                 <option value="aleatoria">Aleatória, sem reposição</option>
                 <option value="grau">Por grau: mais contatos primeiro</option>
               </select>
-              {mensagem('estrategia')}
+              {erroEstrategia.mensagem}
             </div>
             <div className="field">
               <label htmlFor="intervencao-fracao">
@@ -84,11 +89,12 @@ export function InterventionFields({
               </label>
               <input
                 id="intervencao-fracao"
+                inputMode="decimal"
                 value={campos.fracao}
                 onChange={(e) => alterar({ ...campos, fracao: e.target.value })}
-                {...acessibilidade('fracao')}
+                {...erroFracao.atributos}
               />
-              {mensagem('fracao')}
+              {erroFracao.mensagem}
               <p>De 0 a 1. Por exemplo, 0,25 corresponde a 25% da população.</p>
             </div>
             <div className="field">
@@ -107,11 +113,12 @@ export function InterventionFields({
               </label>
               <input
                 id="intervencao-inicio"
+                inputMode="numeric"
                 value={campos.inicio}
                 onChange={(e) => alterar({ ...campos, inicio: e.target.value })}
-                {...acessibilidade('inicio')}
+                {...erroInicio.atributos}
               />
-              {mensagem('inicio')}
+              {erroInicio.mensagem}
               <p>
                 Dia 0: antes da primeira atualização. Use um dia menor que o
                 limite de passos.
@@ -131,13 +138,13 @@ export function InterventionFields({
                       .value as EntradaIntervencao['mecanismo'],
                   })
                 }
-                {...acessibilidade('mecanismo')}
+                {...erroMecanismo.atributos}
               >
                 <option value="desativacao">Desativação dos contatos</option>
                 <option value="reducao">Redução da intensidade</option>
                 <option value="exclusao">Exclusão dos contatos</option>
               </select>
-              {mensagem('mecanismo')}
+              {erroMecanismo.mensagem}
               <p>Os três mecanismos preservam as pessoas e seus estados SIR.</p>
             </div>
             {campos.mecanismo === 'reducao' && (
@@ -147,13 +154,14 @@ export function InterventionFields({
                 </label>
                 <input
                   id="intervencao-reducao"
+                  inputMode="decimal"
                   value={campos.reducao}
                   onChange={(e) =>
                     alterar({ ...campos, reducao: e.target.value })
                   }
-                  {...acessibilidade('reducao')}
+                  {...erroReducao.atributos}
                 />
-                {mensagem('reducao')}
+                {erroReducao.mensagem}
                 <p>
                   0 mantém a intensidade; 1 remove toda a intensidade dos
                   contatos afetados.

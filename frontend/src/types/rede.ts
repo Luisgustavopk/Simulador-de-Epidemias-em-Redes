@@ -29,6 +29,7 @@ export interface OrigemRede {
 }
 
 export interface InspecaoRede {
+  contexto_rede: string
   revisao: number
   disponivel: boolean
   confirmada: boolean

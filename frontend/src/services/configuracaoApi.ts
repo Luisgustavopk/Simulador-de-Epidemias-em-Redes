@@ -30,28 +30,40 @@ export function prepararFormularioIntervencao(
   }
 }
 
-export interface FormularioConfiguracao {
+export type ModoPeso = 'intensidade' | 'probabilidade'
+
+export type FormularioConfiguracao = {
   beta: string | null
   gamma: string
-  modo_peso: 'intensidade' | 'probabilidade'
-  modo_iniciais: 'ids' | 'sorteio'
-  ids_infectados_iniciais?: string[]
-  quantidade_infectados?: string
+  modo_peso: ModoPeso
   semente_epidemia: string
   semente_iniciais: string
   semente_isolamento: string
   limite_passos: string
   revisao_rede: string
+  contexto_rede?: string
   intervencao?: FormularioIntervencao | null
-}
+} & (
+  | {
+      modo_iniciais: 'ids'
+      ids_infectados_iniciais: string[]
+      quantidade_infectados?: never
+    }
+  | {
+      modo_iniciais: 'sorteio'
+      quantidade_infectados: string
+      ids_infectados_iniciais?: never
+    }
+)
 
 export interface ConfiguracaoValidada {
+  contexto_rede: string
   populacao: number
   modo_iniciais: 'ids' | 'sorteio'
   configuracao: {
     beta: number | null
     gamma: number
-    modo_peso: string
+    modo_peso: ModoPeso
     ids_infectados_iniciais: string[]
     semente_epidemia: string
     semente_iniciais: string
@@ -83,6 +95,8 @@ export function validarConfiguracao(
 
 export interface ComparacaoValidada {
   repeticoes: string
+  contexto_rede: string
+  limite_passos: number
   cenarios: ('sem_intervencao' | 'aleatoria' | 'grau')[]
   revisao_rede: number
   populacao: number

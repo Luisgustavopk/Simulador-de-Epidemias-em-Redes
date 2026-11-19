@@ -1,7 +1,7 @@
 from dataclasses import asdict
 import re
 
-from simulador.carga_rede import RedeDisponivel, ServicoCargaRede
+from simulador.carga_rede import ErroCargaRede, ProblemaCargaRede, RedeDisponivel, ServicoCargaRede
 from simulador.configuracao import (
     ConfiguracaoIntervencao, ConfiguracaoSimulacao, ErroConfiguracao, ProblemaConfiguracao,
 )
@@ -32,8 +32,7 @@ def ler_configuracao(
         falha_conversao(campo, "Informe um inteiro válido em texto, sem casas decimais.")
         return None
 
-    def probabilidade(campo: str, fonte: dict[str, object] | None = None) -> float | None:
-        valor = (campos if fonte is None else fonte).get(campo.rsplit(".", 1)[-1])
+    def decimal(campo: str, valor: object) -> float | None:
         if not isinstance(valor, bool) and isinstance(valor, (str, int, float)):
             try:
                 return float(valor.replace(',', '.') if isinstance(valor, str) else valor)
@@ -42,10 +41,35 @@ def ler_configuracao(
         falha_conversao(campo, "Informe um número válido; use ponto ou vírgula para as casas decimais.")
         return None
 
+    def ler_intervencao(entrada: object) -> ConfiguracaoIntervencao | None:
+        if entrada is None:
+            return None
+        if not isinstance(entrada, dict):
+            erro('intervencao', 'Informe os campos da intervenção ou null para nenhuma.')
+            return None
+        for campo in entrada:
+            if campo not in ('estrategia', 'fracao', 'inicio', 'mecanismo', 'reducao'):
+                erro(f'intervencao.{campo}', 'Este campo não faz parte da configuração; a quantidade é derivada da fração.')
+        try:
+            mecanismo = MecanismoIsolamento(entrada.get('mecanismo'))
+        except (TypeError, ValueError):
+            mecanismo = None
+            falha_conversao('intervencao.mecanismo', 'Escolha desativação, redução ou exclusão de contatos.')
+        reducao = entrada.get('reducao')
+        if reducao is not None:
+            reducao = decimal('intervencao.reducao', reducao)
+        return ConfiguracaoIntervencao(
+            estrategia=entrada.get('estrategia'),
+            fracao=decimal('intervencao.fracao', entrada.get('fracao')),
+            inicio=inteiro('intervencao.inicio', entrada.get('inicio')),
+            mecanismo=mecanismo,
+            reducao=reducao,
+        )
+
     modo = campos.get('modo_iniciais')
     permitidos = {
         'beta', 'gamma', 'modo_peso', 'modo_iniciais', 'semente_epidemia',
-        'semente_iniciais', 'semente_isolamento', 'limite_passos', 'revisao_rede', 'intervencao',
+        'semente_iniciais', 'semente_isolamento', 'limite_passos', 'revisao_rede', 'contexto_rede', 'intervencao',
     }
     ids = None
     quantidade = None
@@ -65,32 +89,12 @@ def ler_configuracao(
         if campo not in permitidos:
             erro(campo, 'Este campo não se aplica ao modo escolhido.')
     modo_peso = campos.get('modo_peso')
-    beta = None if modo_peso == 'probabilidade' and campos.get('beta') is None else probabilidade('beta')
-    intervencao = None
-    entrada_intervencao = campos.get('intervencao')
-    if entrada_intervencao is not None:
-        if not isinstance(entrada_intervencao, dict):
-            erro('intervencao', 'Informe os campos da intervenção ou null para nenhuma.')
-        else:
-            for campo in entrada_intervencao:
-                if campo not in ('estrategia', 'fracao', 'inicio', 'mecanismo', 'reducao'):
-                    erro(f'intervencao.{campo}', 'Este campo não faz parte da configuração; a quantidade é derivada da fração.')
-            mecanismo = None
-            try:
-                mecanismo = MecanismoIsolamento(entrada_intervencao.get('mecanismo'))
-            except (TypeError, ValueError):
-                falha_conversao('intervencao.mecanismo', 'Escolha desativação, redução ou exclusão de contatos.')
-            reducao = None
-            if entrada_intervencao.get('reducao') is not None:
-                reducao = probabilidade('intervencao.reducao', entrada_intervencao)
-            intervencao = ConfiguracaoIntervencao(
-                estrategia=entrada_intervencao.get('estrategia'),
-                fracao=probabilidade('intervencao.fracao', entrada_intervencao),
-                inicio=inteiro('intervencao.inicio', entrada_intervencao.get('inicio')),
-                mecanismo=mecanismo, reducao=reducao,
-            )
+    beta = campos.get('beta')
+    if modo_peso != 'probabilidade' or beta is not None:
+        beta = decimal('beta', beta)
+    intervencao = ler_intervencao(campos.get('intervencao'))
     cfg = ConfiguracaoSimulacao(
-        beta=beta, gamma=probabilidade('gamma'),
+        beta=beta, gamma=decimal('gamma', campos.get('gamma')),
         semente_epidemia=inteiro('semente_epidemia', campos.get('semente_epidemia'), textual=True),
         semente_iniciais=inteiro('semente_iniciais', campos.get('semente_iniciais'), textual=True),
         semente_isolamento=inteiro('semente_isolamento', campos.get('semente_isolamento'), textual=True),
@@ -101,6 +105,10 @@ def ler_configuracao(
     )
     if cfg.revisao_rede is None:
         raise ErroConfiguracao(problemas)
+    if 'contexto_rede' in campos and campos['contexto_rede'] != servico.contexto_rede:
+        raise ErroCargaRede((ProblemaCargaRede(
+            'revisao', 'A rede mudou. Atualize a inspeção e valide novamente.',
+        ),))
     disponivel = servico.obter_rede_confirmada(cfg.revisao_rede)
     problemas.extend(
         problema for problema in cfg.validar(disponivel.rede, disponivel.revisao)
@@ -123,5 +131,5 @@ def validar_formulario(servico: ServicoCargaRede, campos: dict[str, object]) -> 
         resumo['intervencao']['quantidade_isolados'] = preparada.intervencao.quantidade_isolados(disponivel.rede.numero_individuos)
     return {
         'configuracao': resumo, 'populacao': disponivel.rede.numero_individuos,
-        'modo_iniciais': modo, 'origem_rede': disponivel.origem,
+        'modo_iniciais': modo, 'origem_rede': disponivel.origem, 'contexto_rede': servico.contexto_rede,
     }

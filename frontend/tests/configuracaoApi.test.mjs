@@ -1,32 +1,8 @@
 import assert from 'node:assert/strict'
-import { readFile } from 'node:fs/promises'
 import test from 'node:test'
-import ts from 'typescript'
+import { carregarConfiguracaoApi } from './carregarConfiguracaoApi.mjs'
 
-function modulo(fonte) {
-  return `data:text/javascript;base64,${Buffer.from(
-    ts.transpileModule(fonte, {
-      compilerOptions: {
-        target: ts.ScriptTarget.ES2023,
-        module: ts.ModuleKind.ESNext,
-      },
-    }).outputText,
-  ).toString('base64')}`
-}
-
-const rede = modulo(
-  await readFile(
-    new URL('../src/services/redeApi.ts', import.meta.url),
-    'utf8',
-  ),
-)
-const fonte = (
-  await readFile(
-    new URL('../src/services/configuracaoApi.ts', import.meta.url),
-    'utf8',
-  )
-).replace("'./redeApi'", JSON.stringify(rede))
-const { validarConfiguracao } = await import(modulo(fonte))
+const { validarConfiguracao } = await carregarConfiguracaoApi()
 
 test('configuração conserva IDs e sementes textuais e inclui a revisão', async () => {
   const anterior = globalThis.fetch

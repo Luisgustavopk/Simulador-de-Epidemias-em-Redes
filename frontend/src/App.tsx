@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
 import { ConfigurationPage } from './pages/ConfigurationPage'
 import { SimulationPage } from './pages/SimulationPage'
+import { ResultsPage } from './pages/ResultsPage'
 import './App.css'
 
 const Rede = lazy(() =>
@@ -24,6 +25,10 @@ export default function App() {
 
   if (pagina === '#simulacao') {
     return <SimulationPage onNavegarRede={() => { window.location.hash = '#rede' }} />
+  }
+
+  if (pagina === '#resultados') {
+    return <ResultsPage />
   }
 
   return (

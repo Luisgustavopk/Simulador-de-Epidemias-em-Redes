@@ -18,7 +18,7 @@ from simulador.carga_rede import (
 )
 
 
-from simulador.comparacao_api import validar_comparacao
+from simulador.comparacao_api import executar_comparacao_api, validar_comparacao
 from simulador.configuracao import ErroConfiguracao
 from simulador.configuracao_api import validar_formulario
 
@@ -34,6 +34,8 @@ ROTAS = {
     "/api/rede": "GET",
     "/api/rede/configuracao": "POST",
     "/api/rede/comparacao/validar": "POST",
+    "/api/rede/comparacao/executar": "POST",
+    "/api/rede/simulacao/executar": "POST",
     "/api/rede/gerar": "POST",
     "/api/rede/importar": "POST",
     "/api/rede/confirmar": "POST",
@@ -106,6 +108,11 @@ def atender(
         raise _erro("metodo", f"Use o método {ROTAS[caminho]} para esta operação.")
     if caminho == "/api/rede/comparacao/validar":
         return validar_comparacao(servico, corpo)
+    if caminho == "/api/rede/comparacao/executar":
+        return executar_comparacao_api(servico, corpo)
+    if caminho == "/api/rede/simulacao/executar":
+        from simulador.comparacao_api import executar_simulacao_api
+        return executar_simulacao_api(servico, corpo)
     if caminho == "/api/rede/configuracao":
         return validar_formulario(servico, corpo)
     if metodo == "GET" and caminho == "/api/rede":

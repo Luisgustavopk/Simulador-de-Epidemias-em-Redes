@@ -19,7 +19,11 @@ const etapas = [
     descricao: 'Ensaio epidemiológico',
     destino: '#simulacao',
   },
-  { titulo: 'Resultados', descricao: 'Em desenvolvimento' },
+  {
+    titulo: 'Resultados',
+    descricao: 'Evidências do experimento',
+    destino: '#resultados',
+  },
 ]
 
 export function AppShell({

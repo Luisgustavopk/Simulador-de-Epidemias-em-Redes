@@ -18,6 +18,7 @@ from simulador.carga_rede import (
 )
 
 
+from simulador.comparacao_api import validar_comparacao
 from simulador.configuracao import ErroConfiguracao
 from simulador.configuracao_api import validar_formulario
 
@@ -32,6 +33,7 @@ LOGGER = logging.getLogger(__name__)
 ROTAS = {
     "/api/rede": "GET",
     "/api/rede/configuracao": "POST",
+    "/api/rede/comparacao/validar": "POST",
     "/api/rede/gerar": "POST",
     "/api/rede/importar": "POST",
     "/api/rede/confirmar": "POST",
@@ -100,6 +102,8 @@ def atender(
         raise _erro("rota", "Operação não encontrada.")
     if metodo != ROTAS[caminho]:
         raise _erro("metodo", f"Use o método {ROTAS[caminho]} para esta operação.")
+    if caminho == "/api/rede/comparacao/validar":
+        return validar_comparacao(servico, corpo)
     if caminho == "/api/rede/configuracao":
         return validar_formulario(servico, corpo)
     if metodo == "GET" and caminho == "/api/rede":

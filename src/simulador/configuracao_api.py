@@ -1,18 +1,25 @@
 from dataclasses import asdict
 import re
 
-from simulador.carga_rede import ServicoCargaRede
+from simulador.carga_rede import RedeDisponivel, ServicoCargaRede
 from simulador.configuracao import (
     ConfiguracaoIntervencao, ConfiguracaoSimulacao, ErroConfiguracao, ProblemaConfiguracao,
 )
 from simulador.isolamento import MecanismoIsolamento
 
 
-def validar_formulario(servico: ServicoCargaRede, campos: dict[str, object]) -> dict[str, object]:
+def ler_configuracao(
+    servico: ServicoCargaRede, campos: dict[str, object],
+) -> tuple[ConfiguracaoSimulacao, RedeDisponivel, str]:
     problemas: list[ProblemaConfiguracao] = []
+    falhas_conversao: set[str] = set()
 
     def erro(campo: str, mensagem: str) -> None:
         problemas.append(ProblemaConfiguracao(campo, mensagem))
+
+    def falha_conversao(campo: str, mensagem: str) -> None:
+        falhas_conversao.add(campo)
+        erro(campo, mensagem)
 
     def inteiro(campo: str, valor: object, *, textual: bool = False) -> int | None:
         if not textual and isinstance(valor, int) and not isinstance(valor, bool):
@@ -22,7 +29,7 @@ def validar_formulario(servico: ServicoCargaRede, campos: dict[str, object]) -> 
                 return int(valor)
             except ValueError:
                 pass
-        erro(campo, "Informe um inteiro válido em texto, sem casas decimais.")
+        falha_conversao(campo, "Informe um inteiro válido em texto, sem casas decimais.")
         return None
 
     def probabilidade(campo: str, fonte: dict[str, object] | None = None) -> float | None:
@@ -32,7 +39,7 @@ def validar_formulario(servico: ServicoCargaRede, campos: dict[str, object]) -> 
                 return float(valor.replace(',', '.') if isinstance(valor, str) else valor)
             except (ValueError, OverflowError):
                 pass
-        erro(campo, "Informe uma probabilidade finita entre 0 e 1.")
+        falha_conversao(campo, "Informe um número válido; use ponto ou vírgula para as casas decimais.")
         return None
 
     modo = campos.get('modo_iniciais')
@@ -46,7 +53,7 @@ def validar_formulario(servico: ServicoCargaRede, campos: dict[str, object]) -> 
         permitidos.add('ids_infectados_iniciais')
         entrada = campos.get('ids_infectados_iniciais')
         if not isinstance(entrada, list):
-            erro('ids_infectados_iniciais', 'Informe uma lista de IDs em texto.')
+            falha_conversao('ids_infectados_iniciais', 'Informe uma lista de IDs em texto.')
         else:
             ids = tuple(inteiro('ids_infectados_iniciais', id, textual=True) for id in entrada)
     elif modo == 'sorteio':
@@ -72,7 +79,7 @@ def validar_formulario(servico: ServicoCargaRede, campos: dict[str, object]) -> 
             try:
                 mecanismo = MecanismoIsolamento(entrada_intervencao.get('mecanismo'))
             except (TypeError, ValueError):
-                erro('intervencao.mecanismo', 'Escolha desativação, redução ou exclusão de contatos.')
+                falha_conversao('intervencao.mecanismo', 'Escolha desativação, redução ou exclusão de contatos.')
             reducao = None
             if entrada_intervencao.get('reducao') is not None:
                 reducao = probabilidade('intervencao.reducao', entrada_intervencao)
@@ -95,9 +102,17 @@ def validar_formulario(servico: ServicoCargaRede, campos: dict[str, object]) -> 
     if cfg.revisao_rede is None:
         raise ErroConfiguracao(problemas)
     disponivel = servico.obter_rede_confirmada(cfg.revisao_rede)
-    problemas.extend(cfg.validar(disponivel.rede, disponivel.revisao))
+    problemas.extend(
+        problema for problema in cfg.validar(disponivel.rede, disponivel.revisao)
+        if problema.campo not in falhas_conversao
+    )
     if problemas:
         raise ErroConfiguracao(list(dict.fromkeys(problemas)))
+    return cfg, disponivel, modo
+
+
+def validar_formulario(servico: ServicoCargaRede, campos: dict[str, object]) -> dict[str, object]:
+    cfg, disponivel, modo = ler_configuracao(servico, campos)
     preparada = cfg.preparar(disponivel.rede, disponivel.revisao)
     resumo = asdict(preparada)
     resumo['ids_infectados_iniciais'] = [str(id) for id in preparada.ids_infectados_iniciais]

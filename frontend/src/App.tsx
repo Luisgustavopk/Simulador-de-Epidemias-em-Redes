@@ -9,9 +9,7 @@ const Rede = lazy(() =>
 )
 
 export default function App() {
-  const [pagina, setPagina] = useState(() =>
-    window.location.hash || '#rede',
-  )
+  const [pagina, setPagina] = useState(() => window.location.hash || '#rede')
 
   useEffect(() => {
     const mudar = () => setPagina(window.location.hash)
@@ -24,7 +22,13 @@ export default function App() {
   }
 
   if (pagina === '#simulacao') {
-    return <SimulationPage onNavegarRede={() => { window.location.hash = '#rede' }} />
+    return (
+      <SimulationPage
+        onNavegarRede={() => {
+          window.location.hash = '#rede'
+        }}
+      />
+    )
   }
 
   if (pagina === '#resultados') {
@@ -33,7 +37,11 @@ export default function App() {
 
   return (
     <Suspense fallback={<p role="status">Carregando rede…</p>}>
-      <Rede onNavegar={() => { window.location.hash = '#simulacao' }} />
+      <Rede
+        onNavegar={() => {
+          window.location.hash = '#simulacao'
+        }}
+      />
     </Suspense>
   )
 }

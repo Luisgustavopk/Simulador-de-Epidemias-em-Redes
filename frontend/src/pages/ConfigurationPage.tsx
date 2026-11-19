@@ -208,10 +208,13 @@ export function ConfigurationPage() {
         throw new Error('A rede mudou. Valide a configuração novamente.')
       }
       setResultado(resultado)
-      sessionStorage.setItem('observatorio-configuracao', JSON.stringify({
-        repeticoes: tipo === 'comparacao' ? repeticoes : null,
-        formulario,
-      }))
+      sessionStorage.setItem(
+        'observatorio-configuracao',
+        JSON.stringify({
+          repeticoes: tipo === 'comparacao' ? repeticoes : null,
+          formulario,
+        }),
+      )
     } catch (erro) {
       if (!controlador.signal.aborted) {
         setProblemas(problemasDoErro(erro))

@@ -104,11 +104,20 @@
     height: 3px;
   }
   .curve-s,
-  .chart-s { background: #4c78a8; stroke: #4c78a8; }
+  .chart-s {
+    background: #4c78a8;
+    stroke: #4c78a8;
+  }
   .curve-i,
-  .chart-i { background: #c94d4d; stroke: #c94d4d; }
+  .chart-i {
+    background: #c94d4d;
+    stroke: #c94d4d;
+  }
   .curve-r,
-  .chart-r { background: #4c9a72; stroke: #4c9a72; }
+  .chart-r {
+    background: #4c9a72;
+    stroke: #4c9a72;
+  }
   .comparison-key {
     color: var(--color-text-muted);
     font-size: 10px;

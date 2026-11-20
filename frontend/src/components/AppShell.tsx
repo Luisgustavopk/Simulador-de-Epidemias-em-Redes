@@ -14,18 +14,28 @@ const etapas = [
     descricao: 'Modelo SIR e intervenção',
     destino: '#configuracao',
   },
-  { titulo: 'Simulação', descricao: 'Em desenvolvimento' },
-  { titulo: 'Resultados', descricao: 'Em desenvolvimento' },
+  {
+    titulo: 'Simulação',
+    descricao: 'Ensaio epidemiológico',
+    destino: '#simulacao',
+  },
+  {
+    titulo: 'Resultados',
+    descricao: 'Evidências do experimento',
+    destino: '#resultados',
+  },
 ]
 
 export function AppShell({
   children,
   conectado,
-  etapaAtiva = 0,
+  etapaAtiva = 1,
+  onNavegar,
 }: {
   children: ReactNode
   conectado: boolean
-  etapaAtiva?: 0 | 1
+  etapaAtiva?: number
+  onNavegar?: (etapa: number) => void
 }) {
   const [recolhida, setRecolhida] = useState(false)
   return (
@@ -93,8 +103,8 @@ export function AppShell({
               {etapas.map(({ titulo, descricao, destino }, indice) => (
                 <li
                   key={titulo}
-                  className={indice === etapaAtiva ? 'current' : ''}
-                  aria-current={indice === etapaAtiva ? 'step' : undefined}
+                  className={indice + 1 === etapaAtiva ? 'current' : ''}
+                  aria-current={indice + 1 === etapaAtiva ? 'step' : undefined}
                 >
                   {destino ? (
                     <a href={destino}>
@@ -105,13 +115,18 @@ export function AppShell({
                       </span>
                     </a>
                   ) : (
-                    <>
+                    <button
+                      type="button"
+                      disabled
+                      onClick={() => onNavegar?.(indice + 1)}
+                      aria-label={`Etapa ${indice + 1}: ${titulo}`}
+                    >
                       <span className="step-number">{indice + 1}</span>
                       <span className="step-copy">
                         <strong>{titulo}</strong>
                         <small>{descricao}</small>
                       </span>
-                    </>
+                    </button>
                   )}
                 </li>
               ))}

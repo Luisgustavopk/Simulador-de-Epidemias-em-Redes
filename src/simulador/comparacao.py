@@ -15,7 +15,7 @@ Motivo = Literal['extincao', 'limite_passos']
 CENARIOS: tuple[Cenario, ...] = ('sem_intervencao', 'aleatoria', 'grau')
 INDICADORES = (
     'pico_infectados', 'pico_proporcional', 'passo_pico', 'fracao_acumulada',
-    'horizonte_observado', 'duracao_extincao',
+    'horizonte_observado', 'duracao_extincao', 'fracao_final_recuperados',
 )
 INDICADORES_REDUCAO = ('pico_infectados', 'pico_proporcional', 'fracao_acumulada')
 
@@ -50,11 +50,25 @@ class ResultadoIndividual:
 
     @property
     def pico_proporcional(self) -> float:
-        return self.pico_infectados / self.populacao_inicial
+        return (
+            self.pico_infectados / self.populacao_inicial
+            if self.populacao_inicial else 0.0
+        )
 
     @property
     def censurada(self) -> bool:
         return self.motivo_termino == 'limite_passos'
+
+    @property
+    def fracao_final_recuperados(self) -> float:
+        if not self.populacao_inicial or not self.historico:
+            return 0.0
+        registro = self.historico[-1]
+        return registro.recuperados / self.populacao_inicial
+
+    @property
+    def ocorreu_infeccao(self) -> bool:
+        return any(registro.infectados > 0 for registro in self.historico)
 
 
 @dataclass(frozen=True, slots=True)

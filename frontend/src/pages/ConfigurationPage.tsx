@@ -208,6 +208,13 @@ export function ConfigurationPage() {
         throw new Error('A rede mudou. Valide a configuração novamente.')
       }
       setResultado(resultado)
+      sessionStorage.setItem(
+        'observatorio-configuracao',
+        JSON.stringify({
+          repeticoes: tipo === 'comparacao' ? repeticoes : null,
+          formulario,
+        }),
+      )
     } catch (erro) {
       if (!controlador.signal.aborted) {
         setProblemas(problemasDoErro(erro))
@@ -224,7 +231,7 @@ export function ConfigurationPage() {
   const camposDoFormulario = { campos, problemas, alterar }
 
   return (
-    <AppShell conectado={conectado} etapaAtiva={1}>
+    <AppShell conectado={conectado} etapaAtiva={2}>
       <main id="conteudo" className="configuration-page">
         <h1>Configuração epidemiológica</h1>
         <p>

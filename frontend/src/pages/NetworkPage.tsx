@@ -9,7 +9,7 @@ import { NodeInspector } from '../features/rede/components/NodeInspector'
 import { useCargaRede } from '../hooks/useCargaRede'
 import { descreverOrigem } from '../types/rede'
 
-export function NetworkPage() {
+export function NetworkPage({ onNavegar }: { onNavegar?: () => void } = {}) {
   const carga = useCargaRede()
   const [selecao, setSelecao] = useState<{
     versao: number
@@ -31,7 +31,13 @@ export function NetworkPage() {
   ] as const
 
   return (
-    <AppShell conectado={carga.conexao === 'online'}>
+    <AppShell
+      conectado={carga.conexao === 'online'}
+      etapaAtiva={1}
+      onNavegar={(etapa) => {
+        if (etapa === 3) onNavegar?.()
+      }}
+    >
       <main id="conteudo" className="workspace" tabIndex={-1}>
         <div className="workspace-heading">
           <div>

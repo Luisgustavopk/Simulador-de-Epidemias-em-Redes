@@ -114,7 +114,7 @@ export interface ComparacaoValidada {
     iniciais: string
     isolamento: string
   }
-  execucao_disponivel: false
+  execucao_disponivel: boolean
 }
 
 export function validarComparacao(
@@ -123,6 +123,131 @@ export function validarComparacao(
   signal?: AbortSignal,
 ): Promise<ComparacaoValidada> {
   return solicitar<ComparacaoValidada>('/comparacao/validar', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ repeticoes, configuracao }),
+    signal,
+  })
+}
+
+export interface RegistroResultado {
+  passo: number
+  suscetiveis: number
+  infectados: number
+  recuperados: number
+  isolados: number
+}
+
+export interface ResultadoSimulacao {
+  resultado_id?: string
+  contexto_rede: string
+  revisao_rede: number
+  populacao: number
+  metrica: {
+    pico_infectados: number
+    passo_pico: number
+    pico_proporcional: number
+    fracao_acumulada: number
+    fracao_final_recuperados: number
+    ocorreu_infeccao: boolean
+    horizonte_observado: number
+    duracao_extincao: number | null
+  }
+  motivo_termino: 'extincao' | 'limite_passos'
+  historico: RegistroResultado[]
+  manifesto?: ManifestoResultado
+}
+
+export interface ManifestoResultado {
+  rede: {
+    contexto: string | null
+    revisao: number
+    origem: Record<string, unknown>
+  }
+  configuracao: Record<string, unknown>
+  algoritmo: Record<string, string>
+  [chave: string]: unknown
+}
+
+export interface ExecucaoComparadaResultado {
+  repeticao: number
+  cenario: 'sem_intervencao' | 'aleatoria' | 'grau'
+  metrica: ResultadoSimulacao['metrica']
+  motivo_termino: ResultadoSimulacao['motivo_termino']
+  historico: RegistroResultado[]
+  manifesto?: ManifestoResultado
+}
+
+export interface EstatisticaResultado {
+  n: number
+  ausentes: number
+  media: number | null
+  desvio_padrao: number | null
+}
+
+export interface ResultadoComparacaoExecutada {
+  resultado_id?: string
+  contexto_rede: string
+  revisao_rede: number
+  populacao: number
+  execucoes: ExecucaoComparadaResultado[]
+  resumo: Record<
+    string,
+    {
+      censuradas: number
+      proporcao_censuradas: number
+      metricas: Record<string, EstatisticaResultado>
+      motivos_termino: Record<string, number>
+    }
+
+  >
+  manifesto?: ManifestoResultado
+}
+
+export interface ResultadoResumo {
+  id: string
+  contexto_rede: string
+  revisao_rede: number
+  populacao: number
+}
+
+export function listarResultados(
+  signal?: AbortSignal,
+): Promise<{ resultados: ResultadoResumo[] }> {
+  return solicitar<{ resultados: ResultadoResumo[] }>('/resultados', {
+    method: 'GET',
+    signal,
+  })
+}
+
+export function consultarResultado(
+  id: string,
+  signal?: AbortSignal,
+): Promise<ResultadoSimulacao | ResultadoComparacaoExecutada> {
+  return solicitar<ResultadoSimulacao | ResultadoComparacaoExecutada>(
+    `/resultados/${encodeURIComponent(id)}`,
+    { method: 'GET', signal },
+  )
+}
+
+export function executarSimulacao(
+  campos: FormularioConfiguracao,
+  signal?: AbortSignal,
+): Promise<ResultadoSimulacao> {
+  return solicitar<ResultadoSimulacao>('/simulacao/executar', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(campos),
+    signal,
+  })
+}
+
+export function executarComparacao(
+  repeticoes: string,
+  configuracao: FormularioConfiguracao,
+  signal?: AbortSignal,
+): Promise<ResultadoComparacaoExecutada> {
+  return solicitar<ResultadoComparacaoExecutada>('/comparacao/executar', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ repeticoes, configuracao }),

@@ -44,16 +44,19 @@ export class RenderizadorRede3D implements RenderizadorRede {
   private selecionado: string | null = null
   private filtrar = false
   private sobre: string | null = null
+  private estadosPorNo: Record<string, 'S' | 'I' | 'R' | 'isolado'> = {}
 
   constructor(
     canvas: HTMLCanvasElement,
     contexto: CanvasRenderingContext2D,
     nos: No3D[],
     previa: PreviaRede,
+    estadosPorNo?: Record<string, 'S' | 'I' | 'R' | 'isolado'>,
   ) {
     this.canvas = canvas
     this.contexto = contexto
     this.nos = nos
+    this.estadosPorNo = estadosPorNo ?? {}
     const indices = new Map(nos.map((no, i) => [no.id, i]))
     this.contatos = previa.contatos.flatMap((contato) => {
       const a = indices.get(contato.origem),
@@ -105,8 +108,8 @@ export class RenderizadorRede3D implements RenderizadorRede {
     this.canvas.dataset.nodeHover = String(id !== null)
   }
 
-  private esfera(selecionado: boolean, camada: number) {
-    const chave = `${selecionado}:${camada}`
+  private esfera(selecionado: boolean, camada: number, estado: 'S' | 'I' | 'R' | 'isolado' | undefined) {
+    const chave = `${selecionado}:${camada}:${estado ?? 'padrao'}`
     const existente = this.sprites.get(chave)
     if (existente) return existente
     const sprite = document.createElement('canvas')
@@ -116,7 +119,17 @@ export class RenderizadorRede3D implements RenderizadorRede {
       // Cada esfera é opaca; a profundidade altera a cor, sem somar transparências.
       contexto.beginPath()
       contexto.arc(20, 20, 19, 0, Math.PI * 2)
-      contexto.fillStyle = selecionado ? this.paleta.destaque : this.paleta.no
+      contexto.fillStyle = selecionado
+        ? this.paleta.destaque
+        : estado === 'I'
+          ? '#ac4433'
+          : estado === 'R'
+            ? '#487751'
+            : estado === 'isolado'
+              ? '#c79a42'
+              : estado === 'S'
+                ? '#315d88'
+                : this.paleta.no
       contexto.fill()
       const luz = contexto.createRadialGradient(13, 12, 0, 20, 20, 22)
       luz.addColorStop(0, '#ffffff30')
@@ -192,7 +205,7 @@ export class RenderizadorRede3D implements RenderizadorRede {
       )
       const selecionado = ponto.id === this.selecionado
       contexto.drawImage(
-        this.esfera(selecionado, selecionado ? 3 : camada),
+        this.esfera(selecionado, selecionado ? 3 : camada, this.estadosPorNo[ponto.id]),
         ponto.x - ponto.raio,
         ponto.y - ponto.raio,
         ponto.raio * 2,

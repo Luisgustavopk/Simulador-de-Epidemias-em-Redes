@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import base64
 import binascii
+from copy import deepcopy
 from dataclasses import dataclass, field
 from http.cookies import SimpleCookie, CookieError
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -18,7 +19,11 @@ from simulador.carga_rede import (
 )
 
 
-from simulador.comparacao_api import validar_comparacao
+from simulador.comparacao_api import (
+    executar_comparacao_api,
+    executar_simulacao_api,
+    validar_comparacao,
+)
 from simulador.configuracao import ErroConfiguracao
 from simulador.configuracao_api import validar_formulario
 
@@ -34,6 +39,8 @@ ROTAS = {
     "/api/rede": "GET",
     "/api/rede/configuracao": "POST",
     "/api/rede/comparacao/validar": "POST",
+    "/api/rede/comparacao/executar": "POST",
+    "/api/rede/simulacao/executar": "POST",
     "/api/rede/gerar": "POST",
     "/api/rede/importar": "POST",
     "/api/rede/confirmar": "POST",
@@ -41,6 +48,7 @@ ROTAS = {
     "/api/rede/individuo": "GET",
     "/api/rede/individuos": "GET",
     "/api/rede/contatos": "GET",
+    "/api/rede/resultados": "GET",
 }
 
 ROTAS_COM_RETRATO = {"/api/rede", "/api/rede/gerar", "/api/rede/importar", "/api/rede/confirmar"}
@@ -66,6 +74,7 @@ class SessaoCarga:
     servico: ServicoCargaRede = field(default_factory=ServicoCargaRede)
     lock: RLock = field(default_factory=RLock)
     ultimo_acesso: float = field(default_factory=monotonic)
+    resultados: dict[str, dict[str, object]] = field(default_factory=dict)
 
 
 def _previa(servico: ServicoCargaRede, revisao: int) -> dict[str, object]:
@@ -99,13 +108,40 @@ def _previa(servico: ServicoCargaRede, revisao: int) -> dict[str, object]:
 def atender(
     servico: ServicoCargaRede, metodo: str, caminho: str,
     parametros: dict[str, list[str]], corpo: dict[str, object],
+    resultados: dict[str, dict[str, object]] | None = None,
 ) -> dict[str, object]:
+    if caminho.startswith("/api/rede/resultados/"):
+        if metodo != "GET" or resultados is None:
+            raise _erro("metodo", "Use o método GET para esta operação.")
+        identificador = caminho.rsplit("/", 1)[-1]
+        resultado = resultados.get(identificador)
+        if resultado is None:
+            raise _erro("resultado", "Resultado não encontrado nesta sessão.")
+        return deepcopy(resultado)
     if caminho not in ROTAS:
         raise _erro("rota", "Operação não encontrada.")
     if metodo != ROTAS[caminho]:
         raise _erro("metodo", f"Use o método {ROTAS[caminho]} para esta operação.")
     if caminho == "/api/rede/comparacao/validar":
         return validar_comparacao(servico, corpo)
+    if caminho == "/api/rede/comparacao/executar":
+        return executar_comparacao_api(servico, corpo)
+    if caminho == "/api/rede/simulacao/executar":
+        return executar_simulacao_api(servico, corpo)
+    if caminho == "/api/rede/resultados":
+        if resultados is None:
+            raise _erro("resultado", "O repositório de resultados não está disponível.")
+        return {
+            "resultados": [
+                {
+                    "id": identificador,
+                    "contexto_rede": resultado.get("contexto_rede"),
+                    "revisao_rede": resultado.get("revisao_rede"),
+                    "populacao": resultado.get("populacao"),
+                }
+                for identificador, resultado in resultados.items()
+            ],
+        }
     if caminho == "/api/rede/configuracao":
         return validar_formulario(servico, corpo)
     if metodo == "GET" and caminho == "/api/rede":
@@ -184,7 +220,10 @@ class ManipuladorCarga(BaseHTTPRequestHandler):
         self.send_header("Cache-Control", "no-store")
         self.send_header("X-Content-Type-Options", "nosniff")
         if status == 405:
-            self.send_header("Allow", ROTAS[urlsplit(self.path).path])
+            self.send_header(
+                "Allow",
+                ROTAS.get(urlsplit(self.path).path, "GET"),
+            )
         if sessao:
             self.send_header("Set-Cookie", f"{COOKIE_SESSAO}={sessao}; Path=/api; HttpOnly; SameSite=Strict")
         self.end_headers()
@@ -215,7 +254,26 @@ class ManipuladorCarga(BaseHTTPRequestHandler):
             identificador, sessao = self.server.sessao(self.headers.get("Cookie", ""))
             url = urlsplit(self.path)
             with sessao.lock:
-                resultado = atender(sessao.servico, self.command, url.path, parse_qs(url.query), corpo)
+                resultado = atender(
+                    sessao.servico,
+                    self.command,
+                    url.path,
+                    parse_qs(url.query),
+                    corpo,
+                    sessao.resultados,
+                )
+                if (
+                    self.command == "POST"
+                    and url.path in (
+                        "/api/rede/simulacao/executar",
+                        "/api/rede/comparacao/executar",
+                    )
+                ):
+                    resultado_id = token_urlsafe(16)
+                    sessao.resultados[resultado_id] = deepcopy(resultado)
+                    while len(sessao.resultados) > 32:
+                        del sessao.resultados[next(iter(sessao.resultados))]
+                    resultado = {**resultado, "resultado_id": resultado_id}
                 if url.path in ROTAS_COM_RETRATO:
                     resultado["contexto_rede"] = sessao.servico.contexto_rede
             self._responder(200, resultado, identificador)

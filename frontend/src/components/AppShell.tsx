@@ -89,13 +89,18 @@ export function AppShell({
       <div className={`app-frame ${recolhida ? 'sidebar-collapsed' : ''}`}>
         <aside className="workflow-sidebar" aria-label="Navegação do estudo">
           <button
+            type="button"
             className="nav-toggle"
-            onClick={() => setRecolhida(!recolhida)}
+            onClick={() => setRecolhida((atual) => !atual)}
             aria-expanded={!recolhida}
             aria-controls="workflow-nav"
             aria-label={recolhida ? 'Expandir navegação' : 'Recolher navegação'}
+            title={recolhida ? 'Expandir navegação' : 'Recolher navegação'}
           >
-            <Icon nome="menu" />
+            <Icon
+              nome="chevron"
+              style={{ transform: recolhida ? undefined : 'rotate(180deg)' }}
+            />
             <span>Etapas do estudo</span>
           </button>
           <nav id="workflow-nav" aria-label="Etapas do estudo">
@@ -104,11 +109,19 @@ export function AppShell({
                 <li
                   key={titulo}
                   className={indice + 1 === etapaAtiva ? 'current' : ''}
-                  aria-current={indice + 1 === etapaAtiva ? 'step' : undefined}
                 >
                   {destino ? (
-                    <a href={destino}>
-                      <span className="step-number">{indice + 1}</span>
+                    <a
+                      href={destino}
+                      aria-label={`Etapa ${indice + 1}: ${titulo}`}
+                      aria-current={
+                        indice + 1 === etapaAtiva ? 'step' : undefined
+                      }
+                      title={titulo}
+                    >
+                      <span className="step-number" aria-hidden="true">
+                        {indice + 1}
+                      </span>
                       <span className="step-copy">
                         <strong>{titulo}</strong>
                         <small>{descricao}</small>
@@ -120,8 +133,14 @@ export function AppShell({
                       disabled
                       onClick={() => onNavegar?.(indice + 1)}
                       aria-label={`Etapa ${indice + 1}: ${titulo}`}
+                      aria-current={
+                        indice + 1 === etapaAtiva ? 'step' : undefined
+                      }
+                      title={titulo}
                     >
-                      <span className="step-number">{indice + 1}</span>
+                      <span className="step-number" aria-hidden="true">
+                        {indice + 1}
+                      </span>
                       <span className="step-copy">
                         <strong>{titulo}</strong>
                         <small>{descricao}</small>

@@ -156,11 +156,33 @@ test(
       }
       assert.fail(`Condição não alcançada: ${expression}`)
     }
-    async function capturarResumo(nome) {
+    async function recarregar() {
+      await comando('Page.enable')
+      let aoCarregar, limite
+      const carregamento = new Promise((resolve, reject) => {
+        aoCarregar = (evento) => {
+          if (JSON.parse(evento.data).method === 'Page.loadEventFired')
+            resolve()
+        }
+        socket.addEventListener('message', aoCarregar)
+        limite = setTimeout(
+          () => reject(new Error('A página não concluiu a recarga.')),
+          15000,
+        )
+      })
+      try {
+        await comando('Page.reload')
+        await carregamento
+      } finally {
+        clearTimeout(limite)
+        socket.removeEventListener('message', aoCarregar)
+      }
+    }
+    async function capturarArea(nome, seletor = '.simulation-summary') {
       if (!process.env.CAPTURAS_DIR) return
       await mkdir(process.env.CAPTURAS_DIR, { recursive: true })
       const area = await avaliar(
-        `(()=>{const area=document.querySelector('.simulation-summary').getBoundingClientRect();return {x:area.x+scrollX,y:area.y+scrollY,width:area.width,height:area.height,scale:1}})()`,
+        `(()=>{const area=document.querySelector(${JSON.stringify(seletor)}).getBoundingClientRect();return {x:area.x+scrollX,y:area.y+scrollY,width:area.width,height:area.height,scale:1}})()`,
       )
       const captura = await comando('Page.captureScreenshot', {
         format: 'png',
@@ -193,7 +215,7 @@ test(
         )
         assert.equal(
           await avaliar(
-            "!!document.querySelector('.population-proportion, .simulation-progress, .sir-network-legend')",
+            "!!document.querySelector('.population-proportion, .isolation-proportion, .simulation-progress, .sir-network-legend')",
           ),
           false,
         )
@@ -212,6 +234,165 @@ test(
       },
     )
     await contexto.test(
+      'execução usa rótulos de domínio sem códigos de requisitos',
+      async () => {
+        assert.doesNotMatch(
+          await avaliar(
+            "document.querySelector('.simulation-controls').textContent",
+          ),
+          /RF06|RF07/,
+        )
+      },
+    )
+    await contexto.test(
+      'sidebar recolhida centraliza etapas, preserva nomes e navega por teclado',
+      async () => {
+        try {
+          await comando('Emulation.setDeviceMetricsOverride', {
+            width: 1365,
+            height: 1000,
+            deviceScaleFactor: 1,
+            mobile: false,
+          })
+          const larguraExpandida = await avaliar(
+            "document.querySelector('.work-sheet').getBoundingClientRect().width",
+          )
+          await avaliar("document.querySelector('.nav-toggle').click()")
+          await ate(
+            "document.querySelector('.nav-toggle').getAttribute('aria-expanded')==='false'",
+          )
+          assert.ok(
+            (await avaliar(
+              "document.querySelector('.work-sheet').getBoundingClientRect().width",
+            )) > larguraExpandida,
+          )
+          for (const [largura, tema] of [
+            [1365, 'light'],
+            [820, 'light'],
+            [1365, 'dark'],
+          ]) {
+            await comando('Emulation.setDeviceMetricsOverride', {
+              width: largura,
+              height: 1000,
+              deviceScaleFactor: 1,
+              mobile: false,
+            })
+            await avaliar(`document.documentElement.dataset.theme='${tema}'`)
+            const centros = await avaliar(
+              "(()=>{const barra=document.querySelector('.workflow-sidebar').getBoundingClientRect();const botao=document.querySelector('.nav-toggle').getBoundingClientRect();return {barra:barra.x+barra.width/2,botao:botao.x+botao.width/2,etapas:[...document.querySelectorAll('#workflow-nav li')].map(item=>{const numero=item.querySelector('.step-number').getBoundingClientRect();const linha=getComputedStyle(item,'::after');const retangulo=item.getBoundingClientRect();const link=item.querySelector('a');const alvo=link.getBoundingClientRect();return {centro:numero.x+numero.width/2,linha:retangulo.x+parseFloat(linha.left)+parseFloat(linha.width)/2,ultimo:item===item.parentElement.lastElementChild,nome:link.getAttribute('aria-label'),titulo:link.title,largura:alvo.width,altura:alvo.height}})}})()",
+            )
+            assert.ok(Math.abs(centros.botao - centros.barra) < 1)
+            for (const etapa of centros.etapas) {
+              assert.ok(Math.abs(etapa.centro - centros.barra) < 1)
+              if (!etapa.ultimo)
+                assert.ok(Math.abs(etapa.linha - etapa.centro) < 1)
+              assert.ok(etapa.nome?.includes('Etapa'))
+              assert.ok(etapa.titulo.length > 0)
+              assert.ok(etapa.largura >= 44 && etapa.altura >= 44)
+            }
+            assert.equal(
+              await avaliar(
+                "document.querySelector('#workflow-nav a[href=\"#simulacao\"]').getAttribute('aria-current')",
+              ),
+              'step',
+            )
+            assert.ok(
+              await avaliar(
+                'document.documentElement.scrollWidth <= innerWidth',
+              ),
+            )
+            await capturarArea(
+              `sidebar-${largura}-${tema}`,
+              '.workflow-sidebar',
+            )
+          }
+          await comando('Emulation.setDeviceMetricsOverride', {
+            width: 390,
+            height: 1000,
+            deviceScaleFactor: 1,
+            mobile: true,
+          })
+          assert.equal(
+            await avaliar(
+              "getComputedStyle(document.querySelector('.nav-toggle')).display",
+            ),
+            'none',
+          )
+          const etapasMoveis = await avaliar(
+            "[...document.querySelectorAll('#workflow-nav a')].map(link=>{const numero=link.querySelector('.step-number').getBoundingClientRect();const texto=link.querySelector('.step-copy');const area=texto.getBoundingClientRect();return {centroNumero:numero.x+numero.width/2,centroTexto:area.x+area.width/2,visivel:getComputedStyle(texto).display!=='none',altura:link.getBoundingClientRect().height}})",
+          )
+          for (const etapa of etapasMoveis) {
+            assert.ok(etapa.visivel && etapa.altura >= 44)
+            assert.ok(Math.abs(etapa.centroNumero - etapa.centroTexto) < 1)
+          }
+          assert.ok(
+            await avaliar('document.documentElement.scrollWidth <= innerWidth'),
+          )
+          await capturarArea('sidebar-mobile-dark', '.workflow-sidebar')
+          await comando('Emulation.setDeviceMetricsOverride', {
+            width: 1365,
+            height: 1000,
+            deviceScaleFactor: 1,
+            mobile: false,
+          })
+          await avaliar("document.querySelector('.nav-toggle').focus()")
+          await comando('Input.dispatchKeyEvent', {
+            type: 'keyDown',
+            key: 'Enter',
+            code: 'Enter',
+            text: '\r',
+            unmodifiedText: '\r',
+            windowsVirtualKeyCode: 13,
+          })
+          await comando('Input.dispatchKeyEvent', {
+            type: 'keyUp',
+            key: 'Enter',
+            code: 'Enter',
+            windowsVirtualKeyCode: 13,
+          })
+          await ate(
+            "document.querySelector('.nav-toggle').getAttribute('aria-expanded')==='true'",
+          )
+          await avaliar(
+            "document.querySelector('.nav-toggle').click();document.querySelector('#workflow-nav a[href=\"#configuracao\"]').focus()",
+          )
+          await comando('Input.dispatchKeyEvent', {
+            type: 'keyDown',
+            key: 'Enter',
+            code: 'Enter',
+            text: '\r',
+            unmodifiedText: '\r',
+            windowsVirtualKeyCode: 13,
+          })
+          await comando('Input.dispatchKeyEvent', {
+            type: 'keyUp',
+            key: 'Enter',
+            code: 'Enter',
+            windowsVirtualKeyCode: 13,
+          })
+          await ate("!!document.querySelector('.configuration-page')")
+          assert.equal(
+            await avaliar(
+              "document.querySelector('#workflow-nav a[href=\"#configuracao\"]').getAttribute('aria-current')",
+            ),
+            'step',
+          )
+          await avaliar("window.location.hash='#simulacao'")
+          await ate("!!document.querySelector('.simulation-controls')")
+        } finally {
+          await avaliar(
+            "document.documentElement.dataset.theme='light';if(document.querySelector('.nav-toggle')?.getAttribute('aria-expanded')==='false')document.querySelector('.nav-toggle').click()",
+          )
+          await comando('Emulation.setDeviceMetricsOverride', {
+            width: 1365,
+            height: 1000,
+            deviceScaleFactor: 1,
+            mobile: false,
+          })
+        }
+      },
+    )
+    await contexto.test(
       'execução exige rede e configuração; reiniciar descarta resposta pendente',
       async () => {
         assert.equal(
@@ -223,9 +404,12 @@ test(
         await avaliar(
           `(async()=>{const rede=await(await fetch('/api/rede/gerar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({modelo:'erdos_renyi',numero_individuos:'3',semente:'1',peso:'1',probabilidade_contato:'1'})})).json();await fetch('/api/rede/confirmar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({revisao:rede.revisao})});const formulario={beta:'1',gamma:'1',modo_peso:'intensidade',modo_iniciais:'ids',ids_infectados_iniciais:['0'],semente_epidemia:'42',semente_iniciais:'43',semente_isolamento:'44',limite_passos:'20',revisao_rede:String(rede.revisao),contexto_rede:rede.contexto_rede,intervencao:{estrategia:'grau',fracao:'0.5',inicio:'0',mecanismo:'desativacao'}};sessionStorage.setItem('observatorio-configuracao',JSON.stringify({repeticoes:'2',formulario}));})()`,
         )
-        await comando('Page.reload')
+        await recarregar()
         await ate(
           "!!document.querySelector('.experiment-actions .button-primary') && !document.querySelector('.experiment-actions .button-primary').disabled",
+        )
+        await avaliar(
+          "[...document.querySelectorAll('.experiment-card')].find(botao=>botao.textContent.includes('Execução Única')).click()",
         )
         const resumo = await avaliar(
           "document.querySelector('.simulation-summary').textContent",
@@ -287,6 +471,63 @@ test(
           ),
           'extincao',
         )
+      },
+    )
+    await contexto.test(
+      'SIR mantém 100% da população e isolamento usa indicador independente',
+      async () => {
+        await avaliar("document.querySelector('.button-pause').click()")
+        assert.equal(
+          await avaliar(
+            "document.querySelector('.population-proportion').children.length",
+          ),
+          3,
+        )
+        const proporcoes = await avaliar(
+          "[...document.querySelectorAll('.population-proportion span')].map(elemento=>parseFloat(elemento.style.width))",
+        )
+        assert.ok(
+          Math.abs(proporcoes.reduce((soma, valor) => soma + valor, 0) - 100) <
+            0.001,
+        )
+        assert.equal(
+          await avaliar(
+            "!!document.querySelector('.population-proportion .bar-isolado')",
+          ),
+          false,
+        )
+        assert.deepEqual(
+          await avaliar(
+            "(()=>{const indicador=document.querySelector('[role=meter][aria-label=\"Indivíduos em isolamento\"]');return [indicador.getAttribute('aria-valuenow'),indicador.getAttribute('aria-valuemax')]})()",
+          ),
+          ['1', '3'],
+        )
+        for (const [largura, tema] of [
+          [390, 'light'],
+          [820, 'light'],
+          [1365, 'light'],
+          [390, 'dark'],
+        ]) {
+          await comando('Emulation.setDeviceMetricsOverride', {
+            width: largura,
+            height: 1000,
+            deviceScaleFactor: 1,
+            mobile: largura === 390,
+          })
+          await avaliar(`document.documentElement.dataset.theme='${tema}'`)
+          assert.ok(
+            await avaliar('document.documentElement.scrollWidth <= innerWidth'),
+          )
+          const larguras = await avaliar(
+            "(()=>{const barra=document.querySelector('.population-proportion');return {total:barra.getBoundingClientRect().width,segmentos:[...barra.children].reduce((soma,elemento)=>soma+elemento.getBoundingClientRect().width,0)}})()",
+          )
+          assert.ok(Math.abs(larguras.total - larguras.segmentos) < 0.1)
+          await capturarArea(
+            `distribuicao-${largura}-${tema}`,
+            '.population-distribution',
+          )
+        }
+        await avaliar("document.documentElement.dataset.theme='light'")
       },
     )
     await contexto.test(
@@ -406,7 +647,7 @@ test(
           const comparacao=await resposta.json();
           sessionStorage.setItem('observatorio-resultado-execucao',JSON.stringify({tipo:'comparacao',comparacao}));
         })()`)
-        await comando('Page.reload')
+        await recarregar()
         await ate(
           "document.querySelectorAll('table[aria-labelledby=history-title] tbody tr').length===50",
         )
@@ -509,7 +750,7 @@ test(
         await avaliar(
           `(async()=>{const rede=await(await fetch('/api/rede/gerar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({modelo:'erdos_renyi',numero_individuos:'3',semente:'2',peso:'1',probabilidade_contato:'0'})})).json();await fetch('/api/rede/confirmar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({revisao:rede.revisao})});})()`,
         )
-        await comando('Page.reload')
+        await recarregar()
         await ate("!!document.querySelector('.results-warning')")
         assert.match(
           await avaliar(
@@ -550,14 +791,40 @@ test(
         await ate(
           "!!JSON.parse(sessionStorage.getItem('observatorio-configuracao'))?.validacao",
         )
-        await avaliar(
-          `window.fetchAnterior=window.fetch;window.fetch=(...argumentos)=>{if(String(argumentos[0]).endsWith('/api/rede/configuracao'))throw new Error('O resumo deveria reutilizar a validação salva.');return window.fetchAnterior(...argumentos)};window.location.hash='#simulacao'`,
+        assert.doesNotMatch(
+          await avaliar(
+            "document.querySelector('.configuration-summary').textContent",
+          ),
+          /integrada posteriormente/,
         )
+        await avaliar(
+          `window.fetchAnterior=window.fetch;window.fetch=(...argumentos)=>{if(String(argumentos[0]).endsWith('/api/rede/configuracao'))throw new Error('O resumo deveria reutilizar a validação salva.');return window.fetchAnterior(...argumentos)};document.querySelector('.configuration-summary a[href="#simulacao"]').focus()`,
+        )
+        await comando('Input.dispatchKeyEvent', {
+          type: 'keyDown',
+          key: 'Enter',
+          code: 'Enter',
+          text: '\r',
+          unmodifiedText: '\r',
+          windowsVirtualKeyCode: 13,
+        })
+        await comando('Input.dispatchKeyEvent', {
+          type: 'keyUp',
+          key: 'Enter',
+          code: 'Enter',
+          windowsVirtualKeyCode: 13,
+        })
         await ate(
           "!!document.querySelector('.simulation-summary') && !document.querySelector('.experiment-actions .button-primary').disabled",
         )
         const resumo = await avaliar(
           "document.querySelector('.simulation-summary').textContent",
+        )
+        assert.match(
+          await avaliar(
+            "document.querySelector('.experiment-card[aria-pressed=true]').textContent",
+          ),
+          /Execução Única/,
         )
         assert.match(resumo, /rede.csv/)
         assert.match(resumo, /9007199254740993/)
@@ -585,7 +852,7 @@ test(
           assert.ok(
             await avaliar('document.documentElement.scrollWidth <= innerWidth'),
           )
-          await capturarResumo(`resumo-${largura}-${tema}`)
+          await capturarArea(`resumo-${largura}-${tema}`)
         }
         await comando('Emulation.setDeviceMetricsOverride', {
           width: 1365,
@@ -696,7 +963,7 @@ test(
         await avaliar(
           `(()=>{const anterior=JSON.parse(sessionStorage.getItem('observatorio-configuracao'));const formulario={...anterior.formulario,modo_iniciais:'ids',ids_infectados_iniciais:[],intervencao:null,limite_passos:'5'};delete formulario.quantidade_infectados;sessionStorage.setItem('observatorio-configuracao',JSON.stringify({repeticoes:null,formulario}));sessionStorage.removeItem('observatorio-resultado-execucao')})()`,
         )
-        await comando('Page.reload')
+        await recarregar()
         await ate(
           "!!document.querySelector('.experiment-actions .button-primary') && !document.querySelector('.experiment-actions .button-primary').disabled",
         )
@@ -722,11 +989,23 @@ test(
           ),
           /Nenhum infectado inicial/,
         )
+        assert.equal(
+          await avaliar(
+            "document.querySelector('[role=meter]').getAttribute('aria-valuenow')",
+          ),
+          '0',
+        )
+        assert.equal(
+          await avaliar(
+            "document.querySelector('.population-proportion .bar-s').style.width",
+          ),
+          '100%',
+        )
         await avaliar("document.querySelector('.button-reset').click()")
         await ate("document.querySelector('.stat-i').textContent==='—'")
         assert.equal(
           await avaliar(
-            "!!document.querySelector('.population-proportion, .simulation-progress, .sir-network-legend')",
+            "!!document.querySelector('.population-proportion, .isolation-proportion, .simulation-progress, .sir-network-legend')",
           ),
           false,
         )
@@ -738,7 +1017,7 @@ test(
         await avaliar(
           `(async()=>{const rede=await(await fetch('/api/rede/gerar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({modelo:'erdos_renyi',numero_individuos:'2',semente:'7',peso:'1',probabilidade_contato:'0'})})).json();await fetch('/api/rede/confirmar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({revisao:rede.revisao})})})()`,
         )
-        await comando('Page.reload')
+        await recarregar()
         await ate(
           "document.querySelector('.simulation-summary')?.textContent.includes('Erdős–Rényi')",
         )
@@ -779,7 +1058,7 @@ test(
         const validacao=await(await fetch('/api/rede/configuracao',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(formulario)})).json();
         sessionStorage.setItem('observatorio-configuracao',JSON.stringify({repeticoes:null,formulario,validacao}));
       })()`)
-        await comando('Page.reload')
+        await recarregar()
         await ate(
           "!!document.querySelector('.simulation-summary-identifiers summary')",
         )
@@ -822,7 +1101,144 @@ test(
         assert.ok(
           await avaliar('document.documentElement.scrollWidth <= innerWidth'),
         )
-        await capturarResumo('resumo-ids-expandidos')
+        await capturarArea('resumo-ids-expandidos')
+      },
+    )
+    await contexto.test(
+      'Tela 02 encaminha a comparação validada para execução real na Tela 03',
+      async () => {
+        await avaliar(
+          "sessionStorage.removeItem('observatorio-resultado-execucao');window.location.hash='#configuracao'",
+        )
+        await ate("document.querySelector('#cfg-ids')?.matches(':enabled')")
+        assert.equal(
+          await avaliar("!!document.querySelector('.configuration-summary')"),
+          false,
+        )
+        await avaliar(
+          "[...document.querySelectorAll('button')].find(botao=>botao.textContent.trim()==='Validar comparação').click()",
+        )
+        await ate("!!document.querySelector('.error-summary')")
+        assert.equal(
+          await avaliar(
+            '!!document.querySelector(\'.configuration-summary a[href="#simulacao"]\')',
+          ),
+          false,
+        )
+        await avaliar(
+          `for(const [identificador,valor] of [['cfg-ids','0'],['cfg-beta','0'],['cfg-gamma','1'],['cfg-limite_passos','2'],['cfg-repeticoes','3']]){const campo=document.getElementById(identificador);Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(campo,valor);campo.dispatchEvent(new Event('input',{bubbles:true}))};document.querySelector('#intervencao-ativa').click()`,
+        )
+        await ate("!!document.querySelector('#intervencao-fracao')")
+        await avaliar(
+          "const campo=document.querySelector('#intervencao-fracao');Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(campo,'1');campo.dispatchEvent(new Event('input',{bubbles:true}))",
+        )
+        await avaliar(
+          "[...document.querySelectorAll('button')].find(botao=>botao.textContent.trim()==='Validar comparação').click()",
+        )
+        await ate(
+          "document.querySelector('.configuration-summary h2')?.textContent==='Comparação validada'",
+        )
+        await avaliar(
+          "(()=>{const campo=document.querySelector('#cfg-repeticoes');Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(campo,'4');campo.dispatchEvent(new Event('input',{bubbles:true}))})()",
+        )
+        await ate("!document.querySelector('.configuration-summary')")
+        await avaliar(
+          "(()=>{const campo=document.querySelector('#cfg-repeticoes');Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(campo,'3');campo.dispatchEvent(new Event('input',{bubbles:true}))})()",
+        )
+        await avaliar(
+          "[...document.querySelectorAll('button')].find(botao=>botao.textContent.trim()==='Validar comparação').click()",
+        )
+        await ate(
+          "document.querySelector('.configuration-summary h2')?.textContent==='Comparação validada'",
+        )
+        assert.doesNotMatch(
+          await avaliar(
+            "document.querySelector('.configuration-summary').textContent",
+          ),
+          /será liberada|integrada posteriormente|estiver integrada/,
+        )
+        await ate(
+          '!!document.querySelector(\'.configuration-summary a[href="#simulacao"]\')',
+        )
+        await capturarArea('comparacao-validada', '.configuration-summary')
+        await avaliar(
+          'document.querySelector(\'.configuration-summary a[href="#simulacao"]\').focus()',
+        )
+        await comando('Input.dispatchKeyEvent', {
+          type: 'keyDown',
+          key: 'Enter',
+          code: 'Enter',
+          text: '\r',
+          unmodifiedText: '\r',
+          windowsVirtualKeyCode: 13,
+        })
+        await comando('Input.dispatchKeyEvent', {
+          type: 'keyUp',
+          key: 'Enter',
+          code: 'Enter',
+          windowsVirtualKeyCode: 13,
+        })
+        await ate(
+          "document.querySelector('.experiment-actions .button-primary')?.matches(':enabled')",
+        )
+        assert.match(
+          await avaliar(
+            "document.querySelector('.experiment-card[aria-pressed=true]').textContent",
+          ),
+          /Repetições/,
+        )
+        assert.match(
+          await avaliar(
+            "document.querySelector('.simulation-summary').textContent",
+          ),
+          /3 repetições/,
+        )
+        assert.equal(
+          await avaliar(
+            "sessionStorage.getItem('observatorio-resultado-execucao')",
+          ),
+          null,
+        )
+        await recarregar()
+        await ate(
+          "document.querySelector('.experiment-actions .button-primary')?.matches(':enabled')",
+        )
+        assert.match(
+          await avaliar(
+            "document.querySelector('.experiment-card[aria-pressed=true]').textContent",
+          ),
+          /Repetições/,
+        )
+        await avaliar(
+          "document.querySelector('.experiment-actions .button-primary').click()",
+        )
+        await ate(
+          "JSON.parse(sessionStorage.getItem('observatorio-resultado-execucao'))?.tipo==='comparacao'",
+        )
+        await avaliar("document.querySelector('.button-pause').click()")
+        const execucoes = await avaliar(
+          "JSON.parse(sessionStorage.getItem('observatorio-resultado-execucao')).comparacao.execucoes.map(execucao=>execucao.cenario)",
+        )
+        assert.equal(execucoes.length, 9)
+        assert.deepEqual([...new Set(execucoes)].sort(), [
+          'aleatoria',
+          'grau',
+          'sem_intervencao',
+        ])
+        assert.deepEqual(
+          await avaliar(
+            "(()=>{const indicador=document.querySelector('[role=meter]');return [indicador.getAttribute('aria-valuenow'),indicador.getAttribute('aria-valuemax'),indicador.firstElementChild.style.width]})()",
+          ),
+          ['20', '20', '100%'],
+        )
+        const proporcoes = await avaliar(
+          "[...document.querySelectorAll('.population-proportion span')].map(elemento=>parseFloat(elemento.style.width))",
+        )
+        assert.ok(
+          Math.abs(proporcoes.reduce((soma, valor) => soma + valor, 0) - 100) <
+            0.001,
+        )
+        await capturarArea('isolamento-total', '.population-distribution')
       },
     )
   },

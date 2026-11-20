@@ -9,6 +9,40 @@
   flex-wrap: wrap;
 }
 
+.population-distribution {
+  margin-top: 16px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.population-distribution .population-proportion {
+  margin-top: 4px;
+}
+
+.population-isolation-heading {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin-top: 16px;
+  margin-bottom: 4px;
+}
+
+.isolation-proportion {
+  height: 10px;
+  overflow: hidden;
+  background: var(--color-surface-subtle);
+}
+
+.isolation-proportion span {
+  display: block;
+  height: 100%;
+}
+
+#population-isolation-help {
+  margin-top: 8px;
+}
+
 .simulation-summary h2 {
   margin-bottom: 16px;
   font-size: 17px;

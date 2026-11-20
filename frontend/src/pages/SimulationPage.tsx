@@ -53,7 +53,10 @@ export function SimulationPage({
   const carga = useCargaRede()
   const total = carga.rede?.resumo?.numero_individuos ?? 0
   const previa = carga.previa ?? previaVazia(total)
-  const [modo, setModo] = useState<'unica' | 'repeticoes'>('unica')
+  const [configuracaoSalva] = useState(lerConfiguracao)
+  const [modo, setModo] = useState<'unica' | 'repeticoes'>(() =>
+    configuracaoSalva?.repeticoes ? 'repeticoes' : 'unica',
+  )
   const [status, setStatus] = useState<'Pausado' | 'Executando' | 'Finalizado'>(
     'Pausado',
   )
@@ -68,7 +71,6 @@ export function SimulationPage({
   const [tema, setTema] = useState<'dark' | 'light'>('dark')
   const [visualizacao, setVisualizacao] = useState<'mapa' | '3d'>('mapa')
   const pedido = useRef<AbortController | null>(null)
-  const [configuracaoSalva] = useState(lerConfiguracao)
   const [validacao, setValidacao] = useState<ConfiguracaoValidada | null>(
     () => configuracaoSalva?.validacao ?? null,
   )
@@ -440,10 +442,6 @@ export function SimulationPage({
           >
             <div className="section-heading">
               <h2 id="controls-title">Controles do ensaio</h2>
-              <div className="requirements">
-                <span>RF06</span>
-                <span>RF07</span>
-              </div>
             </div>
             <fieldset className="experiment-mode">
               <legend>Modo de Experimento</legend>
@@ -463,7 +461,7 @@ export function SimulationPage({
                 <span className="radio-mark" aria-hidden="true" />
                 <span>
                   <strong>Execução Única</strong>
-                  <small>Trajetória detalhada (RF06)</small>
+                  <small>Trajetória detalhada</small>
                 </span>
               </button>
               <button
@@ -482,7 +480,7 @@ export function SimulationPage({
                 <span className="radio-mark" aria-hidden="true" />
                 <span>
                   <strong>Repetições</strong>
-                  <small>Comparar cenários (RF07)</small>
+                  <small>Comparar cenários</small>
                 </span>
               </button>
             </fieldset>
@@ -717,34 +715,66 @@ export function SimulationPage({
               </div>
             </dl>
             {registroAtual && total > 0 && (
-              <div
-                className="population-proportion"
-                aria-label="Distribuição proporcional da população"
-              >
-                <span
-                  className="bar-s"
-                  style={{
-                    width: `${(registroAtual.suscetiveis / total) * 100}%`,
-                  }}
-                />
-                <span
-                  className="bar-i"
-                  style={{
-                    width: `${(registroAtual.infectados / total) * 100}%`,
-                  }}
-                />
-                <span
-                  className="bar-r"
-                  style={{
-                    width: `${(registroAtual.recuperados / total) * 100}%`,
-                  }}
-                />
-                <span
-                  className="bar-isolado"
-                  style={{
-                    width: `${(registroAtual.isolados / total) * 100}%`,
-                  }}
-                />
+              <div className="population-distribution">
+                <p className="population-distribution-label">
+                  Estados epidemiológicos · S + I + R = {total}
+                </p>
+                <div
+                  className="population-proportion"
+                  role="img"
+                  aria-label={`Distribuição SIR: ${registroAtual.suscetiveis} suscetíveis, ${registroAtual.infectados} infectados e ${registroAtual.recuperados} recuperados, de ${total} pessoas`}
+                >
+                  <span
+                    className="bar-s"
+                    style={{
+                      width: `${(registroAtual.suscetiveis / total) * 100}%`,
+                    }}
+                  />
+                  <span
+                    className="bar-i"
+                    style={{
+                      width: `${(registroAtual.infectados / total) * 100}%`,
+                    }}
+                  />
+                  <span
+                    className="bar-r"
+                    style={{
+                      width: `${(registroAtual.recuperados / total) * 100}%`,
+                    }}
+                  />
+                </div>
+                <div className="population-isolation-heading">
+                  <span>Isolamento · condição sobreposta</span>
+                  <span>
+                    {registroAtual.isolados} de {total} ·{' '}
+                    {((registroAtual.isolados / total) * 100).toLocaleString(
+                      'pt-BR',
+                      { maximumFractionDigits: 1 },
+                    )}
+                    %
+                  </span>
+                </div>
+                <div
+                  className="isolation-proportion"
+                  role="meter"
+                  aria-label="Indivíduos em isolamento"
+                  aria-valuemin={0}
+                  aria-valuemax={total}
+                  aria-valuenow={registroAtual.isolados}
+                  aria-valuetext={`${registroAtual.isolados} de ${total} pessoas`}
+                  aria-describedby="population-isolation-help"
+                >
+                  <span
+                    className="bar-isolado"
+                    style={{
+                      width: `${(registroAtual.isolados / total) * 100}%`,
+                    }}
+                  />
+                </div>
+                <p id="population-isolation-help">
+                  Os isolados já estão incluídos em S, I ou R e não são somados
+                  à população.
+                </p>
               </div>
             )}
           </section>

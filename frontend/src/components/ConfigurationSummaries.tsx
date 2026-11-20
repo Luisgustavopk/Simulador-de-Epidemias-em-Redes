@@ -56,17 +56,17 @@ export function ResumoComparacao({
         {resultado.sementes_base.isolamento}.
       </p>
       <p>Limite: {resultado.limite_passos} passos.</p>
-      <p id="execucao-comparacao-pendente">
-        A execução da comparação será liberada quando a simulação individual
-        estiver integrada.
+      <p id="execucao-comparacao-orientacao">
+        Revise os três cenários na Tela 03. O cálculo começa ao selecionar
+        Iniciar / Continuar Simulação.
       </p>
-      <button
-        type="button"
-        disabled
-        aria-describedby="execucao-comparacao-pendente"
+      <a
+        className="button-primary"
+        href="#simulacao"
+        aria-describedby="execucao-comparacao-orientacao"
       >
-        Executar comparação
-      </button>
+        Preparar comparação na Tela 03
+      </a>
     </section>
   )
 }
@@ -118,9 +118,12 @@ export function ResumoConfiguracao({
         <p>Sem intervenção neste cenário.</p>
       )}
       <p>
-        A rede de referência continua intacta. A execução completa será
-        integrada posteriormente.
+        A rede de referência continua intacta. Revise o ensaio na Tela 03 e
+        selecione Iniciar / Continuar Simulação para executar.
       </p>
+      <a className="button-primary" href="#simulacao">
+        Preparar execução única na Tela 03
+      </a>
     </section>
   )
 }

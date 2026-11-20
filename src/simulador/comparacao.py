@@ -9,6 +9,8 @@ from simulador.configuracao import (
     ConfiguracaoIntervencao, ConfiguracaoSimulacao, ErroConfiguracao, ProblemaConfiguracao,
 )
 from simulador.rede_contatos import RedeContatos
+from simulador.resultado import ResultadoSimulacao
+from simulador.simulacao import Simulacao
 
 Cenario = Literal['sem_intervencao', 'aleatoria', 'grau']
 Motivo = Literal['extincao', 'limite_passos']
@@ -76,7 +78,7 @@ class ExecucaoComparada:
     repeticao: int
     cenario: Cenario
     configuracao: ConfiguracaoSimulacao
-    resultado: ResultadoIndividual
+    resultado: ResultadoIndividual | ResultadoSimulacao
 
 
 @dataclass(frozen=True, slots=True)
@@ -188,8 +190,15 @@ def _conferir_resultado(resultado: ResultadoIndividual, populacao: int, limite: 
 def executar_comparacao(
     referencia: RedeDisponivel,
     pedido: PedidoComparacao,
-    executar_individual: Callable[[RedeContatos, ConfiguracaoSimulacao], ResultadoIndividual],
+    executar_individual: Callable[
+        [RedeContatos, ConfiguracaoSimulacao], ResultadoIndividual | ResultadoSimulacao
+    ] | None = None,
 ) -> ResultadoComparacao:
+    """Executa cenários com uma cópia de trabalho por execução.
+
+    O executor padrão lê a referência estável sem modificá-la. Executores
+    injetados continuam recebendo cópias próprias para preservar o contrato.
+    """
     intervencao_validada = pedido.validar(referencia)
     configuracao = pedido.configuracao
     populacao = referencia.rede.numero_individuos
@@ -207,7 +216,18 @@ def executar_comparacao(
             )
             configuracao_cenario = replace(configuracao_repeticao, intervencao=intervencao_cenario)
             try:
-                resultado = executar_individual(referencia.rede.copiar(), configuracao_cenario)
+                if executar_individual is None:
+                    resultado = Simulacao(
+                        referencia.rede, configuracao_cenario,
+                        revisao_rede=referencia.revisao, repeticao=indice + 1,
+                        copiar_referencia=False,
+                    ).executar()
+                else:
+                    resultado = executar_individual(
+                        referencia.rede.copiar(), configuracao_cenario,
+                    )
+                if isinstance(resultado, ResultadoSimulacao):
+                    resultado = replace(resultado, repeticao=indice + 1)
                 _conferir_resultado(resultado, populacao, configuracao_cenario.limite_passos)
             except Exception as erro:
                 raise ErroExecucaoComparacao(indice + 1, cenario) from erro

@@ -1,12 +1,55 @@
 from simulador.aleatoriedade import GeradorAleatorio
 from simulador.configuracao import ConfiguracaoSimulacao, ErroConfiguracao
-from simulador.individuo import EstadoSIR
+from simulador.contato import Contato
+from simulador.individuo import EstadoSIR, Individuo
 from simulador.rede_contatos import RedeContatos
 
 
 class MotorSIR:
     def __init__(self, gerador: GeradorAleatorio) -> None:
         self._gerador = gerador
+        self._rede: RedeContatos | None = None
+        self._versao_topologia = -1
+        self._configuracao: ConfiguracaoSimulacao | None = None
+        self._revisao_rede: int | None = None
+        self._ordem: tuple[
+            tuple[Individuo, tuple[tuple[int, Contato], ...]], ...
+        ] = ()
+
+    def _preparar(
+        self, rede: RedeContatos, configuracao: ConfiguracaoSimulacao,
+        revisao_rede: int,
+    ) -> None:
+        estrutura_mudou = (
+            not isinstance(rede, RedeContatos)
+            or self._rede is not rede
+            or self._versao_topologia != rede.versao_topologia
+        )
+        if (
+            estrutura_mudou
+            or self._configuracao is not configuracao
+            or type(revisao_rede) is not int
+            or self._revisao_rede != revisao_rede
+        ):
+            problemas = configuracao.validar(rede, revisao_rede)
+            if problemas:
+                raise ErroConfiguracao(problemas)
+        if estrutura_mudou:
+            pessoas = sorted(rede.iter_individuos(), key=lambda pessoa: pessoa.id)
+            self._ordem = tuple(
+                (pessoa, tuple(
+                    (contato.outro_extremo(pessoa).id, contato)
+                    for contato in sorted(
+                        rede.contatos_de(pessoa),
+                        key=lambda contato: contato.outro_extremo(pessoa).id,
+                    )
+                ))
+                for pessoa in pessoas
+            )
+            self._rede = rede
+            self._versao_topologia = rede.versao_topologia
+        self._configuracao = configuracao
+        self._revisao_rede = revisao_rede
 
     def avancar(
         self, rede: RedeContatos, configuracao: ConfiguracaoSimulacao,
@@ -16,20 +59,17 @@ class MotorSIR:
             raise TypeError("O passo atual deve ser inteiro.")
         if passo_atual < 0:
             raise ValueError("O passo atual deve ser não negativo.")
-        problemas = configuracao.validar(rede, revisao_rede)
-        if problemas:
-            raise ErroConfiguracao(problemas)
-        pessoas = sorted(rede.iter_individuos(), key=lambda p: p.id)
-        estados_no_inicio = {p.id: p.estado for p in pessoas}
+        self._preparar(rede, configuracao, revisao_rede)
+        estados_no_inicio = {
+            pessoa.id: pessoa.estado for pessoa, _ in self._ordem
+        }
         novas_infecoes: list[int] = []
         recuperacoes: list[int] = []
-        for pessoa in pessoas:
+        for pessoa, contatos in self._ordem:
             if estados_no_inicio[pessoa.id] is EstadoSIR.SUSCETIVEL:
                 probabilidade_infeccao = 0.0
-                contatos = sorted(rede.contatos_de(pessoa), key=lambda c: c.outro_extremo(pessoa).id)
-                for contato in contatos:
-                    vizinho = contato.outro_extremo(pessoa)
-                    if not contato.ativa or estados_no_inicio[vizinho.id] is not EstadoSIR.INFECTADO:
+                for id_vizinho, contato in contatos:
+                    if not contato.ativa or estados_no_inicio[id_vizinho] is not EstadoSIR.INFECTADO:
                         continue
                     probabilidade_contato = contato.peso
                     if configuracao.modo_peso == "intensidade":

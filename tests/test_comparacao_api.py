@@ -1,7 +1,7 @@
 import pytest
 
 from simulador.api_local import atender
-from simulador.carga_rede import ErroCargaRede, ServicoCargaRede
+from simulador.carga_rede import ArquivoCSV, ErroCargaRede, ServicoCargaRede
 from simulador.configuracao import ErroConfiguracao
 
 
@@ -118,3 +118,26 @@ def test_execucao_comparada_retorna_todos_cenarios_e_historicos(servico, campos)
         assert execucao['motivo_termino'] in ('extincao', 'limite_passos')
         assert execucao['historico'][0]['passo'] == 0
         assert execucao['manifesto']['cenario'] == execucao['cenario']
+
+
+@pytest.mark.parametrize('comparar', [False, True])
+def test_manifestos_preservam_ids_grandes_como_texto(campos, comparar):
+    servico = ServicoCargaRede()
+    identificador = '9007199254740993'
+    servico.importar_csv(
+        ArquivoCSV('contatos.csv', f'origem,destino,peso\n{identificador},2,1\n'.encode()),
+        arquivo_individuos=ArquivoCSV('pessoas.csv', f'id\n{identificador}\n2\n'.encode()),
+    )
+    servico.confirmar(1)
+    configuracao = {**campos, 'modo_iniciais': 'ids', 'ids_infectados_iniciais': [identificador]}
+    configuracao.pop('quantidade_infectados')
+    resultado = atender(servico, 'POST',
+        '/api/rede/comparacao/executar' if comparar else '/api/rede/simulacao/executar', {},
+        {'configuracao': configuracao, 'repeticoes': '2'} if comparar else configuracao,
+    )
+    manifestos = [resultado['manifesto']]
+    if comparar:
+        manifestos.extend(execucao['manifesto'] for execucao in resultado['execucoes'])
+    for manifesto in manifestos:
+        assert manifesto['configuracao']['ids_infectados_iniciais'] == [identificador]
+        assert manifesto['configuracao']['sementes']['epidemia'].isdigit()

@@ -37,6 +37,7 @@ from simulador.isolamento import (
 from simulador.metricas import MetricasEpidemia
 from simulador.rede_contatos import RedeContatos
 from simulador.simulacao import RegistroPasso, Simulacao
+from simulador.resultado import ResultadoSimulacao
 
 __all__ = [
     "ArquivoCSV",
@@ -51,6 +52,7 @@ __all__ = [
     "ProblemaCargaRede",
     "RedeContatos",
     "RegistroPasso",
+    "ResultadoSimulacao",
     "Simulacao",
     "RedeDisponivel",
     "ServicoCargaRede",

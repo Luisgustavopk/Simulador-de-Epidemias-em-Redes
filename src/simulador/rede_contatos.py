@@ -28,6 +28,12 @@ class RedeContatos:
         self._individuos: dict[int, Individuo] = {}
         self._adjacencias: dict[int, dict[int, Contato]] = {}
         self._numero_contatos = 0
+        self._versao_topologia = 0
+
+    @property
+    def versao_topologia(self) -> int:
+        """Versão incrementada quando pessoas ou contatos são acrescentados/removidos."""
+        return self._versao_topologia
 
     @property
     def numero_individuos(self) -> int:
@@ -70,6 +76,7 @@ class RedeContatos:
             raise ValueError(f"O indivíduo {individuo.id} já está cadastrado.")
         self._individuos[individuo.id] = individuo
         self._adjacencias[individuo.id] = {}
+        self._versao_topologia += 1
 
     def buscar_individuo(self, id_individuo: int) -> Individuo | None:
         """Busca opcional por ID, retornando None quando não há cadastro."""
@@ -116,6 +123,7 @@ class RedeContatos:
         adjacencia[destino.id] = contato
         adjacencia_destino[origem.id] = contato
         self._numero_contatos += 1
+        self._versao_topologia += 1
         return contato
 
     def adicionar_contato(
@@ -171,6 +179,7 @@ class RedeContatos:
         del self._adjacencias[id_origem][id_destino]
         del self._adjacencias[id_destino][id_origem]
         self._numero_contatos -= 1
+        self._versao_topologia += 1
         return contato
 
     def desconectar_individuo(self, id_individuo: int) -> tuple[Contato, ...]:
@@ -186,6 +195,8 @@ class RedeContatos:
             del self._adjacencias[id_vizinho][id_individuo]
         adjacencia.clear()
         self._numero_contatos -= len(removidos)
+        if removidos:
+            self._versao_topologia += 1
         return removidos
 
     def vizinhos(self, id_individuo: int) -> tuple[Individuo, ...]:
@@ -251,4 +262,5 @@ class RedeContatos:
             for identificador, adjacencia in self._adjacencias.items()
         }
         copia._numero_contatos = self._numero_contatos
+        copia._versao_topologia = self._versao_topologia
         return copia

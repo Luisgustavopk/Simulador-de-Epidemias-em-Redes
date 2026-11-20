@@ -1,76 +1,829 @@
 import assert from 'node:assert/strict'
-import { readFile } from 'node:fs/promises'
+import { spawn } from 'node:child_process'
+import {
+  access,
+  mkdir,
+  mkdtemp,
+  readdir,
+  rm,
+  writeFile,
+} from 'node:fs/promises'
+import { homedir, tmpdir } from 'node:os'
+import path from 'node:path'
+import { once } from 'node:events'
+import { fileURLToPath } from 'node:url'
 import test from 'node:test'
+import { createServer } from 'vite'
 
-const [simulation, results] = await Promise.all([
-  readFile(new URL('../src/pages/SimulationPage.tsx', import.meta.url), 'utf8'),
-  readFile(new URL('../src/pages/ResultsPage.tsx', import.meta.url), 'utf8'),
-])
+const frontend = fileURLToPath(new URL('..', import.meta.url))
+const projeto = path.dirname(frontend)
+async function localizarChrome() {
+  const candidatos = [
+    process.env.CHROME_BIN,
+    '/usr/bin/chromium',
+    '/usr/bin/google-chrome',
+  ]
+  const cache = path.join(homedir(), '.cache/ms-playwright')
+  for (const pasta of await readdir(cache).catch(() => []))
+    candidatos.push(path.join(cache, pasta, 'chrome-linux64/chrome'))
+  for (const candidato of candidatos.filter(Boolean)) {
+    try {
+      await access(candidato)
+      return candidato
+    } catch {
+      continue
+    }
+  }
+}
+const chrome = await localizarChrome()
+const aguardarSaida = (fluxo, expressao) =>
+  new Promise((resolve, reject) => {
+    let texto = ''
+    const limite = setTimeout(
+      () => reject(new Error(`Tempo esgotado: ${texto}`)),
+      15000,
+    )
+    fluxo.on('data', (bloco) => {
+      texto += bloco.toString()
+      const encontrado = texto.match(expressao)
+      if (encontrado) {
+        clearTimeout(limite)
+        resolve(encontrado[1])
+      }
+    })
+  })
 
-test('SimulationPage monta o fluxo de ensaio em sua montagem principal', () => {
-  assert.match(simulation, /export function SimulationPage/)
-  assert.match(simulation, /<AppShell/)
-  assert.match(simulation, /Modo de Experimento/)
-  assert.match(simulation, /Execução Única/)
-  assert.match(simulation, /Repetições/)
-  assert.match(simulation, /Iniciar \/ Continuar Simulação/)
-})
-
-test('execução individual chama o backend e persiste o resultado individual', () => {
-  assert.match(simulation, /const resultado = await executarSimulacao/)
-  assert.match(simulation, /tipo: 'individual', resultado/)
-  assert.match(simulation, /setResultadoIndividual\(resultado\)/)
-})
-
-test('execução sem configuração validada é bloqueada com diagnóstico', () => {
-  assert.match(
-    simulation,
-    /Valide uma configuração na Tela 02 antes de executar o ensaio/,
-  )
-  assert.match(simulation, /setRequisicao\('falhou'\)/)
-  assert.doesNotMatch(simulation, /await executarSimulacao[\s\S]*!configuracao/)
-})
-
-test('modo de repetições executa comparação e registra o lote', () => {
-  assert.match(simulation, /modo === 'repeticoes'/)
-  assert.match(simulation, /const lote = await executarComparacao/)
-  assert.match(simulation, /tipo: 'comparacao'/)
-  assert.match(simulation, /comparacao: lote/)
-})
-
-test('mudança de revisão ou contexto invalida ensaio e configuração', () => {
-  assert.match(
-    simulation,
-    /O resultado foi invalidado porque a revisão ou o contexto da rede mudou/,
-  )
-  assert.match(simulation, /sessionStorage\.removeItem\(CHAVE_HISTORICO\)/)
-  assert.match(simulation, /sessionStorage\.removeItem\(CHAVE_RESULTADO\)/)
-  assert.match(
-    results,
-    /A configuração foi invalidada porque a revisão ou o contexto da rede mudou/,
-  )
-  assert.match(
-    results,
-    /O resultado foi invalidado porque a revisão ou o contexto da rede mudou/,
-  )
-})
-
-test('ResultsPage monta consulta de resultados, métricas e histórico', () => {
-  assert.match(results, /export function ResultsPage/)
-  assert.match(results, /Trajetórias da epidemia/)
-  assert.match(results, /Pico de infectados/)
-  assert.match(results, /Histórico por passo/)
-  assert.match(results, /Nenhum ensaio concluído/)
-})
-
-test('exportações de Resultados incluem CSV, agregado, JSON, SVG e PNG', () => {
-  assert.match(results, /historico-ensaio\.csv/)
-  assert.match(results, /trajetorias-comparacao\.csv/)
-  assert.match(results, /metadados-ensaio\.json/)
-  assert.match(results, /trajetorias-epidemia\.svg/)
-  assert.match(results, /trajetorias-epidemia\.png/)
-  assert.match(results, /exportarCsvAgregado/)
-  assert.match(results, /exportarJson/)
-  assert.match(results, /exportarSvg/)
-  assert.match(results, /exportarPng/)
-})
+test(
+  'fluxos reais de execução, gráficos e exportação',
+  {
+    skip: !chrome ? 'Defina CHROME_BIN para executar o navegador.' : false,
+    timeout: 60000,
+  },
+  async (contexto) => {
+    const perfil = await mkdtemp(path.join(tmpdir(), 'observatorio-test-'))
+    const api = spawn(
+      process.env.PYTHON_BIN ?? path.join(projeto, '.venv/bin/python'),
+      ['-u', '-m', 'simulador.api_local', '--porta', '0'],
+      {
+        cwd: projeto,
+        env: { ...process.env, PYTHONPATH: path.join(projeto, 'src') },
+        stdio: ['ignore', 'pipe', 'pipe'],
+      },
+    )
+    let vite, navegador, socket
+    contexto.after(async () => {
+      socket?.close()
+      navegador?.kill()
+      await vite?.close()
+      api.kill()
+      await rm(perfil, {
+        recursive: true,
+        force: true,
+        maxRetries: 5,
+        retryDelay: 100,
+      })
+    })
+    const porta = await aguardarSaida(api.stdout, /127\.0\.0\.1:(\d+)/)
+    vite = await createServer({
+      root: frontend,
+      logLevel: 'silent',
+      server: {
+        host: '127.0.0.1',
+        port: 0,
+        proxy: { '/api': `http://127.0.0.1:${porta}` },
+      },
+    })
+    await vite.listen()
+    navegador = spawn(
+      chrome,
+      [
+        '--headless',
+        '--no-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-gpu',
+        '--remote-debugging-port=0',
+        `--user-data-dir=${perfil}`,
+        'about:blank',
+      ],
+      { stdio: ['ignore', 'ignore', 'pipe'] },
+    )
+    const depuracao = await aguardarSaida(
+      navegador.stderr,
+      /DevTools listening on (ws:\/\/[^\s]+)/,
+    )
+    const alvos = await (
+      await fetch(`http://${new URL(depuracao).host}/json/list`)
+    ).json()
+    socket = new WebSocket(
+      alvos.find((alvo) => alvo.type === 'page').webSocketDebuggerUrl,
+    )
+    await once(socket, 'open')
+    let contador = 0
+    const pendentes = new Map()
+    socket.addEventListener('message', (evento) => {
+      const mensagem = JSON.parse(evento.data)
+      if (pendentes.has(mensagem.id)) {
+        pendentes.get(mensagem.id)(mensagem)
+        pendentes.delete(mensagem.id)
+      }
+    })
+    async function comando(method, params = {}) {
+      const id = ++contador
+      const resposta = new Promise((resolve) => pendentes.set(id, resolve))
+      socket.send(JSON.stringify({ id, method, params }))
+      const mensagem = await resposta
+      assert.equal(mensagem.error, undefined)
+      return mensagem.result
+    }
+    async function avaliar(expression) {
+      const resposta = await comando('Runtime.evaluate', {
+        expression,
+        awaitPromise: true,
+        returnByValue: true,
+      })
+      assert.equal(
+        resposta.exceptionDetails,
+        undefined,
+        JSON.stringify(resposta.exceptionDetails),
+      )
+      return resposta.result.value
+    }
+    async function ate(expression) {
+      const limite = Date.now() + 10000
+      while (Date.now() < limite) {
+        if (await avaliar(expression)) return
+        await new Promise((resolve) => setTimeout(resolve, 30))
+      }
+      assert.fail(`Condição não alcançada: ${expression}`)
+    }
+    async function capturarResumo(nome) {
+      if (!process.env.CAPTURAS_DIR) return
+      await mkdir(process.env.CAPTURAS_DIR, { recursive: true })
+      const area = await avaliar(
+        `(()=>{const area=document.querySelector('.simulation-summary').getBoundingClientRect();return {x:area.x+scrollX,y:area.y+scrollY,width:area.width,height:area.height,scale:1}})()`,
+      )
+      const captura = await comando('Page.captureScreenshot', {
+        format: 'png',
+        clip: area,
+        captureBeyondViewport: true,
+      })
+      await writeFile(
+        path.join(process.env.CAPTURAS_DIR, `${nome}.png`),
+        Buffer.from(captura.data, 'base64'),
+      )
+    }
+    await comando('Page.navigate', {
+      url: `http://127.0.0.1:${vite.httpServer.address().port}/#simulacao`,
+    })
+    await ate("!!document.querySelector('.experiment-actions')")
+    await contexto.test(
+      'contagens ficam indisponíveis sem histórico real',
+      async () => {
+        assert.deepEqual(
+          await avaliar(
+            "[...document.querySelectorAll('.sir-population-stats dd')].map(elemento=>elemento.textContent)",
+          ),
+          ['—', '—', '—', '—'],
+        )
+        assert.deepEqual(
+          await avaliar(
+            "[...document.querySelectorAll('.simulation-workspace .sir-model small')].map(elemento=>elemento.textContent)",
+          ),
+          ['—', '—', '—'],
+        )
+        assert.equal(
+          await avaliar(
+            "!!document.querySelector('.population-proportion, .simulation-progress, .sir-network-legend')",
+          ),
+          false,
+        )
+        assert.match(
+          await avaliar(
+            "document.querySelector('.simulation-empty').textContent",
+          ),
+          /Nenhuma simulação executada/,
+        )
+        assert.match(
+          await avaliar(
+            "document.querySelector('.simulation-summary').textContent",
+          ),
+          /Nenhuma rede carregada/,
+        )
+      },
+    )
+    await contexto.test(
+      'execução exige rede e configuração; reiniciar descarta resposta pendente',
+      async () => {
+        assert.equal(
+          await avaliar(
+            "document.querySelector('.experiment-actions .button-primary').disabled",
+          ),
+          true,
+        )
+        await avaliar(
+          `(async()=>{const rede=await(await fetch('/api/rede/gerar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({modelo:'erdos_renyi',numero_individuos:'3',semente:'1',peso:'1',probabilidade_contato:'1'})})).json();await fetch('/api/rede/confirmar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({revisao:rede.revisao})});const formulario={beta:'1',gamma:'1',modo_peso:'intensidade',modo_iniciais:'ids',ids_infectados_iniciais:['0'],semente_epidemia:'42',semente_iniciais:'43',semente_isolamento:'44',limite_passos:'20',revisao_rede:String(rede.revisao),contexto_rede:rede.contexto_rede,intervencao:{estrategia:'grau',fracao:'0.5',inicio:'0',mecanismo:'desativacao'}};sessionStorage.setItem('observatorio-configuracao',JSON.stringify({repeticoes:'2',formulario}));})()`,
+        )
+        await comando('Page.reload')
+        await ate(
+          "!!document.querySelector('.experiment-actions .button-primary') && !document.querySelector('.experiment-actions .button-primary').disabled",
+        )
+        const resumo = await avaliar(
+          "document.querySelector('.simulation-summary').textContent",
+        )
+        for (const esperado of [
+          /Erdős–Rényi/,
+          /1 · Confirmada/,
+          /3 indivíduos · 3 contatos/,
+          /β = 1 · γ = 1/,
+          /20 passos/,
+          /Por grau/,
+          /1 de 3 pessoas/,
+          /Desativação dos contatos/,
+        ])
+          assert.match(resumo, esperado)
+        assert.deepEqual(
+          await avaliar(
+            "[...document.querySelectorAll('.sir-population-stats dd')].map(elemento=>elemento.textContent)",
+          ),
+          ['—', '—', '—', '—'],
+        )
+        await avaliar(
+          `window.fetchOriginal=window.fetch;window.fetch=async(...parametros)=>{if(String(parametros[0]).includes('simulacao/executar'))await new Promise(resolve=>setTimeout(resolve,350));return window.fetchOriginal(...parametros)};document.querySelector('.experiment-actions .button-primary').click()`,
+        )
+        await ate(
+          "document.querySelector('.experiment-actions .button-primary').textContent.includes('Consultando')",
+        )
+        assert.equal(
+          await avaliar(
+            "document.querySelector('.experiment-actions .button-secondary').disabled",
+          ),
+          true,
+        )
+        await avaliar("document.querySelector('.button-reset').click()")
+        await avaliar('new Promise(resolve=>setTimeout(resolve,550))')
+        assert.equal(
+          await avaliar(
+            "sessionStorage.getItem('observatorio-resultado-execucao')",
+          ),
+          null,
+        )
+        assert.match(
+          await avaliar("document.querySelector('.run-status').textContent"),
+          /Pausado/,
+        )
+        await avaliar(
+          "window.fetch=window.fetchOriginal;document.querySelector('.experiment-actions .button-primary').click()",
+        )
+        await ate("!!sessionStorage.getItem('observatorio-resultado-execucao')")
+        assert.deepEqual(
+          await avaliar(
+            "[...document.querySelectorAll('.sir-population-stats dd')].map(elemento=>elemento.textContent)",
+          ),
+          ['2', '1', '0', '1'],
+        )
+        assert.equal(
+          await avaliar(
+            "JSON.parse(sessionStorage.getItem('observatorio-resultado-execucao')).resultado.motivo_termino",
+          ),
+          'extincao',
+        )
+      },
+    )
+    await contexto.test(
+      'resultado direto permite JSON e associa horizonte ao cenário',
+      async () => {
+        await avaliar(
+          "sessionStorage.removeItem('observatorio-resultado-execucao');window.location.hash='#resultados'",
+        )
+        await ate("document.querySelectorAll('.comparison-mean').length===3")
+        assert.equal(
+          await avaliar(
+            "[...document.querySelectorAll('.export-actions button')].find(botao=>botao.textContent.trim()==='JSON').disabled",
+          ),
+          false,
+        )
+        assert.match(
+          await avaliar(
+            "document.querySelector('.result-metrics').textContent",
+          ),
+          /registrado em t = 1/,
+        )
+      },
+    )
+    await contexto.test(
+      'faixas são visíveis e acompanham os controles das séries',
+      async () => {
+        assert.notEqual(
+          await avaliar(
+            "getComputedStyle(document.querySelector('.band-infectados')).fill",
+          ),
+          'none',
+        )
+        assert.equal(
+          await avaliar("document.querySelectorAll('.comparison-band').length"),
+          12,
+        )
+        await avaliar(
+          "[...document.querySelectorAll('.trajectory-legend button')].find(botao=>botao.textContent.includes('Infectados')).click()",
+        )
+        await ate("!document.querySelector('.band-infectados')")
+        await avaliar(
+          "[...document.querySelectorAll('.trajectory-legend button')].find(botao=>botao.textContent.includes('Infectados')).click()",
+        )
+      },
+    )
+    await contexto.test(
+      'SVG e PNG preservam cores; CSV contém estatísticas reais',
+      async () => {
+        await avaliar(
+          `window.arquivos=[];window.blobs=new Map();const criar=URL.createObjectURL;URL.createObjectURL=blob=>{const endereco=criar(blob);window.blobs.set(endereco,blob);return endereco};HTMLAnchorElement.prototype.click=function(){window.arquivos.push({nome:this.download,blob:window.blobs.get(this.href)})};[...document.querySelectorAll('.export-actions button')].forEach(botao=>botao.click())`,
+        )
+        await ate(
+          "window.arquivos.some(arquivo=>arquivo.nome.endsWith('.png'))",
+        )
+        const svg = await avaliar(
+          "window.arquivos.find(arquivo=>arquivo.nome.endsWith('.svg')).blob.text()",
+        )
+        assert.match(svg, /stroke="rgb\(/)
+        assert.match(svg, /<metadata>/)
+        assert.match(
+          await avaliar(
+            "window.arquivos.find(arquivo=>arquivo.nome.endsWith('metricas-agregadas.csv')).blob.text()",
+          ),
+          /"media";"desvio_padrao"/,
+        )
+        assert.ok(
+          await avaliar(
+            `(async()=>{const imagem=await createImageBitmap(window.arquivos.find(arquivo=>arquivo.nome.endsWith('.png')).blob);const canvas=document.createElement('canvas');canvas.width=imagem.width;canvas.height=imagem.height;const contexto=canvas.getContext('2d');contexto.drawImage(imagem,0,0);const pixels=contexto.getImageData(0,0,canvas.width,canvas.height).data;for(let indice=0;indice<pixels.length;indice+=4)if(pixels[indice+3]&&(pixels[indice]!==pixels[indice+1]||pixels[indice+1]!==pixels[indice+2]))return true;return false})()`,
+          ),
+        )
+      },
+    )
+    await contexto.test(
+      'seleção de execução anterior e layout móvel',
+      async () => {
+        await ate(
+          "document.querySelectorAll('#resultado-anterior option').length >= 3",
+        )
+        await avaliar(
+          "const seletor=document.querySelector('#resultado-anterior');seletor.value=seletor.options[1].value;seletor.dispatchEvent(new Event('change',{bubbles:true}))",
+        )
+        await ate("!document.querySelector('#execucao-principal')")
+        assert.match(
+          await avaliar(
+            "document.querySelector('.result-metrics').textContent",
+          ),
+          /Execução única/,
+        )
+        await comando('Emulation.setDeviceMetricsOverride', {
+          width: 390,
+          height: 844,
+          deviceScaleFactor: 1,
+          mobile: true,
+        })
+        assert.ok(
+          await avaliar('document.documentElement.scrollWidth <= innerWidth'),
+        )
+        await comando('Emulation.setDeviceMetricsOverride', {
+          width: 1365,
+          height: 900,
+          deviceScaleFactor: 1,
+          mobile: false,
+        })
+      },
+    )
+    await contexto.test(
+      'histórico pagina por teclado, preserva CSV completo e reinicia ao trocar cenário',
+      async () => {
+        await avaliar(`(async()=>{
+          const configuracao=JSON.parse(sessionStorage.getItem('observatorio-configuracao'));
+          const formulario={...configuracao.formulario,beta:'0',gamma:'0',limite_passos:'123'};
+          const resposta=await fetch('/api/rede/comparacao/executar',{
+            method:'POST',headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({configuracao:formulario,repeticoes:'2'})
+          });
+          if(!resposta.ok)throw new Error(await resposta.text());
+          const comparacao=await resposta.json();
+          sessionStorage.setItem('observatorio-resultado-execucao',JSON.stringify({tipo:'comparacao',comparacao}));
+        })()`)
+        await comando('Page.reload')
+        await ate(
+          "document.querySelectorAll('table[aria-labelledby=history-title] tbody tr').length===50",
+        )
+        assert.equal(
+          await avaliar(
+            "document.querySelector('table[aria-labelledby=history-title] tbody td').textContent",
+          ),
+          '0',
+        )
+        assert.equal(
+          await avaliar(
+            'document.querySelector(\'[aria-label="Página anterior do histórico"]\').disabled',
+          ),
+          true,
+        )
+        await avaliar(
+          "document.querySelector('section[aria-labelledby=history-title] .history-table-wrap').scrollTop=400;document.querySelector('[aria-label=\"Próxima página do histórico\"]').focus()",
+        )
+        await comando('Input.dispatchKeyEvent', {
+          type: 'keyDown',
+          key: 'Enter',
+          code: 'Enter',
+          text: '\r',
+          unmodifiedText: '\r',
+          windowsVirtualKeyCode: 13,
+        })
+        await comando('Input.dispatchKeyEvent', {
+          type: 'keyUp',
+          key: 'Enter',
+          code: 'Enter',
+          windowsVirtualKeyCode: 13,
+        })
+        await ate(
+          "document.querySelector('table[aria-labelledby=history-title] tbody td').textContent==='50'",
+        )
+        assert.equal(
+          await avaliar(
+            "document.querySelector('section[aria-labelledby=history-title] .history-table-wrap').scrollTop",
+          ),
+          0,
+        )
+        await avaliar(
+          'document.querySelector(\'[aria-label="Última página do histórico"]\').click()',
+        )
+        await ate(
+          "document.querySelectorAll('table[aria-labelledby=history-title] tbody tr').length===24",
+        )
+        assert.equal(
+          await avaliar(
+            'document.querySelector(\'[aria-label="Próxima página do histórico"]\').disabled',
+          ),
+          true,
+        )
+        assert.match(
+          await avaliar(
+            "document.querySelector('.history-pagination [role=status]').textContent",
+          ),
+          /101–124.*Página 3 de 3/,
+        )
+        const csv = await avaliar(`(async()=>{
+          let arquivo;
+          const criar=URL.createObjectURL;
+          const clicar=HTMLAnchorElement.prototype.click;
+          URL.createObjectURL=blob=>{arquivo=blob;return criar(blob)};
+          HTMLAnchorElement.prototype.click=function(){};
+          document.querySelector('.export-button').click();
+          URL.createObjectURL=criar;
+          HTMLAnchorElement.prototype.click=clicar;
+          return arquivo.text();
+        })()`)
+        assert.equal(csv.split('\n').length, 125)
+        for (const largura of [390, 820, 1365]) {
+          await comando('Emulation.setDeviceMetricsOverride', {
+            width: largura,
+            height: 900,
+            deviceScaleFactor: 1,
+            mobile: largura === 390,
+          })
+          assert.ok(
+            await avaliar('document.documentElement.scrollWidth <= innerWidth'),
+          )
+        }
+        await avaliar(
+          "const seletor=document.querySelector('#execucao-principal');seletor.value='sem_intervencao-1';seletor.dispatchEvent(new Event('change',{bubbles:true}))",
+        )
+        await ate(
+          "document.querySelector('table[aria-labelledby=history-title] tbody td').textContent==='0'",
+        )
+        assert.equal(
+          await avaliar(
+            "document.querySelectorAll('table[aria-labelledby=history-title] tbody tr').length",
+          ),
+          50,
+        )
+      },
+    )
+    await contexto.test(
+      'nova revisão invalida resultados anteriores',
+      async () => {
+        await avaliar(
+          `(async()=>{const rede=await(await fetch('/api/rede/gerar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({modelo:'erdos_renyi',numero_individuos:'3',semente:'2',peso:'1',probabilidade_contato:'0'})})).json();await fetch('/api/rede/confirmar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({revisao:rede.revisao})});})()`,
+        )
+        await comando('Page.reload')
+        await ate("!!document.querySelector('.results-warning')")
+        assert.match(
+          await avaliar(
+            "document.querySelector('.results-warning').textContent",
+          ),
+          /invalidado/,
+        )
+        assert.equal(
+          await avaliar(
+            "document.querySelectorAll('.comparison-series').length",
+          ),
+          0,
+        )
+      },
+    )
+    await contexto.test(
+      'IDs grandes permanecem texto após JSON.parse',
+      async () => {
+        const identificador = await avaliar(
+          `(async()=>{const rede=await(await fetch('/api/rede/importar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({arquivo_contatos:{nome:'rede.csv',conteudo_base64:btoa('origem,destino,peso\\n9007199254740993,2,1\\n')},arquivo_individuos:{nome:'pessoas.csv',conteudo_base64:btoa('id\\n9007199254740993\\n2\\n')}})})).json();await fetch('/api/rede/confirmar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({revisao:rede.revisao})});const resultado=await(await fetch('/api/rede/simulacao/executar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({beta:'0',gamma:'1',modo_peso:'intensidade',modo_iniciais:'ids',ids_infectados_iniciais:['9007199254740993'],semente_epidemia:'42',semente_iniciais:'43',semente_isolamento:'44',limite_passos:'2',revisao_rede:String(rede.revisao),contexto_rede:rede.contexto_rede,intervencao:null})})).json();return resultado.manifesto.configuracao.ids_infectados_iniciais[0]})()`,
+        )
+        assert.equal(identificador, '9007199254740993')
+      },
+    )
+    await contexto.test(
+      'resumo reutiliza a validação da Tela 02 e preserva IDs e sementes grandes',
+      async () => {
+        await avaliar(
+          "sessionStorage.removeItem('observatorio-resultado-execucao');window.location.hash='#configuracao'",
+        )
+        await ate("document.querySelector('#cfg-ids')?.matches(':enabled')")
+        await avaliar(
+          `for(const [identificador,valor] of [['cfg-ids','9007199254740993'],['cfg-semente_epidemia','900719925474099312345']]){const campo=document.getElementById(identificador);Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(campo,valor);campo.dispatchEvent(new Event('input',{bubbles:true}))}`,
+        )
+        await avaliar(
+          "[...document.querySelectorAll('button')].find(botao=>botao.textContent.includes('Validar configuração')).click()",
+        )
+        await ate(
+          "!!JSON.parse(sessionStorage.getItem('observatorio-configuracao'))?.validacao",
+        )
+        await avaliar(
+          `window.fetchAnterior=window.fetch;window.fetch=(...argumentos)=>{if(String(argumentos[0]).endsWith('/api/rede/configuracao'))throw new Error('O resumo deveria reutilizar a validação salva.');return window.fetchAnterior(...argumentos)};window.location.hash='#simulacao'`,
+        )
+        await ate(
+          "!!document.querySelector('.simulation-summary') && !document.querySelector('.experiment-actions .button-primary').disabled",
+        )
+        const resumo = await avaliar(
+          "document.querySelector('.simulation-summary').textContent",
+        )
+        assert.match(resumo, /rede.csv/)
+        assert.match(resumo, /9007199254740993/)
+        assert.match(resumo, /900719925474099312345/)
+        assert.match(resumo, /Sem intervenção/)
+        assert.deepEqual(
+          await avaliar(
+            "[...document.querySelectorAll('.sir-population-stats dd')].map(elemento=>elemento.textContent)",
+          ),
+          ['—', '—', '—', '—'],
+        )
+        await avaliar('window.fetch=window.fetchAnterior')
+        for (const [largura, tema] of [
+          [1365, 'light'],
+          [820, 'light'],
+          [390, 'dark'],
+        ]) {
+          await comando('Emulation.setDeviceMetricsOverride', {
+            width: largura,
+            height: 1000,
+            deviceScaleFactor: 1,
+            mobile: largura === 390,
+          })
+          await avaliar(`document.documentElement.dataset.theme='${tema}'`)
+          assert.ok(
+            await avaliar('document.documentElement.scrollWidth <= innerWidth'),
+          )
+          await capturarResumo(`resumo-${largura}-${tema}`)
+        }
+        await comando('Emulation.setDeviceMetricsOverride', {
+          width: 1365,
+          height: 900,
+          deviceScaleFactor: 1,
+          mobile: false,
+        })
+        await avaliar("document.documentElement.dataset.theme='light'")
+      },
+    )
+    await contexto.test(
+      'resumo resolve o sorteio no backend e identifica sementes base na comparação',
+      async () => {
+        await avaliar(`window.location.hash='#configuracao'`)
+        await ate("!!document.querySelector('.configuration-page')")
+        await avaliar(
+          `(()=>{const anterior=JSON.parse(sessionStorage.getItem('observatorio-configuracao'));const formulario={...anterior.formulario,modo_iniciais:'sorteio',quantidade_infectados:'1',intervencao:{estrategia:'grau',fracao:'0.5',inicio:'1',mecanismo:'reducao',reducao:'0.25'}};delete formulario.ids_infectados_iniciais;sessionStorage.setItem('observatorio-configuracao',JSON.stringify({repeticoes:'2',formulario}));window.validacoesResumo=[];window.fetchAnterior=window.fetch;window.fetch=async(...argumentos)=>{const resposta=await window.fetchAnterior(...argumentos);if(String(argumentos[0]).endsWith('/api/rede/configuracao'))window.validacoesResumo.push(await resposta.clone().json());return resposta};window.location.hash='#simulacao'})()`,
+        )
+        await ate(
+          "window.validacoesResumo.length===1 && !document.querySelector('.experiment-actions .button-primary').disabled",
+        )
+        const ids = await avaliar(
+          'window.validacoesResumo[0].configuracao.ids_infectados_iniciais',
+        )
+        assert.equal(ids.length, 1)
+        assert.match(
+          await avaliar(
+            "document.querySelector('.simulation-summary-identifiers').textContent",
+          ),
+          new RegExp(ids[0]),
+        )
+        await avaliar(
+          "[...document.querySelectorAll('.experiment-card')].find(botao=>botao.textContent.includes('Repetições')).click()",
+        )
+        const resumo = await avaliar(
+          "document.querySelector('.simulation-summary').textContent",
+        )
+        for (const esperado of [
+          /2 repetições/,
+          /Semente epidemiológica base/,
+          /Sem intervenção · Aleatória · Por grau/,
+          /1 de 2 pessoas/,
+          /Passo 1/,
+          /Redução da intensidade/,
+          /redução 0.25/,
+          /primeira repetição/,
+          /sorteados novamente em cada repetição/,
+        ])
+          assert.match(resumo, esperado)
+        assert.equal(await avaliar('window.validacoesResumo.length'), 1)
+        await avaliar('window.fetch=window.fetchAnterior')
+      },
+    )
+    await contexto.test(
+      'falha na consulta do resumo não inventa contagens e permite nova tentativa',
+      async () => {
+        await avaliar("window.location.hash='#configuracao'")
+        await ate("!!document.querySelector('.configuration-page')")
+        await avaliar(
+          `window.fetchAnterior=window.fetch;window.fetch=(...argumentos)=>{if(String(argumentos[0]).endsWith('/api/rede/configuracao'))return Promise.reject(new Error('Falha de conexão no resumo.'));return window.fetchAnterior(...argumentos)};window.location.hash='#simulacao'`,
+        )
+        await ate(
+          "document.querySelector('.simulation-summary [role=alert]')?.textContent.includes('Não foi possível conectar à API local')",
+        )
+        assert.equal(
+          await avaliar(
+            "document.querySelector('.experiment-actions .button-primary').disabled",
+          ),
+          true,
+        )
+        assert.deepEqual(
+          await avaliar(
+            "[...document.querySelectorAll('.sir-population-stats dd')].map(elemento=>elemento.textContent)",
+          ),
+          ['—', '—', '—', '—'],
+        )
+        await avaliar(
+          "window.fetch=window.fetchAnterior;document.querySelector('.simulation-summary-feedback button').focus()",
+        )
+        await comando('Input.dispatchKeyEvent', {
+          type: 'keyDown',
+          key: 'Enter',
+          code: 'Enter',
+          text: '\r',
+          unmodifiedText: '\r',
+          windowsVirtualKeyCode: 13,
+        })
+        await comando('Input.dispatchKeyEvent', {
+          type: 'keyUp',
+          key: 'Enter',
+          code: 'Enter',
+          windowsVirtualKeyCode: 13,
+        })
+        await ate(
+          "!document.querySelector('.experiment-actions .button-primary').disabled",
+        )
+        assert.equal(
+          await avaliar(
+            "!!document.querySelector('.simulation-summary [role=alert]')",
+          ),
+          false,
+        )
+      },
+    )
+    await contexto.test(
+      'ausência de infectados mostra zeros reais e reiniciar restaura o estado sem dados',
+      async () => {
+        await avaliar(
+          `(()=>{const anterior=JSON.parse(sessionStorage.getItem('observatorio-configuracao'));const formulario={...anterior.formulario,modo_iniciais:'ids',ids_infectados_iniciais:[],intervencao:null,limite_passos:'5'};delete formulario.quantidade_infectados;sessionStorage.setItem('observatorio-configuracao',JSON.stringify({repeticoes:null,formulario}));sessionStorage.removeItem('observatorio-resultado-execucao')})()`,
+        )
+        await comando('Page.reload')
+        await ate(
+          "!!document.querySelector('.experiment-actions .button-primary') && !document.querySelector('.experiment-actions .button-primary').disabled",
+        )
+        await avaliar(
+          "document.querySelector('.experiment-actions .button-secondary').click()",
+        )
+        await ate("document.querySelector('.stat-i').textContent==='0'")
+        assert.deepEqual(
+          await avaliar(
+            "[...document.querySelectorAll('.sir-population-stats dd')].map(elemento=>elemento.textContent)",
+          ),
+          ['2', '0', '0', '0'],
+        )
+        assert.match(
+          await avaliar(
+            "document.querySelector('.simulation-outcome').textContent",
+          ),
+          /extinção da epidemia em t = 0/,
+        )
+        assert.match(
+          await avaliar(
+            "document.querySelector('.simulation-summary-identifiers').textContent",
+          ),
+          /Nenhum infectado inicial/,
+        )
+        await avaliar("document.querySelector('.button-reset').click()")
+        await ate("document.querySelector('.stat-i').textContent==='—'")
+        assert.equal(
+          await avaliar(
+            "!!document.querySelector('.population-proportion, .simulation-progress, .sir-network-legend')",
+          ),
+          false,
+        )
+      },
+    )
+    await contexto.test(
+      'nova revisão não reaproveita o resumo epidemiológico da rede anterior',
+      async () => {
+        await avaliar(
+          `(async()=>{const rede=await(await fetch('/api/rede/gerar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({modelo:'erdos_renyi',numero_individuos:'2',semente:'7',peso:'1',probabilidade_contato:'0'})})).json();await fetch('/api/rede/confirmar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({revisao:rede.revisao})})})()`,
+        )
+        await comando('Page.reload')
+        await ate(
+          "document.querySelector('.simulation-summary')?.textContent.includes('Erdős–Rényi')",
+        )
+        assert.equal(
+          await avaliar(
+            "document.querySelector('.experiment-actions .button-primary').disabled",
+          ),
+          true,
+        )
+        assert.equal(
+          await avaliar(
+            "!!document.querySelector('.simulation-summary-identifiers')",
+          ),
+          false,
+        )
+        assert.doesNotMatch(
+          await avaliar(
+            "document.querySelector('.simulation-summary').textContent",
+          ),
+          /900719925474099312345/,
+        )
+        assert.deepEqual(
+          await avaliar(
+            "[...document.querySelectorAll('.sir-population-stats dd')].map(elemento=>elemento.textContent)",
+          ),
+          ['—', '—', '—', '—'],
+        )
+      },
+    )
+    await contexto.test(
+      'listas extensas de IDs continuam acessíveis por teclado',
+      async () => {
+        await avaliar(`(async()=>{
+        const rede=await(await fetch('/api/rede/gerar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({modelo:'erdos_renyi',numero_individuos:'20',semente:'7',peso:'1',probabilidade_contato:'0'})})).json();
+        await fetch('/api/rede/confirmar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({revisao:rede.revisao})});
+        const anterior=JSON.parse(sessionStorage.getItem('observatorio-configuracao'));
+        const formulario={...anterior.formulario,ids_infectados_iniciais:Array.from({length:20},(_,indice)=>String(indice)),revisao_rede:String(rede.revisao),contexto_rede:rede.contexto_rede};
+        const validacao=await(await fetch('/api/rede/configuracao',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(formulario)})).json();
+        sessionStorage.setItem('observatorio-configuracao',JSON.stringify({repeticoes:null,formulario,validacao}));
+      })()`)
+        await comando('Page.reload')
+        await ate(
+          "!!document.querySelector('.simulation-summary-identifiers summary')",
+        )
+        assert.equal(
+          await avaliar(
+            "document.querySelector('.simulation-summary details').open",
+          ),
+          false,
+        )
+        await avaliar(
+          "document.querySelector('.simulation-summary summary').focus()",
+        )
+        await comando('Input.dispatchKeyEvent', {
+          type: 'keyDown',
+          key: 'Enter',
+          code: 'Enter',
+          text: '\r',
+          unmodifiedText: '\r',
+          windowsVirtualKeyCode: 13,
+        })
+        await comando('Input.dispatchKeyEvent', {
+          type: 'keyUp',
+          key: 'Enter',
+          code: 'Enter',
+          windowsVirtualKeyCode: 13,
+        })
+        await ate("document.querySelector('.simulation-summary details').open")
+        assert.equal(
+          await avaliar(
+            "document.querySelector('.simulation-summary details p').textContent.split(', ').length",
+          ),
+          20,
+        )
+        await comando('Emulation.setDeviceMetricsOverride', {
+          width: 390,
+          height: 1000,
+          deviceScaleFactor: 1,
+          mobile: true,
+        })
+        assert.ok(
+          await avaliar('document.documentElement.scrollWidth <= innerWidth'),
+        )
+        await capturarResumo('resumo-ids-expandidos')
+      },
+    )
+  },
+)

@@ -213,6 +213,7 @@ export function ConfigurationPage() {
         JSON.stringify({
           repeticoes: tipo === 'comparacao' ? repeticoes : null,
           formulario,
+          validacao: 'configuracao' in resultado ? resultado : undefined,
         }),
       )
     } catch (erro) {

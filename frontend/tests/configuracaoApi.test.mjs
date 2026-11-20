@@ -2,8 +2,12 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import { carregarConfiguracaoApi } from './carregarConfiguracaoApi.mjs'
 
-const { validarComparacao, validarConfiguracao, executarComparacao, executarSimulacao } =
-  await carregarConfiguracaoApi()
+const {
+  validarComparacao,
+  validarConfiguracao,
+  executarComparacao,
+  executarSimulacao,
+} = await carregarConfiguracaoApi()
 
 test('configuração conserva IDs e sementes textuais e inclui a revisão', async () => {
   const anterior = globalThis.fetch
@@ -139,7 +143,10 @@ test('execução de comparação preserva lote e cenários separados', async () 
       semente_epidemia: '42',
     })
     assert.equal(lote.revisao_rede, 4)
-    assert.deepEqual(lote.execucoes.map((item) => item.cenario), ['grau', 'aleatoria'])
+    assert.deepEqual(
+      lote.execucoes.map((item) => item.cenario),
+      ['grau', 'aleatoria'],
+    )
   } finally {
     globalThis.fetch = anterior
   }

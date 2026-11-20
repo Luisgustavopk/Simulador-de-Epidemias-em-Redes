@@ -1,17 +1,21 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { AppShell } from '../components/AppShell'
 import { Icon } from '../components/Icon'
 import { NetworkScene } from '../features/rede/visualizacao/NetworkScene'
+import { ResumoEnsaio } from '../features/resultados/ResumoEnsaio'
 import { useCargaRede } from '../hooks/useCargaRede'
 import {
   executarComparacao,
   executarSimulacao,
+  validarConfiguracao,
+  type ConfiguracaoSalva,
+  type ConfiguracaoValidada,
   type ExecucaoComparadaResultado,
-  type FormularioConfiguracao,
   type RegistroResultado,
   type ResultadoSimulacao,
 } from '../services/configuracaoApi'
 import type { PreviaRede } from '../types/rede'
+import './SimulationPage.css'
 
 type EstadoSIR = 'S' | 'I' | 'R' | 'isolado'
 
@@ -30,17 +34,11 @@ function previaVazia(total: number): PreviaRede {
   }
 }
 
-function lerConfiguracao(): {
-  repeticoes: string | null
-  formulario: FormularioConfiguracao
-} | null {
+function lerConfiguracao(): ConfiguracaoSalva | null {
   try {
     const valor = JSON.parse(
       sessionStorage.getItem(CHAVE_CONFIGURACAO) ?? 'null',
-    ) as {
-      repeticoes: string | null
-      formulario: FormularioConfiguracao
-    } | null
+    ) as ConfiguracaoSalva | null
     return valor?.formulario ? valor : null
   } catch {
     return null
@@ -53,7 +51,7 @@ export function SimulationPage({
   onNavegarRede: () => void
 }) {
   const carga = useCargaRede()
-  const total = carga.rede?.resumo?.numero_individuos ?? 100
+  const total = carga.rede?.resumo?.numero_individuos ?? 0
   const previa = carga.previa ?? previaVazia(total)
   const [modo, setModo] = useState<'unica' | 'repeticoes'>('unica')
   const [status, setStatus] = useState<'Pausado' | 'Executando' | 'Finalizado'>(
@@ -64,25 +62,90 @@ export function SimulationPage({
     'ociosa' | 'carregando' | 'concluida' | 'falhou'
   >('ociosa')
   const [historico, setHistorico] = useState<RegistroResultado[]>([])
-  const [resultadoIndividual, setResultadoIndividual] =
+  const [resultadoEnsaio, setResultadoEnsaio] =
     useState<ResultadoSimulacao | null>(null)
   const [passo, setPasso] = useState(0)
   const [tema, setTema] = useState<'dark' | 'light'>('dark')
   const [visualizacao, setVisualizacao] = useState<'mapa' | '3d'>('mapa')
+  const pedido = useRef<AbortController | null>(null)
+  const [configuracaoSalva] = useState(lerConfiguracao)
+  const [validacao, setValidacao] = useState<ConfiguracaoValidada | null>(
+    () => configuracaoSalva?.validacao ?? null,
+  )
+  const [falhaResumo, setFalhaResumo] = useState('')
+  const [tentativaResumo, setTentativaResumo] = useState(0)
+  const contextoAtual = carga.rede?.contexto_rede
+  const revisaoAtual = carga.rede?.revisao
+  const podeValidar = Boolean(
+    carga.rede?.confirmada &&
+    configuracaoSalva?.formulario.contexto_rede === carga.rede.contexto_rede &&
+    Number(configuracaoSalva?.formulario.revisao_rede) === carga.rede.revisao,
+  )
+  const validacaoAtual =
+    podeValidar &&
+    validacao?.contexto_rede === contextoAtual &&
+    validacao?.configuracao?.revisao_rede === revisaoAtual
+      ? validacao
+      : null
+  const podeExecutar = Boolean(
+    validacaoAtual &&
+    (modo === 'unica' || validacaoAtual.configuracao.intervencao),
+  )
+  const repeticoes = configuracaoSalva?.repeticoes ?? '2'
+
+  useEffect(() => {
+    if (!podeValidar || !configuracaoSalva || validacaoAtual) return
+    const controlador = new AbortController()
+    validarConfiguracao(configuracaoSalva.formulario, controlador.signal)
+      .then((resultado) => {
+        if (controlador.signal.aborted) return
+        if (
+          resultado.contexto_rede !== contextoAtual ||
+          resultado.configuracao.revisao_rede !== revisaoAtual
+        )
+          throw new Error(
+            'A rede mudou. Valide a configuração novamente na Tela 02.',
+          )
+        setValidacao(resultado)
+      })
+      .catch((falha: unknown) => {
+        if (!controlador.signal.aborted)
+          setFalhaResumo(
+            falha instanceof Error
+              ? falha.message
+              : 'Não foi possível consultar a configuração.',
+          )
+      })
+    return () => controlador.abort()
+  }, [
+    podeValidar,
+    configuracaoSalva,
+    contextoAtual,
+    revisaoAtual,
+    validacaoAtual,
+    tentativaResumo,
+  ])
+
+  useEffect(() => {
+    return () => {
+      pedido.current?.abort()
+      pedido.current = null
+    }
+  }, [carga.rede?.contexto_rede, carga.rede?.revisao])
 
   useEffect(() => {
     if (!carga.rede || !historico.length) return
-    const configuracao = lerConfiguracao()
+    const configuracao = configuracaoSalva
     const resultadoContextualizado =
-      resultadoIndividual?.contexto_rede === carga.rede.contexto_rede &&
-      resultadoIndividual.revisao_rede === carga.rede.revisao
+      resultadoEnsaio?.contexto_rede === carga.rede.contexto_rede &&
+      resultadoEnsaio.revisao_rede === carga.rede.revisao
     const configuracaoAtual =
       configuracao?.formulario.contexto_rede === carga.rede.contexto_rede &&
       Number(configuracao?.formulario.revisao_rede) === carga.rede.revisao
     if (!resultadoContextualizado && !configuracaoAtual) {
       const tarefa = window.setTimeout(() => {
         setHistorico([])
-        setResultadoIndividual(null)
+        setResultadoEnsaio(null)
         setPasso(0)
         setStatus('Pausado')
         setErro(
@@ -93,27 +156,27 @@ export function SimulationPage({
       }, 0)
       return () => window.clearTimeout(tarefa)
     }
-  }, [carga.rede, historico.length, resultadoIndividual])
+  }, [carga.rede, historico.length, resultadoEnsaio, configuracaoSalva])
 
-  const atual = historico.at(-1) ?? {
-    passo: 0,
-    suscetiveis: Math.max(total - 4, 0),
-    infectados: Math.min(4, total),
-    recuperados: 0,
-    isolados: 0,
-  }
-  const registroAtual = historico.find((item) => item.passo === passo) ?? atual
-  const suscetiveis = registroAtual.suscetiveis
-  const infectados = registroAtual.infectados
-  const recuperados = registroAtual.recuperados
-  const isolados = registroAtual.isolados
+  const resultadoAtual =
+    resultadoEnsaio?.contexto_rede === contextoAtual &&
+    resultadoEnsaio?.revisao_rede === revisaoAtual
+      ? resultadoEnsaio
+      : null
+  const registroAtual = resultadoAtual
+    ? (historico.find((item) => item.passo === passo) ?? null)
+    : null
+  const suscetiveis = registroAtual?.suscetiveis
+  const infectados = registroAtual?.infectados
+  const recuperados = registroAtual?.recuperados
+  const isolados = registroAtual?.isolados
   const limitePassos =
-    resultadoIndividual?.metrica.horizonte_observado ??
-    historico.at(-1)?.passo ??
-    100
+    resultadoAtual?.metrica.horizonte_observado ?? historico.at(-1)?.passo ?? 0
 
   const estadosPorNo = useMemo(() => {
+    if (!registroAtual || total === 0) return undefined
     const estados: Record<string, EstadoSIR> = {}
+    const { recuperados, infectados, isolados } = registroAtual
     const quantidade = previa.individuos.length
     previa.individuos.forEach((no, indice) => {
       const posicao = quantidade ? indice / quantidade : 0
@@ -131,18 +194,19 @@ export function SimulationPage({
       }
     })
     return estados
-  }, [previa.individuos, recuperados, infectados, isolados, total])
+  }, [previa.individuos, registroAtual, total])
 
   async function executarBackend(): Promise<boolean> {
+    if (pedido.current) return false
     setErro('')
-    const configuracao = lerConfiguracao()
+    const configuracao = configuracaoSalva
     if (!configuracao) {
       setErro('Valide uma configuração na Tela 02 antes de executar o ensaio.')
       setRequisicao('falhou')
       return false
     }
     if (
-      !carga.rede ||
+      !carga.rede?.confirmada ||
       configuracao.formulario.contexto_rede !== carga.rede.contexto_rede ||
       Number(configuracao.formulario.revisao_rede) !== carga.rede.revisao
     ) {
@@ -153,18 +217,33 @@ export function SimulationPage({
       return false
     }
 
+    const controlador = new AbortController()
+    pedido.current = controlador
     setRequisicao('carregando')
     try {
       if (modo === 'repeticoes') {
         const lote = await executarComparacao(
           configuracao.repeticoes ?? '2',
           configuracao.formulario,
+          controlador.signal,
         )
+        if (controlador.signal.aborted || pedido.current !== controlador)
+          return false
         const principal: ExecucaoComparadaResultado =
           lote.execucoes.find((item) => item.cenario === 'grau') ??
           lote.execucoes.find((item) => item.cenario === 'aleatoria') ??
           lote.execucoes[0]
         const registros = principal?.historico ?? []
+        setResultadoEnsaio(
+          principal
+            ? {
+                ...principal,
+                contexto_rede: lote.contexto_rede,
+                revisao_rede: lote.revisao_rede,
+                populacao: lote.populacao,
+              }
+            : null,
+        )
         setHistorico(registros)
         setPasso(0)
         sessionStorage.setItem(CHAVE_HISTORICO, JSON.stringify(registros))
@@ -181,8 +260,13 @@ export function SimulationPage({
         return registros.length > 0
       }
 
-      const resultado = await executarSimulacao(configuracao.formulario)
-      setResultadoIndividual(resultado)
+      const resultado = await executarSimulacao(
+        configuracao.formulario,
+        controlador.signal,
+      )
+      if (controlador.signal.aborted || pedido.current !== controlador)
+        return false
+      setResultadoEnsaio(resultado)
       setHistorico(resultado.historico)
       setPasso(0)
       sessionStorage.setItem(
@@ -197,8 +281,7 @@ export function SimulationPage({
       setRequisicao('concluida')
       return resultado.historico.length > 0
     } catch (falha) {
-      if (falha instanceof DOMException && falha.name === 'AbortError')
-        return false
+      if (controlador.signal.aborted) return false
       setErro(
         falha instanceof Error
           ? falha.message
@@ -206,6 +289,8 @@ export function SimulationPage({
       )
       setRequisicao('falhou')
       return false
+    } finally {
+      if (pedido.current === controlador) pedido.current = null
     }
   }
 
@@ -237,13 +322,15 @@ export function SimulationPage({
   }
 
   async function reiniciar() {
+    pedido.current?.abort()
+    pedido.current = null
     setPasso(0)
     setStatus('Pausado')
     setRequisicao('ociosa')
     sessionStorage.removeItem(CHAVE_HISTORICO)
     sessionStorage.removeItem(CHAVE_RESULTADO)
     setHistorico([])
-    setResultadoIndividual(null)
+    setResultadoEnsaio(null)
   }
 
   useEffect(() => {
@@ -270,7 +357,11 @@ export function SimulationPage({
   }, [status, historico, modo])
 
   const percentual =
-    limitePassos > 0 ? Math.round((passo / limitePassos) * 100) : 0
+    limitePassos > 0
+      ? Math.round((passo / limitePassos) * 100)
+      : registroAtual
+        ? 100
+        : 0
 
   return (
     <AppShell
@@ -293,24 +384,32 @@ export function SimulationPage({
               Execute o motor real e acompanhe o histórico obtido pelo backend.
             </p>
           </div>
-          <div className="sir-model" role="img" aria-label="Modelo SIR">
+          <div
+            className="sir-model"
+            role="img"
+            aria-label={
+              registroAtual
+                ? `Modelo SIR: ${suscetiveis} suscetíveis, ${infectados} infectados e ${recuperados} recuperados`
+                : 'Modelo SIR: contagens indisponíveis antes da execução'
+            }
+          >
             <span>
               <b>S</b>
-              <small>{suscetiveis}</small>
+              <small>{suscetiveis ?? '—'}</small>
             </span>
             <i>
               β<Icon nome="arrow" size={33} />
             </i>
             <span>
               <b>I</b>
-              <small>{infectados}</small>
+              <small>{infectados ?? '—'}</small>
             </span>
             <i>
               γ<Icon nome="arrow" size={33} />
             </i>
             <span>
               <b>R</b>
-              <small>{recuperados}</small>
+              <small>{recuperados ?? '—'}</small>
             </span>
           </div>
         </div>
@@ -320,6 +419,19 @@ export function SimulationPage({
             {erro}
           </p>
         )}
+
+        <ResumoEnsaio
+          rede={carga.rede}
+          validacao={validacaoAtual}
+          modo={modo}
+          repeticoes={repeticoes}
+          carregando={podeValidar && !validacaoAtual && !falhaResumo}
+          erro={podeValidar ? falhaResumo : ''}
+          onRepetir={() => {
+            setFalhaResumo('')
+            setTentativaResumo((atual) => atual + 1)
+          }}
+        />
 
         <div className="simulation-workbench">
           <aside
@@ -380,7 +492,9 @@ export function SimulationPage({
                 className="button-primary full-width"
                 onClick={() => void iniciar()}
                 disabled={
-                  status === 'Executando' || requisicao === 'carregando'
+                  !podeExecutar ||
+                  status === 'Executando' ||
+                  requisicao === 'carregando'
                 }
               >
                 {requisicao === 'carregando'
@@ -392,9 +506,10 @@ export function SimulationPage({
                 className="button-secondary full-width"
                 onClick={() => void avancarUmPasso()}
                 disabled={
+                  !podeExecutar ||
+                  requisicao === 'carregando' ||
                   status === 'Executando' ||
-                  (historico.length > 0 &&
-                    passo >= Math.max(...historico.map((item) => item.passo)))
+                  (historico.length > 0 && passo >= limitePassos)
                 }
               >
                 ▷ 1 Passo
@@ -426,6 +541,13 @@ export function SimulationPage({
                 </a>
               )}
             </div>
+            {!podeExecutar && (
+              <p role="status">
+                {validacaoAtual && modo === 'repeticoes'
+                  ? 'Configure uma intervenção na Tela 02 para comparar estratégias.'
+                  : 'Confirme a rede e aguarde a configuração validada da Tela 02 para executar.'}
+              </p>
+            )}
           </aside>
 
           <section
@@ -435,39 +557,66 @@ export function SimulationPage({
             <div className="population-heading">
               <h2 id="population-title">População ao longo do tempo</h2>
               <span className={`run-status status-${status.toLowerCase()}`}>
-                {status} - {passo}/{limitePassos}
+                {registroAtual
+                  ? `${status} - ${passo}/${limitePassos}`
+                  : `${status} · aguardando execução`}
               </span>
             </div>
-            <div className="progress-label">
-              <strong>Passo Atual: t = {passo}</strong>
-              <span>{percentual}%</span>
-            </div>
-            <div
-              className="simulation-progress"
-              role="progressbar"
-              aria-valuemin={0}
-              aria-valuemax={limitePassos}
-              aria-valuenow={passo}
-            >
-              <span style={{ width: `${percentual}%` }} />
-            </div>
-            <div className="progress-ticks" aria-hidden="true">
-              <span>0</span>
-              <span>25</span>
-              <span>50</span>
-              <span>75</span>
-              <span>{limitePassos} passos</span>
-            </div>
+            {registroAtual ? (
+              <>
+                <div className="progress-label">
+                  <strong>Passo Atual: t = {passo}</strong>
+                  <span>{percentual}%</span>
+                </div>
+                <div
+                  className="simulation-progress"
+                  role="progressbar"
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-valuenow={percentual}
+                  aria-valuetext={`Passo ${passo} de ${limitePassos} passos registrados`}
+                >
+                  <span style={{ width: `${percentual}%` }} />
+                </div>
+                <div className="progress-ticks" aria-hidden="true">
+                  {[
+                    ...new Set(
+                      [0, 0.25, 0.5, 0.75, 1].map((fracao) =>
+                        Math.round(limitePassos * fracao),
+                      ),
+                    ),
+                  ].map((instante) => (
+                    <span key={instante}>{instante}</span>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <p role="status" className="simulation-empty">
+                {requisicao === 'carregando'
+                  ? 'Calculando o ensaio. As contagens aparecerão após a resposta do backend.'
+                  : 'Nenhuma simulação executada. As contagens aparecerão após a resposta do backend.'}
+              </p>
+            )}
+            {resultadoAtual && (
+              <p className="simulation-outcome">
+                Histórico recebido:{' '}
+                {resultadoAtual.motivo_termino === 'extincao'
+                  ? 'extinção da epidemia'
+                  : 'limite máximo de passos'}{' '}
+                em t = {limitePassos} ({limitePassos} passos realizados).
+              </p>
+            )}
 
             <section className="sir-network" aria-labelledby="network-title">
               <div className="network-title-row">
                 <div>
-                  <h3 id="network-title">Estados na rede</h3>
+                  <h3 id="network-title">
+                    {registroAtual ? 'Estados na rede' : 'Estrutura da rede'}
+                  </h3>
                   <p>
-                    Estado individual inferido a partir das contagens do
-                    histórico (o backend não fornece snapshots por ID) -{' '}
-                    {previa.total_individuos.toLocaleString('pt-BR')} nós - t ={' '}
-                    {passo}
+                    {registroAtual
+                      ? `Estado individual inferido das contagens (não são snapshots por ID) · ${previa.total_individuos.toLocaleString('pt-BR')} nós · t = ${passo}`
+                      : 'Prévia estrutural; os estados epidemiológicos ainda não foram calculados.'}
                   </p>
                 </div>
                 <div className="sir-network-controls">
@@ -524,68 +673,80 @@ export function SimulationPage({
                   compacto
                 />
               </div>
-              <div
-                className="sir-network-legend"
-                aria-label="Legenda dos estados"
-              >
-                <span>
-                  <b className="legend-s" />
-                  Suscetível
-                </span>
-                <span>
-                  <b className="legend-i" />
-                  Infectado
-                </span>
-                <span>
-                  <b className="legend-r" />
-                  Recuperado
-                </span>
-                <span>
-                  <b className="legend-isolado" />
-                  Isolado
-                </span>
-              </div>
+              {registroAtual && (
+                <div
+                  className="sir-network-legend"
+                  aria-label="Legenda dos estados"
+                >
+                  <span>
+                    <b className="legend-s" />
+                    Suscetível
+                  </span>
+                  <span>
+                    <b className="legend-i" />
+                    Infectado
+                  </span>
+                  <span>
+                    <b className="legend-r" />
+                    Recuperado
+                  </span>
+                  <span>
+                    <b className="legend-isolado" />
+                    Isolado
+                  </span>
+                </div>
+              )}
             </section>
 
             <dl className="sir-population-stats">
               <div>
                 <dt>Suscetíveis (S)</dt>
-                <dd className="stat-s">{suscetiveis}</dd>
+                <dd className="stat-s">{suscetiveis ?? '—'}</dd>
               </div>
               <div>
                 <dt>Infectados (I)</dt>
-                <dd className="stat-i">{infectados}</dd>
+                <dd className="stat-i">{infectados ?? '—'}</dd>
               </div>
               <div>
                 <dt>Recuperados (R)</dt>
-                <dd className="stat-r">{recuperados}</dd>
+                <dd className="stat-r">{recuperados ?? '—'}</dd>
               </div>
               <div>
                 <dt>Isolados</dt>
-                <dd className="stat-isolado">{isolados}</dd>
+                <dd className="stat-isolado">{isolados ?? '—'}</dd>
               </div>
             </dl>
-            <div
-              className="population-proportion"
-              aria-label="Distribuição proporcional da população"
-            >
-              <span
-                className="bar-s"
-                style={{ width: `${(suscetiveis / total) * 100}%` }}
-              />
-              <span
-                className="bar-i"
-                style={{ width: `${(infectados / total) * 100}%` }}
-              />
-              <span
-                className="bar-r"
-                style={{ width: `${(recuperados / total) * 100}%` }}
-              />
-              <span
-                className="bar-isolado"
-                style={{ width: `${(isolados / total) * 100}%` }}
-              />
-            </div>
+            {registroAtual && total > 0 && (
+              <div
+                className="population-proportion"
+                aria-label="Distribuição proporcional da população"
+              >
+                <span
+                  className="bar-s"
+                  style={{
+                    width: `${(registroAtual.suscetiveis / total) * 100}%`,
+                  }}
+                />
+                <span
+                  className="bar-i"
+                  style={{
+                    width: `${(registroAtual.infectados / total) * 100}%`,
+                  }}
+                />
+                <span
+                  className="bar-r"
+                  style={{
+                    width: `${(registroAtual.recuperados / total) * 100}%`,
+                  }}
+                />
+                <span
+                  className="bar-isolado"
+                  style={{
+                    width: `${(registroAtual.isolados / total) * 100}%`,
+                  }}
+                />
+              </div>
+            )}
           </section>
         </div>
       </main>

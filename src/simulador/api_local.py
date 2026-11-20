@@ -117,7 +117,7 @@ def atender(
         resultado = resultados.get(identificador)
         if resultado is None:
             raise _erro("resultado", "Resultado não encontrado nesta sessão.")
-        return deepcopy(resultado)
+        return {**deepcopy(resultado), 'resultado_id': identificador}
     if caminho not in ROTAS:
         raise _erro("rota", "Operação não encontrada.")
     if metodo != ROTAS[caminho]:

@@ -1,12 +1,18 @@
-"""Orquestração temporal básica de uma simulação em rede."""
+"""Orquestração temporal de uma simulação SIR em rede."""
 
 from dataclasses import dataclass
 
+from simulador.aleatoriedade import GeradorAleatorio
+from simulador.configuracao import ConfiguracaoSimulacao, aplicar_condicoes_iniciais
+from simulador.estrategias_isolamento import preparar_estrategia
 from simulador.individuo import EstadoSIR
+from simulador.isolamento import aplicar_isolamento
+from simulador.motor_sir import MotorSIR
 from simulador.rede_contatos import RedeContatos
+from simulador.resultado import ResultadoSimulacao
 
 
-@dataclass(frozen=True, init=False)
+@dataclass(frozen=True, slots=True, init=False)
 class RegistroPasso:
     """Fotografia dos estados epidemiológicos em um passo."""
 
@@ -86,16 +92,33 @@ class RegistroPasso:
 
 
 class Simulacao:
-    """Avança o relógio temporal e registra o estado da rede."""
+    """Coordena o motor SIR, as intervenções e o histórico da rede.
+
+    copiar_referencia=False permite reutilizar um retrato privado dos
+    controllers. O chamador deve mantê-lo estável durante o uso da instância.
+    Com configuração, a rede de trabalho é independente em cada início.
+    """
 
     def __init__(
         self,
         rede: RedeContatos,
-        limite_passos: int = 100,
+        limite_passos: int | ConfiguracaoSimulacao = 100,
+        *,
+        configuracao: ConfiguracaoSimulacao | None = None,
+        revisao_rede: int | None = None,
+        repeticao: int | None = None,
+        copiar_referencia: bool = True,
         **opcoes: object,
     ) -> None:
         if not isinstance(rede, RedeContatos):
             raise TypeError("rede deve ser uma instância de RedeContatos.")
+
+        if isinstance(limite_passos, ConfiguracaoSimulacao):
+            if configuracao is not None:
+                raise TypeError('Informe a configuração apenas uma vez.')
+            configuracao = limite_passos
+        if configuracao is not None:
+            limite_passos = configuracao.limite_passos
 
         if "max_passos" in opcoes:
             if limite_passos != 100:
@@ -109,12 +132,24 @@ class Simulacao:
         if limite_passos < 0:
             raise ValueError("O limite de passos não pode ser negativo.")
 
+        self._rede_inicial = rede.copiar() if copiar_referencia else rede
         self.rede = rede
+        self.configuracao = None
+        self.repeticao = repeticao
+        self._resultado: ResultadoSimulacao | None = None
+        self._motor: MotorSIR | None = None
+        self._estrategia = None
+        if configuracao is not None:
+            revisao = configuracao.revisao_rede if revisao_rede is None else revisao_rede
+            self.configuracao = configuracao.preparar(self._rede_inicial, revisao)
         self.limite_passos = limite_passos
         self.passo_atual = 0
         self.historico: list[RegistroPasso] = []
         self.finalizada = False
-        self.inicializar()
+        if self.configuracao is None:
+            self.registrar_estado_atual()
+        else:
+            self.inicializar()
 
     @property
     def passo(self) -> int:
@@ -125,15 +160,25 @@ class Simulacao:
         return tuple(self.historico)
 
     def inicializar(self) -> list[RegistroPasso]:
-        """Reinicia o relógio e registra o estado inicial em t=0."""
+        """Restaura a rede inicial, os sorteios e o único registro em t=0."""
+        self.rede = self._rede_inicial.copiar()
         self.passo_atual = 0
         self.historico.clear()
         self.finalizada = False
-        self._atualizar_finalizacao()
-        if not self.finalizada:
-            self.registrar_estado_atual()
-        else:
-            self.registrar_estado_atual()
+        self._resultado = None
+        self._motor = None
+        self._estrategia = None
+        if self.configuracao is not None:
+            revisao = self.configuracao.revisao_rede
+            aplicar_condicoes_iniciais(self.rede, self.configuracao, revisao)
+            self._motor = MotorSIR(
+                GeradorAleatorio(self.configuracao.semente_epidemia),
+            )
+            self._estrategia = preparar_estrategia(
+                self.rede, self.configuracao, revisao_rede=revisao,
+            )
+            self._aplicar_intervencao(self.configuracao, self._estrategia)
+        self.registrar_estado_atual()
         return list(self.historico)
 
     def contar_estados(self) -> tuple[int, int, int, int]:
@@ -143,7 +188,7 @@ class Simulacao:
         recuperados = 0
         isolados = 0
 
-        for individuo in self.rede.individuos:
+        for individuo in self.rede.iter_individuos():
             if individuo.estado is EstadoSIR.SUSCETIVEL:
                 suscetiveis += 1
             elif individuo.estado is EstadoSIR.INFECTADO:
@@ -167,27 +212,49 @@ class Simulacao:
             isolados=isolados,
         )
         self.historico.append(registro)
-        self._atualizar_finalizacao()
+        self._atualizar_finalizacao(registro)
         return registro
 
     def executar_passo(self) -> RegistroPasso:
-        """Avança t -> t+1 e registra uma nova fotografia."""
+        """Aplica uma transição SIR configurada e registra o próximo instante."""
         if self.finalizada:
             return self.historico[-1]
         if self.passo_atual >= self.limite_passos:
             self.finalizada = True
             return self.historico[-1]
 
+        if self.configuracao is not None:
+            return self._executar_passo_motor(
+                self._motor,
+                self.configuracao,
+                self.configuracao.revisao_rede,
+                self._estrategia,
+            )
+        return self._avancar_relogio()
+
+    def _avancar_relogio(self) -> RegistroPasso:
+        self._resultado = None
         self.passo_atual += 1
         return self.registrar_estado_atual()
 
     def avancar(self) -> RegistroPasso:
         return self.executar_passo()
 
-    def executar(self) -> list[RegistroPasso]:
+    def executar(self) -> ResultadoSimulacao | list[RegistroPasso]:
         """Executa até extinção dos infectados ou o limite de passos."""
         while not self.finalizada:
             self.executar_passo()
+        if self.configuracao is not None:
+            if self._resultado is None:
+                from simulador.metricas import MetricasEpidemia
+
+                self._resultado = ResultadoSimulacao(
+                    configuracao=self.configuracao, historico=self.registros,
+                    metricas=MetricasEpidemia(self.registros, self.rede.numero_individuos),
+                    motivo_termino='extincao' if self.registros[-1].infectados == 0 else 'limite_passos',
+                    populacao_inicial=self.rede.numero_individuos, repeticao=self.repeticao,
+                )
+            return self._resultado
         return list(self.historico)
 
     def executar_motor(
@@ -199,41 +266,45 @@ class Simulacao:
     ) -> tuple[RegistroPasso, ...]:
         """Executa o ciclo SIR usando a configuração e o motor fornecidos.
 
-        A preparação dos infectados iniciais e da intervenção no passo zero
-        ocorre antes da criação desta instância. A partir do registro inicial,
-        este método concentra a evolução, a intervenção agendada e a parada.
+        Na construção legada, prepare os infectados iniciais e a intervenção
+        no passo zero antes de criar a instância. O avanço compartilha a mesma
+        transição usada pela execução configurada por passos.
         """
-        from simulador.isolamento import aplicar_isolamento
-
-        intervencao = configuracao.intervencao
         while not self.finalizada:
-            if (
-                intervencao is not None
-                and self.passo == intervencao.inicio
-                and self.passo > 0
-                and estrategia is not None
-            ):
-                ids = estrategia.selecionar(
-                    self.rede,
-                    intervencao.quantidade_isolados(self.rede.numero_individuos),
-                )
-                aplicar_isolamento(
-                    self.rede,
-                    ids,
-                    intervencao.mecanismo,
-                    orcamento=intervencao.quantidade_isolados(
-                        self.rede.numero_individuos,
-                    ),
-                    reducao=intervencao.reducao,
-                )
-            motor.avancar(
-                self.rede,
-                configuracao,
-                self.passo,
-                revisao_rede=revisao_rede,
+            self._executar_passo_motor(
+                motor, configuracao, revisao_rede, estrategia,
             )
-            self.executar_passo()
         return self.registros
+
+    def _executar_passo_motor(
+        self,
+        motor: object,
+        configuracao: object,
+        revisao_rede: int,
+        estrategia: object,
+    ) -> RegistroPasso:
+        if self.passo > 0:
+            self._aplicar_intervencao(configuracao, estrategia)
+        motor.avancar(
+            self.rede, configuracao, self.passo, revisao_rede=revisao_rede,
+        )
+        return self._avancar_relogio()
+
+    def _aplicar_intervencao(self, configuracao: object, estrategia: object) -> None:
+        intervencao = configuracao.intervencao
+        if (
+            intervencao is not None
+            and self.passo == intervencao.inicio
+            and estrategia is not None
+        ):
+            quantidade = intervencao.quantidade_isolados(self.rede.numero_individuos)
+            aplicar_isolamento(
+                self.rede,
+                estrategia.selecionar(self.rede, quantidade),
+                intervencao.mecanismo,
+                orcamento=quantidade,
+                reducao=intervencao.reducao,
+            )
 
     def getPassoAtual(self) -> int:
         return self.passo_atual
@@ -244,9 +315,6 @@ class Simulacao:
     def getHistorico(self) -> tuple[RegistroPasso, ...]:
         return tuple(self.historico)
 
-    def _atualizar_finalizacao(self) -> None:
-        _, infectados, _, _ = self.contar_estados()
-        if infectados == 0:
-            self.finalizada = True
-        elif self.passo_atual >= self.limite_passos:
+    def _atualizar_finalizacao(self, registro: RegistroPasso) -> None:
+        if registro.infectados == 0 or self.passo_atual >= self.limite_passos:
             self.finalizada = True

@@ -81,6 +81,12 @@ export interface ConfiguracaoValidada {
   }
 }
 
+export interface ConfiguracaoSalva {
+  repeticoes: string | null
+  formulario: FormularioConfiguracao
+  validacao?: ConfiguracaoValidada
+}
+
 export function validarConfiguracao(
   campos: FormularioConfiguracao,
   signal?: AbortSignal,
@@ -199,7 +205,6 @@ export interface ResultadoComparacaoExecutada {
       metricas: Record<string, EstatisticaResultado>
       motivos_termino: Record<string, number>
     }
-
   >
   manifesto?: ManifestoResultado
 }

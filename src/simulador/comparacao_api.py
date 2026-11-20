@@ -1,18 +1,14 @@
 import re
+from datetime import datetime
 
-from simulador.aleatoriedade import GeradorAleatorio
 from simulador.comparacao import (
     CENARIOS,
     PedidoComparacao,
     ResultadoIndividual,
     executar_comparacao,
 )
-from simulador.configuracao import aplicar_condicoes_iniciais
-from simulador.estrategias_isolamento import preparar_estrategia
-from simulador.isolamento import aplicar_isolamento
-from simulador.metricas import MetricasEpidemia
-from simulador.motor_sir import MotorSIR
 from simulador.simulacao import Simulacao
+from simulador.resultado import ResultadoSimulacao
 
 from simulador.carga_rede import RedeDisponivel, ServicoCargaRede
 from simulador.configuracao import ErroConfiguracao, ProblemaConfiguracao
@@ -87,7 +83,7 @@ def _serializar_historico(historico):
     ]
 
 
-def _serializar_metrica(resultado: ResultadoIndividual) -> dict[str, object]:
+def _serializar_metrica(resultado: ResultadoIndividual | ResultadoSimulacao) -> dict[str, object]:
     return {
         'pico_infectados': resultado.pico_infectados,
         'passo_pico': resultado.passo_pico,
@@ -109,7 +105,7 @@ def _serializar_configuracao(configuracao) -> dict[str, object]:
         'limite_passos': configuracao.limite_passos,
         'revisao_rede': configuracao.revisao_rede,
         'ids_infectados_iniciais': (
-            list(configuracao.ids_infectados_iniciais)
+            [str(identificador) for identificador in configuracao.ids_infectados_iniciais]
             if configuracao.ids_infectados_iniciais is not None else None
         ),
         'quantidade_infectados': configuracao.quantidade_infectados,
@@ -133,6 +129,8 @@ def _criar_manifesto(
 ) -> dict[str, object]:
     preparada = configuracao.preparar(referencia.rede, referencia.revisao)
     return {
+        'projeto': 'Observatório — Simulador de Epidemias em Redes',
+        'criado_em': datetime.now().astimezone().isoformat(),
         'rede': {
             'contexto': contexto,
             'revisao': referencia.revisao,
@@ -146,46 +144,14 @@ def _criar_manifesto(
     }
 
 
-def _executar_individual(referencia: RedeDisponivel, configuracao) -> ResultadoIndividual:
-    rede = referencia.rede.copiar()
-    preparada = configuracao.preparar(rede, referencia.revisao)
-    aplicar_condicoes_iniciais(rede, preparada, referencia.revisao)
-
-    estrategia = preparar_estrategia(rede, preparada, revisao_rede=referencia.revisao)
-    intervencao = preparada.intervencao
-    if intervencao is not None and intervencao.inicio == 0:
-        if estrategia is not None:
-            ids = estrategia.selecionar(rede, intervencao.quantidade_isolados(rede.numero_individuos))
-            aplicar_isolamento(
-                rede, ids, intervencao.mecanismo,
-                orcamento=intervencao.quantidade_isolados(rede.numero_individuos),
-                reducao=intervencao.reducao,
-            )
-
-    simulado = Simulacao(rede, configuracao.limite_passos)
-    motor = MotorSIR(GeradorAleatorio(configuracao.semente_epidemia))
-    simulado.executar_motor(
-        motor,
-        preparada,
-        referencia.revisao,
-        estrategia,
+def _executar_individual(referencia: RedeDisponivel, configuracao) -> ResultadoSimulacao:
+    simulado = Simulacao(
+        referencia.rede, configuracao=configuracao,
+        revisao_rede=referencia.revisao, copiar_referencia=False,
     )
-
-    historico = simulado.registros
-    metricas = MetricasEpidemia(list(historico), rede.numero_individuos)
-    registro_final = historico[-1]
-    return ResultadoIndividual(
-        populacao_inicial=referencia.rede.numero_individuos,
-        pico_infectados=metricas.pico_infectados,
-        passo_pico=metricas.passo_pico,
-        fracao_acumulada=metricas.taxa_ataque,
-        horizonte_observado=registro_final.passo,
-        duracao_extincao=(
-            metricas.duracao_surto if registro_final.infectados == 0 else None
-        ),
-        motivo_termino='extincao' if registro_final.infectados == 0 else 'limite_passos',
-        historico=historico,
-    )
+    resultado = simulado.executar()
+    assert isinstance(resultado, ResultadoSimulacao)
+    return resultado
 
 
 def executar_simulacao_api(servico: ServicoCargaRede, campos: dict[str, object]) -> dict[str, object]:
@@ -217,9 +183,6 @@ def executar_comparacao_api(servico: ServicoCargaRede, campos: dict[str, object]
     resultado = executar_comparacao(
         referencia,
         PedidoComparacao(configuracao, repeticoes),
-        lambda rede, cfg: _executar_individual(
-            RedeDisponivel(rede, referencia.revisao, referencia.origem), cfg,
-        ),
     )
     execucoes = [
         {
@@ -263,6 +226,8 @@ def executar_comparacao_api(servico: ServicoCargaRede, campos: dict[str, object]
             for cenario, resumo in resultado.resumo.items()
         },
         'manifesto': {
+            'projeto': 'Observatório — Simulador de Epidemias em Redes',
+            'criado_em': datetime.now().astimezone().isoformat(),
             'rede': {
                 'contexto': servico.contexto_rede,
                 'revisao': referencia.revisao,

@@ -9,3 +9,6 @@ __pycache__/
 htmlcov/
 build/
 dist/
+
+# Arquivos intermediários de geração e revisão da documentação.
+/tmp/documentacao/

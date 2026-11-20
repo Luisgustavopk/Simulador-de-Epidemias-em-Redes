@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1130" viewBox="0 0 1600 1130">
+<defs><marker id="seta" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0 L8,3 L0,6 Z" fill="#282828"/></marker></defs>
+<rect width="1600" height="1130" fill="white"/>
+<text x="40" y="56" font-family="Arial, sans-serif" font-size="21" font-weight="700" text-anchor="start" fill="#666">SIMULADOR DE EPIDEMIAS EM REDES · UML</text>
+<rect x="40" y="86" width="1520" height="865" rx="24" fill="white" stroke="#666" stroke-width="2"/>
+<path d="M64,86 H1536 Q1560,86 1560,110 V166 H40 V110 Q40,86 64,86 Z" fill="#efefef"/>
+<path d="M40,166 H1560" fill="none" stroke="#303030" stroke-width="3"/>
+<text x="800" y="142" font-family="Arial, sans-serif" font-size="38" font-weight="700" text-anchor="middle" fill="#282828">Indivíduo</text>
+<path d="M926,188 V930" fill="none" stroke="#303030" stroke-width="3" stroke-dasharray="12 12"/>
+<text x="264" y="218" font-family="Arial, sans-serif" font-size="30" font-weight="700" text-anchor="start" fill="#282828">Condição epidemiológica</text>
+<text x="296" y="253" font-family="Arial, sans-serif" font-size="21" font-weight="400" text-anchor="start" fill="#777">Suscetível → Infectado → Recuperado</text>
+<text x="1060" y="218" font-family="Arial, sans-serif" font-size="30" font-weight="700" text-anchor="start" fill="#282828">Condição de isolamento</text>
+<text x="1090" y="253" font-family="Arial, sans-serif" font-size="21" font-weight="400" text-anchor="start" fill="#777">Uma condição independente do SIR</text>
+<circle cx="440" cy="298" r="17" fill="#222"/>
+<path d="M440,315 V352" fill="none" stroke="#303030" stroke-width="3" marker-end="url(#seta)"/>
+<polygon points="440,352 468,380 440,408 412,380" fill="white" stroke="#555" stroke-width="3"/>
+<path d="M440,408 V500" fill="none" stroke="#303030" stroke-width="3" marker-end="url(#seta)"/>
+<text x="270" y="475" font-family="Arial, sans-serif" font-size="24" font-weight="400" text-anchor="start" fill="#282828">[demais]</text>
+<path d="M468,380 H762 Q776,380 776,394 V710 H573" fill="none" stroke="#303030" stroke-width="3" marker-end="url(#seta)"/>
+<text x="506" y="440" font-family="Arial, sans-serif" font-size="24" font-weight="400" text-anchor="start" fill="#282828">[infectado inicial]</text>
+<text x="506" y="471" font-family="Arial, sans-serif" font-size="24" font-weight="400" text-anchor="start" fill="#282828">/ infectar(0)</text>
+<rect x="310" y="501" width="260" height="73" rx="20" fill="#f6f6f6" stroke="#666" stroke-width="2"/>
+<text x="440.0" y="547.5" font-family="Arial, sans-serif" font-size="30" font-weight="700" text-anchor="middle" fill="#282828">Suscetível (S)</text>
+<path d="M440,574 V678" fill="none" stroke="#303030" stroke-width="3" marker-end="url(#seta)"/>
+<text x="70" y="614" font-family="Arial, sans-serif" font-size="24" font-weight="400" text-anchor="start" fill="#282828">atualização [infecção]</text>
+<text x="70" y="645" font-family="Arial, sans-serif" font-size="24" font-weight="400" text-anchor="start" fill="#282828">/ infectar(t+1)</text>
+<rect x="307" y="678" width="266" height="73" rx="20" fill="#f6f6f6" stroke="#666" stroke-width="2"/>
+<text x="440.0" y="724.5" font-family="Arial, sans-serif" font-size="30" font-weight="700" text-anchor="middle" fill="#282828">Infectado (I)</text>
+<path d="M440,751 V851" fill="none" stroke="#303030" stroke-width="3" marker-end="url(#seta)"/>
+<text x="70" y="786" font-family="Arial, sans-serif" font-size="24" font-weight="400" text-anchor="start" fill="#282828">atualização [recuperação]</text>
+<text x="70" y="817" font-family="Arial, sans-serif" font-size="24" font-weight="400" text-anchor="start" fill="#282828">/ recuperar()</text>
+<rect x="260" y="851" width="360" height="73" rx="20" fill="#f6f6f6" stroke="#666" stroke-width="2"/>
+<text x="440.0" y="879.5" font-family="Arial, sans-serif" font-size="30" font-weight="700" text-anchor="middle" fill="#282828">Recuperado ou</text>
+<text x="440.0" y="916.5" font-family="Arial, sans-serif" font-size="30" font-weight="700" text-anchor="middle" fill="#282828">removido (R)</text>
+<circle cx="1258" cy="299" r="17" fill="#222"/>
+<path d="M1258,316 V508" fill="none" stroke="#303030" stroke-width="3" marker-end="url(#seta)"/>
+<rect x="1122" y="508" width="272" height="75" rx="20" fill="#f6f6f6" stroke="#666" stroke-width="2"/>
+<text x="1258.0" y="555.5" font-family="Arial, sans-serif" font-size="30" font-weight="700" text-anchor="middle" fill="#282828">Não isolado</text>
+<path d="M1258,583 V792" fill="none" stroke="#303030" stroke-width="3" marker-end="url(#seta)"/>
+<text x="965" y="674" font-family="Arial, sans-serif" font-size="24" font-weight="400" text-anchor="start" fill="#282828">início em t_int</text>
+<text x="965" y="705" font-family="Arial, sans-serif" font-size="24" font-weight="400" text-anchor="start" fill="#282828">[selecionado] / isolar()</text>
+<rect x="1151" y="792" width="214" height="75" rx="20" fill="#f6f6f6" stroke="#666" stroke-width="2"/>
+<text x="1258.0" y="839.5" font-family="Arial, sans-serif" font-size="30" font-weight="700" text-anchor="middle" fill="#282828">Isolado</text>
+<text x="1258" y="908" font-family="Arial, sans-serif" font-size="21" font-weight="400" text-anchor="middle" fill="#777">Alvos fixos, sem substituição</text>
+<rect x="40" y="979" width="1520" height="133" rx="20" fill="#f6f6f6" stroke="#ddd" stroke-width="2"/>
+<text x="70" y="1016" font-family="Arial, sans-serif" font-size="21" font-weight="700" text-anchor="start" fill="#666">CONVENÇÃO ADOTADA NESTA VERSÃO</text>
+<text x="70" y="1054" font-family="Arial, sans-serif" font-size="24" font-weight="400" text-anchor="start" fill="#282828">A recuperação preserva o isolamento, mantido até o encerramento da execução.</text>
+<text x="70" y="1091" font-family="Arial, sans-serif" font-size="24" font-weight="400" text-anchor="start" fill="#282828">Decisões epidemiológicas usam o estado em t e são efetivadas juntas em t+1.</text>
+</svg>

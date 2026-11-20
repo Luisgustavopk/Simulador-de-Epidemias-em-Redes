@@ -129,6 +129,13 @@
     position: relative;
     color: var(--color-text-muted);
   }
+  .workflow-sidebar li > a {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: inherit;
+    text-decoration: none;
+  }
   .workflow-sidebar li:not(:last-child)::after {
     content: '';
     position: absolute;

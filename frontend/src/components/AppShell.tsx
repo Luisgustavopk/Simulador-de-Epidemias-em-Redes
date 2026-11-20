@@ -4,18 +4,28 @@ import { Icon } from './Icon'
 import { ThemeToggle } from './ThemeToggle'
 
 const etapas = [
-  ['Rede de contatos', 'Carga e inspeção'],
-  ['Configuração', 'Modelo SIR e intervenção'],
-  ['Simulação', 'Execução do cenário'],
-  ['Resultados', 'Histórico e métricas'],
+  {
+    titulo: 'Rede de contatos',
+    descricao: 'Carga e inspeção',
+    destino: '#rede',
+  },
+  {
+    titulo: 'Configuração',
+    descricao: 'Modelo SIR e intervenção',
+    destino: '#configuracao',
+  },
+  { titulo: 'Simulação', descricao: 'Em desenvolvimento' },
+  { titulo: 'Resultados', descricao: 'Em desenvolvimento' },
 ]
 
 export function AppShell({
   children,
   conectado,
+  etapaAtiva = 0,
 }: {
   children: ReactNode
   conectado: boolean
+  etapaAtiva?: 0 | 1
 }) {
   const [recolhida, setRecolhida] = useState(false)
   return (
@@ -80,19 +90,29 @@ export function AppShell({
           </button>
           <nav id="workflow-nav" aria-label="Etapas do estudo">
             <ol>
-              {etapas.map(([titulo, descricao], indice) => (
+              {etapas.map(({ titulo, descricao, destino }, indice) => (
                 <li
                   key={titulo}
-                  className={indice === 0 ? 'current' : ''}
-                  aria-current={indice === 0 ? 'step' : undefined}
+                  className={indice === etapaAtiva ? 'current' : ''}
+                  aria-current={indice === etapaAtiva ? 'step' : undefined}
                 >
-                  <span className="step-number">{indice + 1}</span>
-                  <span className="step-copy">
-                    <strong>{titulo}</strong>
-                    <small>
-                      {indice === 0 ? descricao : 'Em desenvolvimento'}
-                    </small>
-                  </span>
+                  {destino ? (
+                    <a href={destino}>
+                      <span className="step-number">{indice + 1}</span>
+                      <span className="step-copy">
+                        <strong>{titulo}</strong>
+                        <small>{descricao}</small>
+                      </span>
+                    </a>
+                  ) : (
+                    <>
+                      <span className="step-number">{indice + 1}</span>
+                      <span className="step-copy">
+                        <strong>{titulo}</strong>
+                        <small>{descricao}</small>
+                      </span>
+                    </>
+                  )}
                 </li>
               ))}
             </ol>

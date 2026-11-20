@@ -112,7 +112,7 @@ export function NetworkPage() {
         </div>
         <div className="network-workbench">
           <NetworkGraph
-            c={carga.versaoVisual}
+            versaoVisual={carga.versaoVisual}
             rede={rede}
             previa={carga.previa}
             selecionado={selecionado}
@@ -242,8 +242,8 @@ export function NetworkPage() {
         </div>
         {rede?.confirmada && (
           <p className="next-step-note">
-            A rede está disponível no serviço de carga. A tela de configuração
-            será integrada na próxima etapa.
+            A rede está disponível para configurar.{' '}
+            <a href="#configuracao">Abrir configuração epidemiológica</a>.
           </p>
         )}
       </main>

@@ -1,0 +1,250 @@
+@startuml
+left to right direction
+skinparam monochrome true
+skinparam dpi 170
+skinparam packageBorderColor #AAAAAA
+skinparam packageBorderThickness 1
+skinparam packageBackgroundColor #FAFAFA
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 14
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+skinparam linetype ortho
+skinparam nodesep 58
+skinparam ranksep 105
+skinparam ArrowFontSize 13
+hide empty members
+hide circle
+title Classes de projeto - domínio da simulação SIR
+
+package "Domínio da rede" {
+  enum EstadoSIR <<enumeration>> {
+    SUSCETIVEL
+    INFECTADO
+    RECUPERADO
+  }
+
+  class Individuo {
+    - id : int
+    - estado : EstadoSIR
+    - isolamento : bool = False
+    - dia_inicio_infeccao : int | None
+    + Individuo(id : int)
+    + getId() : int
+    + getEstado() : EstadoSIR
+    + isIsolado() : bool
+    + getInicioInfeccao() : int | None
+    + infectar(passo : int) : None
+    + recuperar() : None
+    + isolar() : None
+  }
+
+  class Contato {
+    - extremos : frozenset[Individuo]
+    - peso : float
+    - ativa : bool = True
+    + Contato(a : Individuo, b : Individuo, peso : float, ativa : bool = True)
+    + getPeso() : float
+    + getExtremos() : frozenset[Individuo]
+    + outro_extremo(individuo : Individuo) : Individuo
+    + isAtiva() : bool
+  }
+
+  class RedeContatos {
+    - individuos : dict[int, Individuo]
+    - adjacencias : dict[int, dict[int, Contato]]
+    + RedeContatos()
+    + adicionar_individuo(individuo : Individuo) : None
+    + buscar_individuo(id : int) : Individuo | None
+    + getIndividuos() : tuple[Individuo, ...]
+    + numero_individuos() : int
+    + conectar(a : Individuo, b : Individuo, peso : float) : Contato
+    + contatos_de(individuo : Individuo) : frozenset[Contato]
+    + grau(individuo : Individuo) : int
+    + alterar_peso_contato(a : int, b : int, peso : float) : Contato
+    + desativar_contato(a : int, b : int) : Contato
+    + remover_contato(a : int, b : int) : Contato
+    + copiar() : RedeContatos
+  }
+
+  RedeContatos "1" -- "0..*" Individuo
+  RedeContatos "1" *-- "0..*" Contato
+  Contato "0..*" -- "2" Individuo
+  Individuo ..> EstadoSIR
+}
+
+package "Configuração" {
+  enum MecanismoIsolamento <<enumeration>> {
+    DESATIVACAO
+    REDUCAO
+    EXCLUSAO
+  }
+  class ConfiguracaoSimulacao {
+    - beta : float | None
+    - modoPeso : str = "intensidade"
+    - mecanismo : MecanismoIsolamento
+    - reducao : float | None
+    - sementeIniciais : int | None
+    - gamma : float
+    - idsInfectadosIniciais : set[int]
+    - fracaoIsolamento : float
+    - passoIntervencao : int
+    - limitePassos : int
+    - semente : int
+    + ConfiguracaoSimulacao(beta : float | None, gamma : float, ids : set[int],\nfracao : float, inicio : int, limite : int, semente : int,\nmodoPeso : str = "intensidade",\nmecanismo : MecanismoIsolamento = DESATIVACAO, reducao : float | None = None)
+    + getBeta() : float | None
+    + getModoPeso() : str
+    + getMecanismo() : MecanismoIsolamento
+    + getReducao() : float | None
+    + getSementeIniciais() : int | None
+    + sortearInfectadosIniciais(rede : RedeContatos, quantidade : int,\ngerador : GeradorAleatorio) : None
+    + getGamma() : float
+    + getIdsInfectadosIniciais() : set[int]
+    + getFracaoIsolamento() : float
+    + getPassoIntervencao() : int
+    + getLimitePassos() : int
+    + getSemente() : int
+    + validar(rede : RedeContatos) : list[str]
+    + quantidadeIsolados(populacaoInicial : int) : int
+    + deveIniciarIsolamento(passoAtual : int) : bool
+  }
+  ConfiguracaoSimulacao ..> MecanismoIsolamento
+}
+
+package "Execução" {
+  class Simulacao {
+    - passoAtual : int = 0
+    - inicializada : bool = False
+    - finalizada : bool = False
+    - origemRede : dict[str, str]
+    - intervencaoAplicada : bool = False
+    + Simulacao(rede : RedeContatos, configuracao : ConfiguracaoSimulacao,\nestrategia : EstrategiaIsolamento | None,\norigemRede : dict[str, str])
+    + inicializar() : list[str]
+    + executar() : ResultadoSimulacao
+    + executarPasso() : RegistroPasso
+    + getPassoAtual() : int
+    + isFinalizada() : bool
+    + getResultado() : ResultadoSimulacao | None
+    - aplicarIntervencao() : None
+    - prepararInstante() : RegistroPasso
+    - prepararManifesto() : dict[str, str]
+  }
+
+  class MotorSIR {
+    - sorteiosEpidemia : GeradorAleatorio
+    + MotorSIR(gerador : GeradorAleatorio)
+    + avancar(rede : RedeContatos, configuracao : ConfiguracaoSimulacao,\npassoAtual : int) : None
+  }
+
+  class GeradorAleatorio {
+    - sementeBase : int
+    - fluxo : str
+    - estadoInterno : object
+    + GeradorAleatorio(sementeBase : int, fluxo : str)
+    + getSementeBase() : int
+    + getFluxo() : str
+    + uniforme() : float
+  }
+
+  Simulacao "1" -- "0..1" MotorSIR
+  MotorSIR "0..1" -- "1" GeradorAleatorio
+}
+
+package "Seleção para isolamento" {
+  abstract class EstrategiaIsolamento {
+    - nome : str
+    + EstrategiaIsolamento(nome : str)
+    + getNome() : str
+    {abstract} + validar(rede : RedeContatos, configuracao : ConfiguracaoSimulacao) : list[str]
+    {abstract} + selecionar(rede : RedeContatos, k : int) : set[Individuo]
+  }
+
+  class IsolamentoAleatorio {
+    - sorteiosIsolamento : GeradorAleatorio
+    + IsolamentoAleatorio(gerador : GeradorAleatorio)
+    + validar(rede : RedeContatos, configuracao : ConfiguracaoSimulacao) : list[str]
+    + selecionar(rede : RedeContatos, k : int) : set[Individuo]
+  }
+
+  class IsolamentoPorGrau {
+    - redePreparada : RedeContatos
+    - grausOriginais : dict[int, int]
+    + IsolamentoPorGrau(rede : RedeContatos)
+    + validar(rede : RedeContatos, configuracao : ConfiguracaoSimulacao) : list[str]
+    + selecionar(rede : RedeContatos, k : int) : set[Individuo]
+  }
+
+  EstrategiaIsolamento <|-- IsolamentoAleatorio
+  EstrategiaIsolamento <|-- IsolamentoPorGrau
+}
+
+package "Resultados" {
+  enum MotivoTermino <<enumeration>> {
+    EXTINCAO
+    LIMITE_PASSOS
+  }
+
+  class ResultadoSimulacao {
+    - populacaoInicial : int
+    - motivoTermino : MotivoTermino | None
+    - metricas : MetricasEpidemia | None
+    - manifesto : dict[str, str]
+    + ResultadoSimulacao(populacaoInicial : int, registroInicial : RegistroPasso,\nmanifesto : dict[str, str])
+    + getPopulacaoInicial() : int
+    + getRegistros() : list[RegistroPasso]
+    + getManifesto() : dict[str, str]
+    + getMotivoTermino() : MotivoTermino | None
+    + getMetricas() : MetricasEpidemia | None
+    + isConcluido() : bool
+    + registrar(registro : RegistroPasso) : None
+    + concluir(motivo : MotivoTermino) : None
+    + calcularMetricas() : MetricasEpidemia
+  }
+
+  class RegistroPasso {
+    - passo : int
+    - suscetiveis : int
+    - infectados : int
+    - recuperados : int
+    - isolados : int
+    + RegistroPasso(passo : int, s : int, i : int, r : int, q : int)
+    + getPasso() : int
+    + getSuscetiveis() : int
+    + getInfectados() : int
+    + getRecuperados() : int
+    + getIsolados() : int
+  }
+
+  class MetricasEpidemia {
+    - populacaoInicial : int
+    - picoInfectados : int
+    - passoPico : int
+    - fracaoAcumulada : float
+    - duracaoExtincao : int | None
+    - horizonteObservado : int
+    - censurada : bool
+    + MetricasEpidemia(populacaoInicial : int, registros : list[RegistroPasso],\nmotivo : MotivoTermino)
+    + getPopulacaoInicial() : int
+    + getPicoInfectados() : int
+    + getPassoPico() : int
+    + getFracaoAcumulada() : float
+    + getDuracaoExtincao() : int | None
+    + getHorizonteObservado() : int
+    + isCensurada() : bool
+    + picoProporcional() : float
+  }
+
+  ResultadoSimulacao "1" *-- "1..*" RegistroPasso
+  ResultadoSimulacao "1" -down- "0..1" MetricasEpidemia
+  ResultadoSimulacao ..> MotivoTermino
+}
+
+Simulacao "0..1" -down- "1" RedeContatos
+ConfiguracaoSimulacao "1" -left- "0..*" Simulacao
+Simulacao "0..1" -down- "0..1" EstrategiaIsolamento
+Simulacao "0..1" -down- "0..1" ResultadoSimulacao
+GeradorAleatorio "1" -down- "0..1" IsolamentoAleatorio
+
+@enduml

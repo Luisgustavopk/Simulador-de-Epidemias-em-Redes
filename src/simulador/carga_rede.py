@@ -16,6 +16,7 @@ import re
 from tempfile import TemporaryDirectory
 from threading import RLock
 from typing import NoReturn
+from uuid import uuid4
 
 from simulador.analise_estrutural import componentes_conexas, resumir_rede
 from simulador.contato import Contato
@@ -182,8 +183,13 @@ class ServicoCargaRede:
         self._resumo: dict[str, object] | None = None
         self._ordenacao: tuple[int, ...] = ()
         self._revisao = 0
+        self._contexto_rede = uuid4().hex
         self._confirmada = False
         self._lock = RLock()
+
+    @property
+    def contexto_rede(self) -> str:
+        return self._contexto_rede
 
     def gerar(self, campos: Mapping[str, object]) -> dict[str, object]:
         """Gera ER/BA com parâmetros de formulário, preservando a origem e a semente.

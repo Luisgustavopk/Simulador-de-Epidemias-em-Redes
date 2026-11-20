@@ -18,7 +18,7 @@ export class ErroApi extends Error {
   }
 }
 
-async function solicitar<T>(
+export async function solicitar<T>(
   caminho: string,
   opcoes: RequestInit = {},
 ): Promise<T> {

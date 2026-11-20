@@ -1,0 +1,41 @@
+@startuml
+hide empty description
+skinparam monochrome true
+skinparam dpi 170
+skinparam shadowing false
+skinparam linetype ortho
+skinparam nodesep 80
+skinparam ranksep 90
+skinparam ArrowFontSize 13
+skinparam defaultFontName Arial
+skinparam backgroundColor white
+skinparam stateBackgroundColor #F1F1F1
+skinparam stateBorderColor #555555
+header SIMULADOR DE EPIDEMIAS EM REDES - UML
+state "Indivíduo" as Individuo {
+  state "Condição epidemiológica" as Epidemiologia {
+    state Inicio <<choice>>
+    state "Suscetível (S)" as S
+    state "Infectado (I)" as I
+    state "Recuperado ou\nremovido (R)" as R
+    [*] --> Inicio
+    Inicio --> S : [demais]
+    Inicio --> I : [infectado inicial]\n/ infectar(0)
+    S --> I : atualização [infecção]\n/ infectar(t+1)
+    I --> R : atualização [recuperação]\n/ recuperar()
+  }
+  ||
+  state "Condição de isolamento" as CondicaoIsolamento {
+    state "Não isolado" as Livre
+    state "Isolado" as Isolado
+    [*] --> Livre
+    Livre --> Isolado : início em t_int\n[selecionado] / isolar()
+  }
+}
+note bottom of Individuo
+  CONVENÇÃO ADOTADA NESTA VERSÃO
+  A recuperação preserva o isolamento até o encerramento da execução.
+  Decisões epidemiológicas usam o estado em t e são efetivadas juntas em t+1.
+  Alvos fixos, sem substituição; isolamento independente do estado SIR.
+end note
+@enduml

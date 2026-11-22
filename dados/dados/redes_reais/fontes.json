@@ -1,0 +1,49 @@
+{
+  "consulta_em": "2026-11-21",
+  "escopo": "Base real principal escolhida; demais condições da bateria epidemiológica ainda não definidas.",
+  "base_real_principal": "escola_suica_2024",
+  "decisao": {
+    "data": "2026-11-21",
+    "autorizacao": "O usuário delegou a escolha da melhor base para o projeto.",
+    "criterio": "Contatos presenciais observados, coleta de 2024, publicação de 2025 e compatibilidade já verificada com o simulador.",
+    "pendencias": "Janela e ponderação da campanha, redes de controle, parâmetros epidemiológicos, sementes, intervenções, repetições e ambiente."
+  },
+  "bases": {
+    "escola_suica_2024": {
+      "titulo": "Contatos presenciais em uma escola secundária de Berna",
+      "finalidade": "Base real principal escolhida para simulações sobre contatos presenciais observados.",
+      "situacao": "selecionada_como_base_real_principal",
+      "pais_coleta": "Suíça",
+      "idioma_documentacao_original": "en",
+      "idioma_documentacao_local": "pt-BR",
+      "coleta": {
+        "inicio": "2024-01-22",
+        "fim": "2024-03-08"
+      },
+      "publicacao_ano": 2025,
+      "pagina": "https://osf.io/naut4/",
+      "artigo": "https://doi.org/10.1038/s41467-025-66719-3",
+      "autoria": "Nicolas Banholzer e colaboradores",
+      "codigo_referencia": "https://osf.io/download/jpaf4/",
+      "versao_fonte": 1,
+      "licenca": "O nó OSF consultado não declara licença específica (node_license=null). O artigo é CC BY 4.0; isso não foi atribuído automaticamente aos CSVs.",
+      "criterio_arquivo": "contact-duration-acc-based-att-65.csv, usado pelo código contact-data.rmd dos autores: filtro de acelerômetro e limiar de atenuação -65 dBm.",
+      "numero_individuos_esperado": 67,
+      "arquivos": [
+        {
+          "nome": "contact-duration-acc-based-att-65.csv",
+          "url": "https://osf.io/download/vygsf/",
+          "metadados": "https://api.osf.io/v2/files/69036af8c7222416ade04907/",
+          "sha256": "5cd405e4cff6620a622463c122c7625fc3bf100d22452d6c7e8905cd296d2950"
+        }
+      ],
+      "limitacoes": [
+        "Coleta suíça; não representa a população brasileira.",
+        "Projeção estática por união de contatos observados: a ordem e o calendário dos contatos não são reproduzidos pelo motor atual.",
+        "Ausência de medição não é tratada como duração zero e não recebe imputação.",
+        "Peso unitário é uma escolha de representação binária, sem calibração de probabilidade de infecção.",
+        "A base de proximidade não reproduz a análise de transmissão, ventilação ou resultados clínicos do artigo."
+      ]
+    }
+  }
+}

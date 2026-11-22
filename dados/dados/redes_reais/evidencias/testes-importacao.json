@@ -1,0 +1,8 @@
+{
+  "data": "2026-11-21",
+  "comando": "PYTHONPATH=src .venv/bin/python -m pytest tests/test_importacao.py tests/test_carga_rede.py -q",
+  "exit_code": 0,
+  "testes_aprovados": 134,
+  "segundos_reportados_pytest": 0.44,
+  "escopo": "Testes existentes do importador e serviço de carga; não houve navegação no navegador nem execução de epidemias."
+}

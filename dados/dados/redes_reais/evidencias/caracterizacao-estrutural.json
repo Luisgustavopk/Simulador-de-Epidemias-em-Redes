@@ -1,0 +1,61 @@
+{
+  "conferido_em_utc": "2026-11-21T23:01:26.954699+00:00",
+  "base": "escola_suica_2024",
+  "comando_calculo": "PYTHONPATH=src python3 scripts/caracterizar_rede_real.py --graficos",
+  "codigo_saida": 0,
+  "indicadores_independentes": {
+    "numero_individuos": 67,
+    "numero_contatos": 1325,
+    "grau_medio": 39.55223880597015,
+    "grau_minimo": 18,
+    "grau_maximo": 54,
+    "densidade": 0.5992763455450023,
+    "numero_componentes": 1,
+    "maior_componente": 67,
+    "individuos_sem_contatos": 0,
+    "soma_graus": 2650
+  },
+  "metodo_independente": "Leitura direta dos CSVs, contagem dos extremos com Counter e componentes por união de conjuntos; sem importar os algoritmos do simulador.",
+  "verificacoes": {
+    "sem_lacos_ou_duplicatas": true,
+    "graus_por_id_conferidos": true,
+    "distribuicao_inclui_0_a_n_menos_1": true,
+    "frequencias_e_fracoes_conferidas": true,
+    "componentes_e_membros_conferidos": true,
+    "resumo_csv_conferido": true,
+    "soma_graus_igual_2m": true,
+    "entradas_preservadas": true,
+    "reproducao_csv_pdf_svg_identica": true,
+    "calculo_sem_dependencia_grafica": true,
+    "caso_sintetico_com_tres_componentes_e_grau_zero": true,
+    "entrada_com_hash_alterado_rejeitada": true
+  },
+  "graficos_inspecionados_visualmente": true,
+  "sha256_caracterizacao_json": "25bb37bd6d1a14e830fa1c2d6c6564c12e9f8c9da5b7b6b11529ede0bd85052b",
+  "sha256_entradas": {
+    "individuos.csv": "4f10518df73dbc91b80a0cdc918cc656733e2e7facca2c0ed8e336103f869d1a",
+    "mapa_ids.csv": "5edcecab590a1d59c4f44307ec21751a66a0000ea93df1a370828ea6909b2cb8",
+    "contatos.csv": "039c17357fab1b5f5101d13837a5d8c0e2256fc40bc3e6fd05d84e2fded37188",
+    "duracoes_observadas.csv": "1753703b00a5431271a446c25daa4772c147191e57054fdb829b4db285fe9829",
+    "manifesto.json": "8c9e27d53f450fba10cbe5e307bf68facd3b548bf5a01eb9bfe690d578a3f941"
+  },
+  "sha256_saidas": {
+    "resumo.csv": "fbdca8f378f15cf036ef62f922f3326f4de9f04488e0ca880e6d535dfd5a0999",
+    "graus.csv": "4485817c77f5e09c5d44449dd45f85da80527f1c735528a198e2a1c8fabcca35",
+    "distribuicao_graus.csv": "e59be603a488346a213fbcabe59bbc7c25f6a495369505718541efb1c43aa46d",
+    "componentes.csv": "c0bbf0d27f64cbc3d5ac1a173d223336a40a19cbfd7c7993b31b6c99f9de7a26",
+    "distribuicao_graus.pdf": "57d0d34ab53debf2c9175e61ea5317e6e14558c9257da82aceb96e9f7a28a781",
+    "distribuicao_graus.svg": "193da870fef5eeeb810b487c5133248809e8506e15a3dfa4b8c2751ba873434e"
+  },
+  "pytest": {
+    "comando": "PYTHONPATH=src .venv/bin/python -m pytest tests/test_analise_estrutural.py -q",
+    "codigo_saida": 0,
+    "resumo": "53 passed in 0.15s",
+    "log": "testes-analise-estrutural.log"
+  },
+  "epidemias_executadas": false,
+  "inspecao_visual": {
+    "arquivo": "escola_suica_2024/caracterizacao/distribuicao_graus.pdf",
+    "metodo": "PDF renderizado em PNG e conferido: títulos, eixos, frequências, média e notas sem recortes. SVG produzido a partir do mesmo objeto gráfico."
+  }
+}

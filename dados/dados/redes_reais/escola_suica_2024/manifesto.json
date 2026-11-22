@@ -1,0 +1,90 @@
+{
+  "base": "escola_suica_2024",
+  "preparado_em_utc": "2026-11-21T22:50:22.531396+00:00",
+  "python": "3.13.3",
+  "fonte": {
+    "titulo": "Contatos presenciais em uma escola secundária de Berna",
+    "finalidade": "Base real principal escolhida para simulações sobre contatos presenciais observados.",
+    "situacao": "selecionada_como_base_real_principal",
+    "pais_coleta": "Suíça",
+    "idioma_documentacao_original": "en",
+    "idioma_documentacao_local": "pt-BR",
+    "coleta": {
+      "inicio": "2024-01-22",
+      "fim": "2024-03-08"
+    },
+    "publicacao_ano": 2025,
+    "pagina": "https://osf.io/naut4/",
+    "artigo": "https://doi.org/10.1038/s41467-025-66719-3",
+    "autoria": "Nicolas Banholzer e colaboradores",
+    "codigo_referencia": "https://osf.io/download/jpaf4/",
+    "versao_fonte": 1,
+    "licenca": "O nó OSF consultado não declara licença específica (node_license=null). O artigo é CC BY 4.0; isso não foi atribuído automaticamente aos CSVs.",
+    "criterio_arquivo": "contact-duration-acc-based-att-65.csv, usado pelo código contact-data.rmd dos autores: filtro de acelerômetro e limiar de atenuação -65 dBm.",
+    "numero_individuos_esperado": 67,
+    "arquivos": [
+      {
+        "nome": "contact-duration-acc-based-att-65.csv",
+        "url": "https://osf.io/download/vygsf/",
+        "metadados": "https://api.osf.io/v2/files/69036af8c7222416ade04907/",
+        "sha256": "5cd405e4cff6620a622463c122c7625fc3bf100d22452d6c7e8905cd296d2950"
+      }
+    ],
+    "limitacoes": [
+      "Coleta suíça; não representa a população brasileira.",
+      "Projeção estática por união de contatos observados: a ordem e o calendário dos contatos não são reproduzidos pelo motor atual.",
+      "Ausência de medição não é tratada como duração zero e não recebe imputação.",
+      "Peso unitário é uma escolha de representação binária, sem calibração de probabilidade de infecção.",
+      "A base de proximidade não reproduz a análise de transmissão, ventilação ou resultados clínicos do artigo."
+    ]
+  },
+  "arquivos_originais": [
+    {
+      "arquivo": "contact-duration-acc-based-att-65.csv",
+      "bytes": 6285870,
+      "sha256": "5cd405e4cff6620a622463c122c7625fc3bf100d22452d6c7e8905cd296d2950"
+    }
+  ],
+  "sha256_catalogo": "abefc8c9fe95bb557acf0c05f537638e164f91e3a291e5f6bad710fa361a9882",
+  "sha256_preparador": "e4d14a68404d460a0da98dc2f0a275b9d5547f2c26ae476952a101c5bed73bfa",
+  "preparacao": {
+    "linhas_lidas": 87932,
+    "duracao_ausente": 36392,
+    "fora_filtro_presenca_movimento": 13128,
+    "duracao_zero_valida": 31475,
+    "contatos_diarios_positivos": 6937,
+    "primeira_data": "2024-01-22",
+    "ultima_data": "2024-03-08",
+    "datas_na_fonte": 42,
+    "pares_positivos_unicos": 1325,
+    "duracao_total_segundos": 1520080,
+    "tratamento": "União estática dos pares com duração > 0, ambos presentes e com movimento > 0; sem imputação. Peso 1."
+  },
+  "verificacao": {
+    "importador": "aprovado",
+    "servico_carga": "aprovado",
+    "confirmada": true,
+    "numero_individuos": 67,
+    "numero_contatos": 1325,
+    "todos_suscetiveis_e_nao_isolados": true
+  },
+  "arquivos_preparados": {
+    "contatos.csv": {
+      "bytes": 10276,
+      "sha256": "039c17357fab1b5f5101d13837a5d8c0e2256fc40bc3e6fd05d84e2fded37188"
+    },
+    "duracoes_observadas.csv": {
+      "bytes": 15468,
+      "sha256": "1753703b00a5431271a446c25daa4772c147191e57054fdb829b4db285fe9829"
+    },
+    "individuos.csv": {
+      "bytes": 194,
+      "sha256": "4f10518df73dbc91b80a0cdc918cc656733e2e7facca2c0ed8e336103f869d1a"
+    },
+    "mapa_ids.csv": {
+      "bytes": 467,
+      "sha256": "5edcecab590a1d59c4f44307ec21751a66a0000ea93df1a370828ea6909b2cb8"
+    }
+  },
+  "epidemias_executadas": false
+}

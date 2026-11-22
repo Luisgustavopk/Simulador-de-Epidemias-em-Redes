@@ -1,0 +1,19 @@
+{
+  "conferido_em_utc": "2026-11-21T23:17:40.775816+00:00",
+  "protocolo": "etapa3-base-v1",
+  "sha256_protocolo": "10cec077ac22299e6c643bc7a206858d923e98ee2aaef25dbcc6e693b27f327b",
+  "resultado": "aprovado",
+  "lotes": 33,
+  "configuracoes_repeticao_validadas": 3300,
+  "trajetorias_planejadas": 9900,
+  "chaves_unicas_incluindo_sementes": 8900,
+  "validacao": "Configuração e preparo de IDs com classes nativas; sem chamar Simulacao, motor ou executar_comparacao.",
+  "representacao_real_preservada": true,
+  "er_esperanca_arestas": 1325,
+  "ba_m_otimo_arestas": {
+    "m": 24,
+    "arestas": 1308
+  },
+  "epidemias_executadas": false,
+  "redes_sinteticas_geradas": false
+}

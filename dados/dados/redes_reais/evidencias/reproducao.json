@@ -1,0 +1,9 @@
+{
+  "comando": "PYTHONPATH=src python3 scripts/preparar_redes_reais.py --pasta <pasta-vazia-com-catalogo> --baixar",
+  "exit_code": 0,
+  "base": "escola_suica_2024",
+  "csvs_identicos_por_sha256": true,
+  "somente_base_selecionada": true,
+  "stdout": "{\"base\": \"escola_suica_2024\", \"importador\": \"aprovado\", \"servico_carga\": \"aprovado\", \"confirmada\": true, \"numero_individuos\": 67, \"numero_contatos\": 1325, \"todos_suscetiveis_e_nao_isolados\": true}\n",
+  "stderr": ""
+}

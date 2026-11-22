@@ -1,0 +1,12 @@
+{
+  "escola_suica_2024": {
+    "pares_correspondem_a_fonte": true,
+    "populacao_integral": true,
+    "sem_lacos_ou_duplicatas": true,
+    "pesos_unitarios": true,
+    "numero_individuos": 67,
+    "numero_contatos": 1325,
+    "duracao_total_segundos": 1520080,
+    "contatos_diarios_positivos": 6937
+  }
+}

@@ -536,7 +536,7 @@ test(
         await avaliar(
           "sessionStorage.removeItem('observatorio-resultado-execucao');window.location.hash='#resultados'",
         )
-        await ate("document.querySelectorAll('.comparison-mean').length===3")
+        await ate("document.querySelectorAll('[data-curva]').length===3")
         assert.equal(
           await avaliar(
             "[...document.querySelectorAll('.export-actions button')].find(botao=>botao.textContent.trim()==='JSON').disabled",
@@ -552,25 +552,78 @@ test(
       },
     )
     await contexto.test(
-      'faixas são visíveis e acompanham os controles das séries',
+      'indicador e faixas acompanham as séries e preservam os três cenários',
       async () => {
+        assert.equal(
+          await avaliar("document.querySelectorAll('[data-curva]').length"),
+          3,
+        )
+        assert.equal(
+          await avaliar(
+            "document.querySelectorAll('path[fill-opacity]').length",
+          ),
+          0,
+        )
+        await avaliar("document.querySelector('.chart-check input').click()")
+        await ate("document.querySelectorAll('path[fill-opacity]').length===3")
         assert.notEqual(
           await avaliar(
-            "getComputedStyle(document.querySelector('.band-infectados')).fill",
+            "getComputedStyle(document.querySelector('path[fill-opacity]')).fill",
           ),
           'none',
         )
+        await avaliar(
+          `(()=>{const seletor=document.querySelector('select[aria-label="Indicador"]');seletor.value='todos';seletor.dispatchEvent(new Event('change',{bubbles:true}))})()`,
+        )
+        await ate("document.querySelectorAll('[data-curva]').length===12")
         assert.equal(
-          await avaliar("document.querySelectorAll('.comparison-band').length"),
+          await avaliar(
+            "document.querySelectorAll('path[fill-opacity]').length",
+          ),
           12,
         )
         await avaliar(
-          "[...document.querySelectorAll('.trajectory-legend button')].find(botao=>botao.textContent.includes('Infectados')).click()",
+          `(()=>{const seletor=document.querySelector('select[aria-label="Indicador"]');seletor.value='suscetiveis';seletor.dispatchEvent(new Event('change',{bubbles:true}))})()`,
         )
-        await ate("!document.querySelector('.band-infectados')")
+        await ate('!document.querySelector(\'[data-curva$="-infectados"]\')')
         await avaliar(
-          "[...document.querySelectorAll('.trajectory-legend button')].find(botao=>botao.textContent.includes('Infectados')).click()",
+          `(()=>{const seletor=document.querySelector('select[aria-label="Indicador"]');seletor.value='infectados';seletor.dispatchEvent(new Event('change',{bubbles:true}))})()`,
         )
+        await ate(
+          'document.querySelectorAll(\'[data-curva$="-infectados"]\').length===3',
+        )
+      },
+    )
+    await contexto.test(
+      'traçado discreto, seleção de repetição e dados acessíveis',
+      async () => {
+        assert.equal(
+          await avaliar(
+            "[...document.querySelectorAll('[data-curva]')].every(linha=>!linha.getAttribute('d').includes('L '))",
+          ),
+          true,
+        )
+        await avaliar("document.querySelector('.chart-data summary').click()")
+        await ate("document.querySelectorAll('.chart-data tbody tr').length>0")
+        assert.ok(
+          await avaliar(
+            "document.querySelectorAll('.chart-data tbody tr').length<=25",
+          ),
+        )
+        await avaliar(
+          `(()=>{const seletor=document.querySelector('select[aria-label="Visualização"]');seletor.value='repeticao';seletor.dispatchEvent(new Event('change',{bubbles:true}))})()`,
+        )
+        await ate(
+          '!!document.querySelector(\'select[aria-label="Repetição"]\')',
+        )
+        assert.equal(
+          await avaliar("document.querySelectorAll('[data-curva]').length"),
+          3,
+        )
+        await avaliar(
+          `(()=>{const seletor=document.querySelector('select[aria-label="Visualização"]');seletor.value='medias';seletor.dispatchEvent(new Event('change',{bubbles:true}))})()`,
+        )
+        await ate("!!document.querySelector('.chart-check')")
       },
     )
     await contexto.test(
@@ -587,6 +640,13 @@ test(
         )
         assert.match(svg, /stroke="rgb\(/)
         assert.match(svg, /<metadata>/)
+        assert.ok(
+          await avaliar(
+            "(async()=>{const imagem=await createImageBitmap(window.arquivos.find(arquivo=>arquivo.nome.endsWith('.png')).blob);return imagem.width>=2400})()",
+          ),
+        )
+        assert.match(svg, /Passos \(dias do modelo\)/)
+
         assert.match(
           await avaliar(
             "window.arquivos.find(arquivo=>arquivo.nome.endsWith('metricas-agregadas.csv')).blob.text()",

@@ -1,0 +1,20 @@
+{
+  "concluida": true,
+  "data_utc": "2026-11-22T21:23:15.152395+00:00",
+  "lotes_auditados": 12,
+  "trajetorias_auditadas": 3600,
+  "registros_auditados": 226345,
+  "reproducoes": [
+    "B_exclusao",
+    "B_reducao",
+    "C_f10_t10",
+    "C_f30_t0",
+    "D_beta0.0025",
+    "D_beta0.01"
+  ],
+  "trajetorias_extras_verificacao": 1800,
+  "referencias_comuns_identicas": true,
+  "exclusao_desativacao_identicas": true,
+  "restauracao_zip_e_exportacoes_identicas": true,
+  "sha256_zip": "f01d9f393f438e0f6c870a7315fc1047d5e4c6ac726455c9efd44b4dcf101ce2"
+}

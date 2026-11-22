@@ -28,6 +28,14 @@ dist/
 /dados/dados/experimentos/topologia-v1/execucao.log
 /dados/dados/experimentos/topologia-v1/lotes/
 
+# Exportações reproduzíveis dos blocos B/C/D; ZIP, hashes e resumos são preservados.
+/dados/dados/experimentos/intervencoes-v1/lotes/
+/dados/dados/experimentos/intervencoes-v1/metricas.csv
+/dados/dados/experimentos/intervencoes-v1/diferencas_pareadas.csv
+/dados/dados/experimentos/intervencoes-v1/curvas_medias.csv
+/dados/dados/experimentos/intervencoes-v1/historicos.csv.gz
+/dados/dados/experimentos/intervencoes-v1/execucao.log
+
 # Os controles são reproduzidos pelas sementes e conferidos pelo inventário preservado.
 /dados/dados/redes_sinteticas/controles-etapa3-v1/er_*/
 /dados/dados/redes_sinteticas/controles-etapa3-v1/ba_*/

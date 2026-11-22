@@ -1,0 +1,61 @@
+{
+  "data": "2026-11-22",
+  "protocolo": "etapa3-base-v1",
+  "protocolo_original_preservado": true,
+  "controles": {
+    "gerados": 20,
+    "caracterizados": 20,
+    "semente_er": [
+      1000,
+      1001,
+      1002,
+      1003,
+      1004,
+      1005,
+      1006,
+      1007,
+      1008,
+      1009
+    ],
+    "semente_ba": [
+      2000,
+      2001,
+      2002,
+      2003,
+      2004,
+      2005,
+      2006,
+      2007,
+      2008,
+      2009
+    ]
+  },
+  "blocos": {
+    "A_topologias": {
+      "situacao": "concluido",
+      "lotes": 21,
+      "trajetorias": 6300,
+      "registros": 408914,
+      "censuradas": 1,
+      "resultado": "topologia-v1/README.md"
+    },
+    "B_mecanismos": {
+      "situacao": "pendente",
+      "lotes": 2,
+      "trajetorias": 600
+    },
+    "C_orcamento_inicio": {
+      "situacao": "pendente",
+      "lotes": 8,
+      "trajetorias": 2400
+    },
+    "D_sensibilidade_beta": {
+      "situacao": "pendente",
+      "lotes": 2,
+      "trajetorias": 600
+    }
+  },
+  "benchmark": "pendente",
+  "autorizacao": "Pedido explícito do usuário para gerar/caracterizar controles e executar comparações sobre topologia. Não registra autoria ou aceite individual dos integrantes.",
+  "evidencia": "topologia-v1/verificacao.json"
+}

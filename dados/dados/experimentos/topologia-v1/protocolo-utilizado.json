@@ -1,0 +1,741 @@
+{
+  "id": "etapa3-base-v1",
+  "versao": 1,
+  "data_definicao": "2026-11-21",
+  "situacao": "configuracao_base_definida_por_delegacao_do_usuario",
+  "autoridade": "Usuário solicitou fechar a metodologia e respondeu: Ainda não; defina uma configuração-base.",
+  "aprovacao_individual_integrante_b": "nao_registrada; aviso de passagem disponível em docs/implementacao/Aviso-IntegranteB-Etapa3.md",
+  "campanha_executada": false,
+  "redes_sinteticas_geradas": false,
+  "objetivo": "Comparar topologias e estratégias no SIR discreto, sem calibração epidemiológica ou reprodução dos resultados clínicos da fonte.",
+  "representacao_real": {
+    "base": "escola_suica_2024",
+    "janela_inclusiva": [
+      "2024-01-22",
+      "2024-03-08"
+    ],
+    "regra": "União de pares positivos com ambos presentes e sensores em movimento, sem imputação; mantém todos os 67 indivíduos.",
+    "modo": "grafo simples, não direcionado e estático",
+    "peso": 1.0,
+    "duracao_no_peso": false,
+    "unidade_passo": "passo abstrato; não corresponde a um dia de coleta",
+    "sha256_manifesto": "f062c31d82a0107edb38ab16fc602b09f9b46cef3e4adcac20fe35fa196a29a7",
+    "sha256_csv": {
+      "contatos.csv": "039c17357fab1b5f5101d13837a5d8c0e2256fc40bc3e6fd05d84e2fded37188",
+      "duracoes_observadas.csv": "1753703b00a5431271a446c25daa4772c147191e57054fdb829b4db285fe9829",
+      "individuos.csv": "4f10518df73dbc91b80a0cdc918cc656733e2e7facca2c0ed8e336103f869d1a",
+      "mapa_ids.csv": "5edcecab590a1d59c4f44307ec21751a66a0000ea93df1a370828ea6909b2cb8"
+    }
+  },
+  "controles": {
+    "criterio": "Mesma população e densidade aproximada; preservar e relatar diferenças de arestas e graus de cada realização.",
+    "er_probabilidade": 0.5992763455450023,
+    "er_contatos_esperados": 1325,
+    "ba_m": 24,
+    "ba_nucleo_inicial": 25,
+    "ba_formula_arestas": "m*N - m*(m+1)/2",
+    "ba_contatos": 1308,
+    "ba_diferenca_relativa_arestas": -0.012830188679245283,
+    "nota_ba": "N pequeno e m alto geram um controle denso; não presumir lei de potência ou heterogeneidade elevada.",
+    "realizacoes_por_modelo": 10
+  },
+  "redes_planejadas": [
+    {
+      "id": "escola_suica_2024",
+      "tipo": "observada",
+      "pasta": "dados/dados/redes_reais/escola_suica_2024"
+    },
+    {
+      "id": "er_1000",
+      "tipo": "sintetica",
+      "modelo": "erdos_renyi",
+      "semente": 1000,
+      "versao_algoritmo": 1,
+      "parametros": {
+        "numero_individuos": 67,
+        "probabilidade_contato": 0.5992763455450023,
+        "peso": 1.0
+      }
+    },
+    {
+      "id": "er_1001",
+      "tipo": "sintetica",
+      "modelo": "erdos_renyi",
+      "semente": 1001,
+      "versao_algoritmo": 1,
+      "parametros": {
+        "numero_individuos": 67,
+        "probabilidade_contato": 0.5992763455450023,
+        "peso": 1.0
+      }
+    },
+    {
+      "id": "er_1002",
+      "tipo": "sintetica",
+      "modelo": "erdos_renyi",
+      "semente": 1002,
+      "versao_algoritmo": 1,
+      "parametros": {
+        "numero_individuos": 67,
+        "probabilidade_contato": 0.5992763455450023,
+        "peso": 1.0
+      }
+    },
+    {
+      "id": "er_1003",
+      "tipo": "sintetica",
+      "modelo": "erdos_renyi",
+      "semente": 1003,
+      "versao_algoritmo": 1,
+      "parametros": {
+        "numero_individuos": 67,
+        "probabilidade_contato": 0.5992763455450023,
+        "peso": 1.0
+      }
+    },
+    {
+      "id": "er_1004",
+      "tipo": "sintetica",
+      "modelo": "erdos_renyi",
+      "semente": 1004,
+      "versao_algoritmo": 1,
+      "parametros": {
+        "numero_individuos": 67,
+        "probabilidade_contato": 0.5992763455450023,
+        "peso": 1.0
+      }
+    },
+    {
+      "id": "er_1005",
+      "tipo": "sintetica",
+      "modelo": "erdos_renyi",
+      "semente": 1005,
+      "versao_algoritmo": 1,
+      "parametros": {
+        "numero_individuos": 67,
+        "probabilidade_contato": 0.5992763455450023,
+        "peso": 1.0
+      }
+    },
+    {
+      "id": "er_1006",
+      "tipo": "sintetica",
+      "modelo": "erdos_renyi",
+      "semente": 1006,
+      "versao_algoritmo": 1,
+      "parametros": {
+        "numero_individuos": 67,
+        "probabilidade_contato": 0.5992763455450023,
+        "peso": 1.0
+      }
+    },
+    {
+      "id": "er_1007",
+      "tipo": "sintetica",
+      "modelo": "erdos_renyi",
+      "semente": 1007,
+      "versao_algoritmo": 1,
+      "parametros": {
+        "numero_individuos": 67,
+        "probabilidade_contato": 0.5992763455450023,
+        "peso": 1.0
+      }
+    },
+    {
+      "id": "er_1008",
+      "tipo": "sintetica",
+      "modelo": "erdos_renyi",
+      "semente": 1008,
+      "versao_algoritmo": 1,
+      "parametros": {
+        "numero_individuos": 67,
+        "probabilidade_contato": 0.5992763455450023,
+        "peso": 1.0
+      }
+    },
+    {
+      "id": "er_1009",
+      "tipo": "sintetica",
+      "modelo": "erdos_renyi",
+      "semente": 1009,
+      "versao_algoritmo": 1,
+      "parametros": {
+        "numero_individuos": 67,
+        "probabilidade_contato": 0.5992763455450023,
+        "peso": 1.0
+      }
+    },
+    {
+      "id": "ba_2000",
+      "tipo": "sintetica",
+      "modelo": "barabasi_albert",
+      "semente": 2000,
+      "versao_algoritmo": 1,
+      "parametros": {
+        "numero_individuos": 67,
+        "contatos_por_novo_individuo": 24,
+        "peso": 1.0
+      }
+    },
+    {
+      "id": "ba_2001",
+      "tipo": "sintetica",
+      "modelo": "barabasi_albert",
+      "semente": 2001,
+      "versao_algoritmo": 1,
+      "parametros": {
+        "numero_individuos": 67,
+        "contatos_por_novo_individuo": 24,
+        "peso": 1.0
+      }
+    },
+    {
+      "id": "ba_2002",
+      "tipo": "sintetica",
+      "modelo": "barabasi_albert",
+      "semente": 2002,
+      "versao_algoritmo": 1,
+      "parametros": {
+        "numero_individuos": 67,
+        "contatos_por_novo_individuo": 24,
+        "peso": 1.0
+      }
+    },
+    {
+      "id": "ba_2003",
+      "tipo": "sintetica",
+      "modelo": "barabasi_albert",
+      "semente": 2003,
+      "versao_algoritmo": 1,
+      "parametros": {
+        "numero_individuos": 67,
+        "contatos_por_novo_individuo": 24,
+        "peso": 1.0
+      }
+    },
+    {
+      "id": "ba_2004",
+      "tipo": "sintetica",
+      "modelo": "barabasi_albert",
+      "semente": 2004,
+      "versao_algoritmo": 1,
+      "parametros": {
+        "numero_individuos": 67,
+        "contatos_por_novo_individuo": 24,
+        "peso": 1.0
+      }
+    },
+    {
+      "id": "ba_2005",
+      "tipo": "sintetica",
+      "modelo": "barabasi_albert",
+      "semente": 2005,
+      "versao_algoritmo": 1,
+      "parametros": {
+        "numero_individuos": 67,
+        "contatos_por_novo_individuo": 24,
+        "peso": 1.0
+      }
+    },
+    {
+      "id": "ba_2006",
+      "tipo": "sintetica",
+      "modelo": "barabasi_albert",
+      "semente": 2006,
+      "versao_algoritmo": 1,
+      "parametros": {
+        "numero_individuos": 67,
+        "contatos_por_novo_individuo": 24,
+        "peso": 1.0
+      }
+    },
+    {
+      "id": "ba_2007",
+      "tipo": "sintetica",
+      "modelo": "barabasi_albert",
+      "semente": 2007,
+      "versao_algoritmo": 1,
+      "parametros": {
+        "numero_individuos": 67,
+        "contatos_por_novo_individuo": 24,
+        "peso": 1.0
+      }
+    },
+    {
+      "id": "ba_2008",
+      "tipo": "sintetica",
+      "modelo": "barabasi_albert",
+      "semente": 2008,
+      "versao_algoritmo": 1,
+      "parametros": {
+        "numero_individuos": 67,
+        "contatos_por_novo_individuo": 24,
+        "peso": 1.0
+      }
+    },
+    {
+      "id": "ba_2009",
+      "tipo": "sintetica",
+      "modelo": "barabasi_albert",
+      "semente": 2009,
+      "versao_algoritmo": 1,
+      "parametros": {
+        "numero_individuos": 67,
+        "contatos_por_novo_individuo": 24,
+        "peso": 1.0
+      }
+    }
+  ],
+  "configuracao_api_base": {
+    "modo_peso": "intensidade",
+    "beta": 0.005,
+    "gamma": 0.1,
+    "modo_iniciais": "sorteio",
+    "quantidade_infectados": 3,
+    "limite_passos": 200,
+    "semente_iniciais": "10000",
+    "semente_epidemia": "20000",
+    "semente_isolamento": "30000",
+    "intervencao": {
+      "estrategia": "grau",
+      "fracao": 0.2,
+      "inicio": 5,
+      "mecanismo": "desativacao",
+      "reducao": null
+    }
+  },
+  "campos_api_preenchidos_apos_importacao": [
+    "contexto_rede",
+    "revisao_rede"
+  ],
+  "repeticoes_por_lote": 100,
+  "cenarios": [
+    "sem_intervencao",
+    "aleatoria",
+    "grau"
+  ],
+  "derivacao_sementes": {
+    "regra": "base + indice com indice 0..99; índice exibido da repetição é 1..100.",
+    "iniciais": [
+      10000,
+      10099
+    ],
+    "epidemia": [
+      20000,
+      20099
+    ],
+    "isolamento": [
+      30000,
+      30099
+    ],
+    "pareamento": "Mesmas bases, população e IDs sorteados por repetição; preservar as configurações efetivas.",
+    "limite_pareamento": "Mesma semente não fixa o mesmo evento aleatório por indivíduo após divergência das trajetórias; IDs sintéticos não identificam estudantes reais."
+  },
+  "orcamentos_efetivos": {
+    "0.1": 6,
+    "0.2": 13,
+    "0.3": 20
+  },
+  "politica_intervencao": "Uma aplicação por cenário; grau estrutural original e desempate por ID; seleção pode incluir S/I/R. Sem substituição nem liberação. Se extinção/limite já ocorreu, não aplicar intervenção; conservar a execução na análise.",
+  "lotes_planejados": [
+    {
+      "id": "A_escola_suica_2024",
+      "bloco": "A_topologias",
+      "rede": "escola_suica_2024",
+      "beta": 0.005,
+      "fracao": 0.2,
+      "inicio": 5,
+      "mecanismo": "desativacao",
+      "reducao": null
+    },
+    {
+      "id": "A_er_1000",
+      "bloco": "A_topologias",
+      "rede": "er_1000",
+      "beta": 0.005,
+      "fracao": 0.2,
+      "inicio": 5,
+      "mecanismo": "desativacao",
+      "reducao": null
+    },
+    {
+      "id": "A_er_1001",
+      "bloco": "A_topologias",
+      "rede": "er_1001",
+      "beta": 0.005,
+      "fracao": 0.2,
+      "inicio": 5,
+      "mecanismo": "desativacao",
+      "reducao": null
+    },
+    {
+      "id": "A_er_1002",
+      "bloco": "A_topologias",
+      "rede": "er_1002",
+      "beta": 0.005,
+      "fracao": 0.2,
+      "inicio": 5,
+      "mecanismo": "desativacao",
+      "reducao": null
+    },
+    {
+      "id": "A_er_1003",
+      "bloco": "A_topologias",
+      "rede": "er_1003",
+      "beta": 0.005,
+      "fracao": 0.2,
+      "inicio": 5,
+      "mecanismo": "desativacao",
+      "reducao": null
+    },
+    {
+      "id": "A_er_1004",
+      "bloco": "A_topologias",
+      "rede": "er_1004",
+      "beta": 0.005,
+      "fracao": 0.2,
+      "inicio": 5,
+      "mecanismo": "desativacao",
+      "reducao": null
+    },
+    {
+      "id": "A_er_1005",
+      "bloco": "A_topologias",
+      "rede": "er_1005",
+      "beta": 0.005,
+      "fracao": 0.2,
+      "inicio": 5,
+      "mecanismo": "desativacao",
+      "reducao": null
+    },
+    {
+      "id": "A_er_1006",
+      "bloco": "A_topologias",
+      "rede": "er_1006",
+      "beta": 0.005,
+      "fracao": 0.2,
+      "inicio": 5,
+      "mecanismo": "desativacao",
+      "reducao": null
+    },
+    {
+      "id": "A_er_1007",
+      "bloco": "A_topologias",
+      "rede": "er_1007",
+      "beta": 0.005,
+      "fracao": 0.2,
+      "inicio": 5,
+      "mecanismo": "desativacao",
+      "reducao": null
+    },
+    {
+      "id": "A_er_1008",
+      "bloco": "A_topologias",
+      "rede": "er_1008",
+      "beta": 0.005,
+      "fracao": 0.2,
+      "inicio": 5,
+      "mecanismo": "desativacao",
+      "reducao": null
+    },
+    {
+      "id": "A_er_1009",
+      "bloco": "A_topologias",
+      "rede": "er_1009",
+      "beta": 0.005,
+      "fracao": 0.2,
+      "inicio": 5,
+      "mecanismo": "desativacao",
+      "reducao": null
+    },
+    {
+      "id": "A_ba_2000",
+      "bloco": "A_topologias",
+      "rede": "ba_2000",
+      "beta": 0.005,
+      "fracao": 0.2,
+      "inicio": 5,
+      "mecanismo": "desativacao",
+      "reducao": null
+    },
+    {
+      "id": "A_ba_2001",
+      "bloco": "A_topologias",
+      "rede": "ba_2001",
+      "beta": 0.005,
+      "fracao": 0.2,
+      "inicio": 5,
+      "mecanismo": "desativacao",
+      "reducao": null
+    },
+    {
+      "id": "A_ba_2002",
+      "bloco": "A_topologias",
+      "rede": "ba_2002",
+      "beta": 0.005,
+      "fracao": 0.2,
+      "inicio": 5,
+      "mecanismo": "desativacao",
+      "reducao": null
+    },
+    {
+      "id": "A_ba_2003",
+      "bloco": "A_topologias",
+      "rede": "ba_2003",
+      "beta": 0.005,
+      "fracao": 0.2,
+      "inicio": 5,
+      "mecanismo": "desativacao",
+      "reducao": null
+    },
+    {
+      "id": "A_ba_2004",
+      "bloco": "A_topologias",
+      "rede": "ba_2004",
+      "beta": 0.005,
+      "fracao": 0.2,
+      "inicio": 5,
+      "mecanismo": "desativacao",
+      "reducao": null
+    },
+    {
+      "id": "A_ba_2005",
+      "bloco": "A_topologias",
+      "rede": "ba_2005",
+      "beta": 0.005,
+      "fracao": 0.2,
+      "inicio": 5,
+      "mecanismo": "desativacao",
+      "reducao": null
+    },
+    {
+      "id": "A_ba_2006",
+      "bloco": "A_topologias",
+      "rede": "ba_2006",
+      "beta": 0.005,
+      "fracao": 0.2,
+      "inicio": 5,
+      "mecanismo": "desativacao",
+      "reducao": null
+    },
+    {
+      "id": "A_ba_2007",
+      "bloco": "A_topologias",
+      "rede": "ba_2007",
+      "beta": 0.005,
+      "fracao": 0.2,
+      "inicio": 5,
+      "mecanismo": "desativacao",
+      "reducao": null
+    },
+    {
+      "id": "A_ba_2008",
+      "bloco": "A_topologias",
+      "rede": "ba_2008",
+      "beta": 0.005,
+      "fracao": 0.2,
+      "inicio": 5,
+      "mecanismo": "desativacao",
+      "reducao": null
+    },
+    {
+      "id": "A_ba_2009",
+      "bloco": "A_topologias",
+      "rede": "ba_2009",
+      "beta": 0.005,
+      "fracao": 0.2,
+      "inicio": 5,
+      "mecanismo": "desativacao",
+      "reducao": null
+    },
+    {
+      "id": "B_reducao",
+      "bloco": "B_mecanismos",
+      "rede": "escola_suica_2024",
+      "beta": 0.005,
+      "fracao": 0.2,
+      "inicio": 5,
+      "mecanismo": "reducao",
+      "reducao": 0.5
+    },
+    {
+      "id": "B_exclusao",
+      "bloco": "B_mecanismos",
+      "rede": "escola_suica_2024",
+      "beta": 0.005,
+      "fracao": 0.2,
+      "inicio": 5,
+      "mecanismo": "exclusao",
+      "reducao": null
+    },
+    {
+      "id": "C_f10_t0",
+      "bloco": "C_orcamento_inicio",
+      "rede": "escola_suica_2024",
+      "beta": 0.005,
+      "fracao": 0.1,
+      "inicio": 0,
+      "mecanismo": "desativacao",
+      "reducao": null
+    },
+    {
+      "id": "C_f10_t5",
+      "bloco": "C_orcamento_inicio",
+      "rede": "escola_suica_2024",
+      "beta": 0.005,
+      "fracao": 0.1,
+      "inicio": 5,
+      "mecanismo": "desativacao",
+      "reducao": null
+    },
+    {
+      "id": "C_f10_t10",
+      "bloco": "C_orcamento_inicio",
+      "rede": "escola_suica_2024",
+      "beta": 0.005,
+      "fracao": 0.1,
+      "inicio": 10,
+      "mecanismo": "desativacao",
+      "reducao": null
+    },
+    {
+      "id": "C_f20_t0",
+      "bloco": "C_orcamento_inicio",
+      "rede": "escola_suica_2024",
+      "beta": 0.005,
+      "fracao": 0.2,
+      "inicio": 0,
+      "mecanismo": "desativacao",
+      "reducao": null
+    },
+    {
+      "id": "C_f20_t10",
+      "bloco": "C_orcamento_inicio",
+      "rede": "escola_suica_2024",
+      "beta": 0.005,
+      "fracao": 0.2,
+      "inicio": 10,
+      "mecanismo": "desativacao",
+      "reducao": null
+    },
+    {
+      "id": "C_f30_t0",
+      "bloco": "C_orcamento_inicio",
+      "rede": "escola_suica_2024",
+      "beta": 0.005,
+      "fracao": 0.3,
+      "inicio": 0,
+      "mecanismo": "desativacao",
+      "reducao": null
+    },
+    {
+      "id": "C_f30_t5",
+      "bloco": "C_orcamento_inicio",
+      "rede": "escola_suica_2024",
+      "beta": 0.005,
+      "fracao": 0.3,
+      "inicio": 5,
+      "mecanismo": "desativacao",
+      "reducao": null
+    },
+    {
+      "id": "C_f30_t10",
+      "bloco": "C_orcamento_inicio",
+      "rede": "escola_suica_2024",
+      "beta": 0.005,
+      "fracao": 0.3,
+      "inicio": 10,
+      "mecanismo": "desativacao",
+      "reducao": null
+    },
+    {
+      "id": "D_beta0.0025",
+      "bloco": "D_sensibilidade_beta",
+      "rede": "escola_suica_2024",
+      "beta": 0.0025,
+      "fracao": 0.2,
+      "inicio": 5,
+      "mecanismo": "desativacao",
+      "reducao": null
+    },
+    {
+      "id": "D_beta0.01",
+      "bloco": "D_sensibilidade_beta",
+      "rede": "escola_suica_2024",
+      "beta": 0.01,
+      "fracao": 0.2,
+      "inicio": 5,
+      "mecanismo": "desativacao",
+      "reducao": null
+    }
+  ],
+  "dimensao": {
+    "redes": 21,
+    "lotes": 33,
+    "repeticoes_por_lote": 100,
+    "trajetorias_por_lote": 300,
+    "trajetorias_incluindo_referencias_repetidas": 9900,
+    "trajetorias_unicas_desconsiderando_reexecucoes_de_referencia": 8900
+  },
+  "analise": {
+    "primarios": [
+      "pico_proporcional",
+      "fracao_acumulada"
+    ],
+    "secundarios": [
+      "pico_infectados",
+      "passo_pico",
+      "fracao_final_recuperados",
+      "horizonte_observado",
+      "duracao_extincao",
+      "motivo_termino"
+    ],
+    "por_rede": "Média, desvio-padrão amostral e n presente/ausente; diferenças pareadas por repetição contra sem intervenção.",
+    "entre_realizacoes_sinteticas": "Resumir as 10 médias por modelo separadamente da dispersão dentro de cada rede; não tratar 1000 trajetórias como 1000 topologias independentes.",
+    "censura": "Relatar proporção censurada. Duração de extinção somente quando observada; não converter null em zero.",
+    "reducao_relativa": "Se o indicador de referência é zero, redução ausente; não dividir por zero.",
+    "referencias_repetidas": "Não contar a repetição do mesmo cenário sem intervenção em diferentes lotes como nova observação independente.",
+    "escopo_blocos": "B, C e D avaliam somente a escola; não extrapolar mecanismos, orçamento/início ou sensibilidade a todas as topologias."
+  },
+  "persistencia": {
+    "regra": "Salvar cada resposta JSON integral e manifesto imediatamente ao concluir o lote, além dos CSVs, parâmetros, hashes e ambiente.",
+    "limite_api_resultados": 32,
+    "motivo": "33 lotes excedem o repositório de 32 resultados por sessão; ele não é armazenamento permanente.",
+    "validacao": "Conferir S+I+R=67, motivo/horizonte/censura, 100 repetições por cenário, pares e orçamento efetivo; nunca substituir falhas por zero."
+  },
+  "desempenho_planejado": {
+    "ordem": "sequencial, sem requisições concorrentes",
+    "redes": [
+      "escola_suica_2024",
+      "er_1000",
+      "ba_2000"
+    ],
+    "operacao": "lote comparativo da configuração-base com 100 repetições; rede carregada/confirmada antes do cronômetro",
+    "medicoes_tempo": 5,
+    "resumo_tempo": "mediana de perf_counter; sem tracemalloc na cronometragem",
+    "execucoes_extras_por_rede": {
+      "alocacoes_python_com_tracemalloc": 1,
+      "contagem_copias_e_assinatura": 1
+    },
+    "limite": "Mede execução e montagem da resposta; exclui HTTP, navegador e preparo da rede. Não é RSS nem custo de desenho.",
+    "ambiente": "Mesma máquina e versões para as três redes; registrar SO, CPU, RAM, Python, revisão e hashes efetivos na execução.",
+    "campanha_executada": false,
+    "adaptacao_executor": "O CLI atual de benchmark gera BA com m=4; fornecer as redes deste protocolo à rotina medir(operacao, 5), sem atribuir à grade medições de outra topologia."
+  },
+  "origens": {
+    "artigo": "https://doi.org/10.1038/s41467-025-66719-3",
+    "dados": "https://osf.io/naut4/",
+    "codigo_local": [
+      "src/simulador/configuracao.py",
+      "src/simulador/comparacao.py",
+      "src/simulador/geracao.py",
+      "src/simulador/motor_sir.py",
+      "src/simulador/api_local.py"
+    ]
+  },
+  "reorganizacao_dados": {
+    "data": "2026-11-22",
+    "raiz_atual": "dados/dados/",
+    "parametros_cientificos_alterados": false
+  }
+}

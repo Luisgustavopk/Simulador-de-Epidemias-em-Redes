@@ -1,6 +1,10 @@
 # Metodologia experimental da etapa 3
 
-O [protocolo etapa3-base-v1](protocolo-etapa3-v1.json) define a campanha por delegação do usuário em 21/11/2026. O usuário informou que B ainda não havia definido os parâmetros e solicitou uma configuração-base. O [aviso dirigido a Luis](../../docs/implementacao/Aviso-IntegranteB-Etapa3.md) reúne os valores e cuidados de execução. A definição do protocolo não significa que a campanha foi realizada ou que houve aceite individual de cada integrante.
+Os dados e o protocolo ficam em `dados/dados/`, conforme a reorganização de 22/11/2026. Os scripts e os links desta documentação já usam essa localização.
+
+O [protocolo etapa3-base-v1](protocolo-etapa3-v1.json) define a campanha por delegação do usuário em 21/11/2026. O usuário informou que B ainda não havia definido os parâmetros e solicitou uma configuração-base. O [aviso dirigido a Luis](../../../docs/implementacao/Aviso-IntegranteB-Etapa3.md) reúne os valores e cuidados de execução. O protocolo foi definido antes das execuções e permanece preservado, inclusive seus indicadores históricos de atividade pendente. O [estado atual](estado-etapa3.json) registra o avanço; não houve registro de aceite individual de cada integrante.
+
+**Atualização de 22/11/2026:** os [vinte controles sintéticos](../redes_sinteticas/controles-etapa3-v1/README.md) foram gerados e caracterizados. O [bloco A de topologias](topologia-v1/README.md) foi concluído: **21 lotes, 6.300 trajetórias e 408.914 registros**. Os blocos B/C/D (12 lotes, 3.600 trajetórias) e o benchmark permanecem pendentes.
 
 ## Representação e condições comuns
 
@@ -25,9 +29,9 @@ Os fluxos de iniciais, epidemia e isolamento são separados. Na repetição r, n
 
 ## Controles e grade
 
-Os controles terão N = 67 e peso 1. Para ER, `p = 1325 / [67 × 66 / 2] = 0,5992763455450023`, produzindo 1.325 arestas em esperança; as realizações podem diferir desse valor. Para BA, o gerador local começa com um núcleo completo de m + 1 indivíduos, e seu total é `M = mN − m(m + 1)/2`. O inteiro m = 24 minimiza a diferença para a escola e produz 1.308 arestas, 17 a menos (−1,28%). Não há igualdade exata de densidade.
+Os controles gerados têm N = 67 e peso 1. Para ER, `p = 1325 / [67 × 66 / 2] = 0,5992763455450023`, produzindo 1.325 arestas em esperança; as realizações podem diferir desse valor. Para BA, o gerador local começa com um núcleo completo de m + 1 indivíduos, e seu total é `M = mN − m(m + 1)/2`. O inteiro m = 24 minimiza a diferença para a escola e produz 1.308 arestas, 17 a menos (−1,28%). Não há igualdade exata de densidade.
 
-Serão usadas dez realizações ER, com sementes 1000–1009, e dez BA, com sementes 2000–2009. Cada uma precisará ser gerada e caracterizada antes da execução. A população pequena e o m alto tornam o controle BA denso; sua distribuição deverá ser medida, sem pressupor uma lei de potência. A comparação inclui a variação observada de densidade e grau, além do mecanismo gerador.
+Foram usadas dez realizações ER, com sementes 1000–1009, e dez BA, com sementes 2000–2009. Todas foram exportadas, reimportadas e caracterizadas antes da execução. Os valores realizados estão na [tabela das redes](topologia-v1/caracterizacao_redes.csv). A população pequena e o m alto tornam o controle BA denso; sua distribuição foi medida, sem pressupor uma lei de potência. A comparação inclui a variação observada de densidade e grau, além do mecanismo gerador.
 
 | Bloco | Condições | Lotes com 100 repetições e três cenários |
 | --- | --- | ---: |
@@ -35,7 +39,7 @@ Serão usadas dez realizações ER, com sementes 1000–1009, e dez BA, com seme
 | B | Escola; redução de 50% dos pesos e exclusão; fração 0,20, início 5 | 2 |
 | C | Escola; desativação; produto das frações 0,10/0,20/0,30 pelos inícios 0/5/10, excluindo a condição principal já incluída | 8 |
 | D | Escola; β = 0,0025 e 0,01; demais condições principais | 2 |
-| Total | Grade definida, ainda não executada | 33 |
+| Total | Grade definida; A concluído e B/C/D pendentes | 33 |
 
 O JSON enumera cada lote. São 9.900 trajetórias planejadas; referências reexecutadas em lotes diferentes deixam 8.900 condições únicas, considerando as sementes. A inferência sobre mecanismos, orçamento, início e sensibilidade dos blocos B–D fica restrita à escola. A campanha não pretende estimar todas as interações entre esses fatores.
 
@@ -43,7 +47,7 @@ O JSON enumera cada lote. São 9.900 trajetórias planejadas; referências reexe
 
 Os indicadores primários são pico proporcional e fração acumulada `[I(T)+R(T)]/N`. Também serão apresentados pico absoluto, primeiro instante do pico, recuperados finais, horizonte, duração de extinção e motivo de término. Para cada rede e condição, serão calculados média, desvio-padrão amostral e n presente/ausente, além das diferenças pareadas em relação ao cenário sem intervenção. Reduções relativas com referência zero serão ausentes.
 
-A duração incluirá somente extinções observadas, com a proporção censurada ao lado. Todas as repetições permanecem na análise, inclusive as que terminam antes da intervenção. Para os controles, a variação das dez médias por modelo será separada da dispersão das repetições em cada rede; reexecuções de uma referência não aumentam a amostra. A estabilidade das médias e a dispersão deverão ser examinadas após a campanha; qualquer ampliação terá nova versão documentada.
+A duração incluirá somente extinções observadas, com a proporção censurada ao lado. Todas as repetições permanecem na análise, inclusive as que terminam antes da intervenção. Para os controles, a variação das dez médias por modelo será separada da dispersão das repetições em cada rede; reexecuções de uma referência não aumentam a amostra. O bloco A preserva ambas as dispersões e descreve os resultados sem teste de significância. Qualquer ampliação terá nova versão documentada.
 
 Cada resposta JSON integral e seus manifestos devem ser salvos ao concluir o lote, junto aos CSVs e hashes. A memória da API conserva somente 32 resultados por sessão, insuficientes para os 33 lotes. Serão conferidos população, contagens, orçamento efetivo, pares, motivo de término e cobertura das 100 repetições. O relatório dos erros deverá preservar tentativas que falharem, sem substituição por zero ou por outra semente escolhida por seu resultado.
 
@@ -57,4 +61,4 @@ A rotina `medir(operacao, 5)` do benchmark pode receber a operação com as rede
 
 ## O que está concluído
 
-A base escolar passou pelo importador, pelo serviço de carga, pela caracterização nativa e pelo [percurso no Chrome](../redes_reais/evidencias/interface-escola/README.md), incluindo Mapa, 3D, medidas e confirmação. O desenho possui limite de 1.200 arestas; a rede completa e suas contagens têm 1.325. A configuração-base e a grade estão definidas. Os controles sintéticos, a campanha, as medições e suas conclusões permanecem por executar.
+A base escolar passou pelo importador, pelo serviço de carga, pela caracterização nativa e pelo [percurso no Chrome](../redes_reais/evidencias/interface-escola/README.md), incluindo Mapa, 3D, medidas e confirmação. O desenho possui limite de 1.200 arestas; a rede completa e suas contagens têm 1.325. A configuração-base e a grade estão definidas. Os controles e o bloco A estão concluídos, com [resultados, gráficos e verificação](topologia-v1/README.md). As conclusões se restringem às topologias na condição principal. Os blocos B/C/D, a instrumentação e as medições continuam pendentes; os tempos operacionais do log não constituem benchmark.

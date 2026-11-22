@@ -19,7 +19,7 @@
     "peso": 1.0,
     "duracao_no_peso": false,
     "unidade_passo": "passo abstrato; não corresponde a um dia de coleta",
-    "sha256_manifesto": "8c9e27d53f450fba10cbe5e307bf68facd3b548bf5a01eb9bfe690d578a3f941",
+    "sha256_manifesto": "f062c31d82a0107edb38ab16fc602b09f9b46cef3e4adcac20fe35fa196a29a7",
     "sha256_csv": {
       "contatos.csv": "039c17357fab1b5f5101d13837a5d8c0e2256fc40bc3e6fd05d84e2fded37188",
       "duracoes_observadas.csv": "1753703b00a5431271a446c25daa4772c147191e57054fdb829b4db285fe9829",
@@ -43,7 +43,7 @@
     {
       "id": "escola_suica_2024",
       "tipo": "observada",
-      "pasta": "dados/redes_reais/escola_suica_2024"
+      "pasta": "dados/dados/redes_reais/escola_suica_2024"
     },
     {
       "id": "er_1000",
@@ -732,5 +732,10 @@
       "src/simulador/motor_sir.py",
       "src/simulador/api_local.py"
     ]
+  },
+  "reorganizacao_dados": {
+    "data": "2026-11-22",
+    "raiz_atual": "dados/dados/",
+    "parametros_cientificos_alterados": false
   }
 }

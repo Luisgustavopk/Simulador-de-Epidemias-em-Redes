@@ -4,6 +4,19 @@
 - [Modelagem do grafo vigente](modelagem/ModelagemGrafo.md).
 - [Proposta de modelagem de classes](modelagem/simulador-epidemias/modelagem-de-classes.md).
 - [Referências do projeto](referencias/REFERENCIAS.md).
+- [Bases observadas preparadas para a etapa 3](../dados/dados/redes_reais/README.md).
+- [Metodologia e configuração-base da etapa 3](../dados/dados/experimentos/README.md).
+- [Controles ER/BA gerados e caracterizados](../dados/dados/redes_sinteticas/controles-etapa3-v1/README.md).
+- [Resultados dos experimentos de topologia — 6.300 trajetórias](../dados/dados/experimentos/topologia-v1/README.md).
+- [Aviso ao integrante B sobre os experimentos](implementacao/Aviso-IntegranteB-Etapa3.md).
+- [Simulação, resultados, API e exportação](implementacao/SimulacaoResultados.md).
+- [Roteiro de apresentação e perguntas — Integrante A: Wesley](apresentacao/Roteiro-IntegranteA-Wesley.md).
+- [Guia de estudo dos resultados de topologia — Integrante A: Wesley](apresentacao/Resultados-Etapa3-IntegranteA-Wesley.md).
+- [Roteiro de apresentação e perguntas — Integrante B: Luis](apresentacao/Roteiro-IntegranteB-Luis.md).
+- [Roteiro de apresentação e perguntas — Integrante C: João](apresentacao/Roteiro-IntegranteC-Joao.md).
+- [Guia de funções por arquivo — Integrante A: Wesley](apresentacao/Funcoes-IntegranteA-Wesley.md).
+- [Guia de funções por arquivo — Integrante B: Luis](apresentacao/Funcoes-IntegranteB-Luis.md).
+- [Guia de funções por arquivo — Integrante C: João](apresentacao/Funcoes-IntegranteC-Joao.md).
 
 ## Diagramas da proposta de projeto
 

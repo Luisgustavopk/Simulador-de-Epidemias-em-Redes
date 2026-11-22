@@ -1,0 +1,59 @@
+{
+  "conferido_em_utc": "2026-11-22T10:58:55.294677+00:00",
+  "estruturas_conferidas_sem_algoritmos_dominio": 21,
+  "controles_regenerados_com_csvs_e_manifestos_identicos": 20,
+  "lotes": 21,
+  "trajetorias_experimentais": 6300,
+  "registros_exportados": 408914,
+  "resumos_csv_identicos_ao_backend": true,
+  "historicos_csv_identicos_aos_lotes": true,
+  "censuradas": [
+    {
+      "rede": "er_1007",
+      "cenario": "sem_intervencao",
+      "repeticao": 33
+    }
+  ],
+  "reproducoes": [
+    {
+      "rede": "escola_suica_2024",
+      "trajetorias": 300,
+      "assinatura": "ede16e371c8b999a6d3d4580d8b959483c75ec7a3670c840f567d3747b50547d",
+      "identica": true
+    },
+    {
+      "rede": "er_1000",
+      "trajetorias": 300,
+      "assinatura": "b154b42bbc2f50244e7c21c0fde7c8fd58961d2a74a6a6ca7a53395369042b73",
+      "identica": true
+    },
+    {
+      "rede": "ba_2000",
+      "trajetorias": 300,
+      "assinatura": "6b3c8d16e78846d981a4a9dcca4cb325a332ba340025d2ad0aacbb5ea8b8e6b4",
+      "identica": true
+    }
+  ],
+  "trajetorias_adicionais_so_para_verificacao": 900,
+  "testes": {
+    "comando": "PYTHONPATH=src .venv/bin/python -m pytest tests/test_experimentos_topologia.py tests/test_geracao.py tests/test_metadados_geracao.py tests/test_comparacao.py tests/test_metricas.py -q",
+    "passaram": 178
+  },
+  "sha256_codigo_verificacao": "0f7d655bc94cd4a0b9c615649ef657c506c58bfbfe41a041447267b3df54bba4",
+  "sha256_codigo_execucao": "22b07033457b8e51271c13215669765c62457a1eb03ef6ab7ba0f698ea371b40",
+  "sha256_csvs_escola": {
+    "contatos.csv": "039c17357fab1b5f5101d13837a5d8c0e2256fc40bc3e6fd05d84e2fded37188",
+    "duracoes_observadas.csv": "1753703b00a5431271a446c25daa4772c147191e57054fdb829b4db285fe9829",
+    "individuos.csv": "4f10518df73dbc91b80a0cdc918cc656733e2e7facca2c0ed8e336103f869d1a",
+    "mapa_ids.csv": "5edcecab590a1d59c4f44307ec21751a66a0000ea93df1a370828ea6909b2cb8"
+  },
+  "conferencia_adicional_exportacoes": {
+    "metricas_csv_com_valores_comparados_aos_lotes": 6300,
+    "diferencas_pareadas_csv_com_valores_comparados_aos_lotes": 8400,
+    "hashes_conferidos": {
+      "metricas.csv": "00d7efed0853967395f900a0cd6dd1ab6601c2baf84ab8845f9dbc30b33ce621",
+      "diferencas_pareadas.csv": "36bdcf0dae3c06aef15599253f3d6c77ec2fe821a5f63b21a82217227889958f"
+    },
+    "metodo": "Leitura dos CSVs; comparação exata de cada valor com as métricas dos JSONs e recálculo das diferenças e reduções da referência pareada."
+  }
+}

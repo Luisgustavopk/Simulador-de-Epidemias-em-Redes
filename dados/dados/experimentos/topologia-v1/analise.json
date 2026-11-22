@@ -1,0 +1,190 @@
+{
+  "contrastes_de_medias": [
+    {
+      "modelo": "escola",
+      "metrica": "pico_proporcional",
+      "sem_intervencao_menos_aleatoria_pontos_percentuais": 7.656716417910447,
+      "sem_intervencao_menos_grau_pontos_percentuais": 10.746268656716419,
+      "aleatoria_menos_grau_pontos_percentuais": 3.0895522388059717
+    },
+    {
+      "modelo": "escola",
+      "metrica": "fracao_acumulada",
+      "sem_intervencao_menos_aleatoria_pontos_percentuais": 28.074626865671643,
+      "sem_intervencao_menos_grau_pontos_percentuais": 38.731343283582085,
+      "aleatoria_menos_grau_pontos_percentuais": 10.656716417910445
+    },
+    {
+      "modelo": "erdos_renyi",
+      "metrica": "pico_proporcional",
+      "sem_intervencao_menos_aleatoria_pontos_percentuais": 7.465671641791044,
+      "sem_intervencao_menos_grau_pontos_percentuais": 8.470149253731343,
+      "aleatoria_menos_grau_pontos_percentuais": 1.0044776119402994
+    },
+    {
+      "modelo": "erdos_renyi",
+      "metrica": "fracao_acumulada",
+      "sem_intervencao_menos_aleatoria_pontos_percentuais": 27.056716417910444,
+      "sem_intervencao_menos_grau_pontos_percentuais": 30.126865671641784,
+      "aleatoria_menos_grau_pontos_percentuais": 3.0701492537313415
+    },
+    {
+      "modelo": "barabasi_albert",
+      "metrica": "pico_proporcional",
+      "sem_intervencao_menos_aleatoria_pontos_percentuais": 7.295522388059703,
+      "sem_intervencao_menos_grau_pontos_percentuais": 9.814925373134328,
+      "aleatoria_menos_grau_pontos_percentuais": 2.519402985074626
+    },
+    {
+      "modelo": "barabasi_albert",
+      "metrica": "fracao_acumulada",
+      "sem_intervencao_menos_aleatoria_pontos_percentuais": 25.42537313432836,
+      "sem_intervencao_menos_grau_pontos_percentuais": 35.06268656716418,
+      "aleatoria_menos_grau_pontos_percentuais": 9.63731343283582
+    }
+  ],
+  "sinais_das_diferencas_pareadas": [
+    {
+      "modelo": "barabasi_albert",
+      "cenario": "aleatoria",
+      "metrica": "fracao_acumulada",
+      "n": 1000,
+      "diferenca_positiva": 879,
+      "empate": 60,
+      "diferenca_negativa": 61
+    },
+    {
+      "modelo": "barabasi_albert",
+      "cenario": "aleatoria",
+      "metrica": "pico_proporcional",
+      "n": 1000,
+      "diferenca_positiva": 787,
+      "empate": 126,
+      "diferenca_negativa": 87
+    },
+    {
+      "modelo": "barabasi_albert",
+      "cenario": "grau",
+      "metrica": "fracao_acumulada",
+      "n": 1000,
+      "diferenca_positiva": 916,
+      "empate": 62,
+      "diferenca_negativa": 22
+    },
+    {
+      "modelo": "barabasi_albert",
+      "cenario": "grau",
+      "metrica": "pico_proporcional",
+      "n": 1000,
+      "diferenca_positiva": 851,
+      "empate": 105,
+      "diferenca_negativa": 44
+    },
+    {
+      "modelo": "erdos_renyi",
+      "cenario": "aleatoria",
+      "metrica": "fracao_acumulada",
+      "n": 1000,
+      "diferenca_positiva": 899,
+      "empate": 60,
+      "diferenca_negativa": 41
+    },
+    {
+      "modelo": "erdos_renyi",
+      "cenario": "aleatoria",
+      "metrica": "pico_proporcional",
+      "n": 1000,
+      "diferenca_positiva": 807,
+      "empate": 120,
+      "diferenca_negativa": 73
+    },
+    {
+      "modelo": "erdos_renyi",
+      "cenario": "grau",
+      "metrica": "fracao_acumulada",
+      "n": 1000,
+      "diferenca_positiva": 901,
+      "empate": 61,
+      "diferenca_negativa": 38
+    },
+    {
+      "modelo": "erdos_renyi",
+      "cenario": "grau",
+      "metrica": "pico_proporcional",
+      "n": 1000,
+      "diferenca_positiva": 832,
+      "empate": 112,
+      "diferenca_negativa": 56
+    },
+    {
+      "modelo": "escola",
+      "cenario": "aleatoria",
+      "metrica": "fracao_acumulada",
+      "n": 100,
+      "diferenca_positiva": 91,
+      "empate": 6,
+      "diferenca_negativa": 3
+    },
+    {
+      "modelo": "escola",
+      "cenario": "aleatoria",
+      "metrica": "pico_proporcional",
+      "n": 100,
+      "diferenca_positiva": 80,
+      "empate": 11,
+      "diferenca_negativa": 9
+    },
+    {
+      "modelo": "escola",
+      "cenario": "grau",
+      "metrica": "fracao_acumulada",
+      "n": 100,
+      "diferenca_positiva": 95,
+      "empate": 4,
+      "diferenca_negativa": 1
+    },
+    {
+      "modelo": "escola",
+      "cenario": "grau",
+      "metrica": "pico_proporcional",
+      "n": 100,
+      "diferenca_positiva": 86,
+      "empate": 10,
+      "diferenca_negativa": 4
+    }
+  ],
+  "censuradas": [
+    {
+      "rede": "er_1007",
+      "modelo": "erdos_renyi",
+      "cenario": "sem_intervencao",
+      "repeticao": "33",
+      "pico_infectados": "11",
+      "passo_pico": "52",
+      "pico_proporcional": "0.16417910447761194",
+      "fracao_acumulada": "0.8059701492537313",
+      "fracao_final_recuperados": "0.7910447761194029",
+      "ocorreu_infeccao": "True",
+      "horizonte_observado": "200",
+      "duracao_extincao": "",
+      "motivo_termino": "limite_passos",
+      "epidemia": "20032",
+      "iniciais": "10032",
+      "isolamento": "30032"
+    }
+  ],
+  "nivel_dispersao_escola": "amostral entre 100 repetições na mesma rede",
+  "nivel_dispersao_sinteticas": "amostral entre 10 médias; cada média usa 100 repetições",
+  "observacao": "Descrição das condições executadas; não estima significância ou eficácia clínica.",
+  "sha256_entradas": {
+    "resumo_por_modelo.csv": "6999cbe219583d9b7954586a6f80b036be06e61db859e235bd8444ddb1791428",
+    "diferencas_pareadas.csv": "36bdcf0dae3c06aef15599253f3d6c77ec2fe821a5f63b21a82217227889958f",
+    "curvas_medias_por_rede.csv": "911bbe512a1fe90e33784ef4da086a24b120f5044e6758c8e7a98dfe3abd44d3",
+    "metricas.csv": "00d7efed0853967395f900a0cd6dd1ab6601c2baf84ab8845f9dbc30b33ce621"
+  },
+  "sha256_figuras": {
+    "curvas-topologias.pdf": "c1eaee9ec675d13431b6caceb87876f36fed81ea7aa2a9dd2a53bdf0543537dc",
+    "curvas-topologias.svg": "a2f3a04a48df60b8f972f0fe09bc83f362fb50fa7ec21815201a5ec41b215285"
+  },
+  "sha256_script": "419be8e2aee3af9e5d1b2ab98029289c9e6fda9d5cc192de10ba1a67b1c1a76c"
+}

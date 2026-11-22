@@ -14,6 +14,7 @@ import type {
 import {
   agregarCurvas,
   CAMPOS_CURVA,
+  caminhoEscalonado,
   CORES_CENARIOS,
   maximoHistorico,
   NOMES_CENARIOS,
@@ -265,29 +266,39 @@ export function GraficoTrajetorias({
       <path
         key={campo}
         className={classe}
-        d={pontos
-          .map(
-            (registro, indice) =>
-              `${indice ? 'L' : 'M'} ${x(registro.passo)} ${y(registro[campo])}`,
-          )
-          .join(' ')}
+        d={caminhoEscalonado(
+          pontos.map((registro) => [x(registro.passo), y(registro[campo])]),
+        )}
       />
     )
   }
 
   function areaDesvio(registros: RegistroAgregado[], campo: CampoCurva) {
     const pontos = noIntervalo(registros)
-    const superior = pontos.map(
-      (registro, indice) =>
-        `${indice ? 'L' : 'M'} ${x(registro.passo)} ${y(Math.min(maximo, registro[campo] + registro.desvios[campo]))}`,
+    if (
+      !pontos.length ||
+      pontos.some((registro) => registro.desvios[campo] === null)
     )
-    const inferior = [...pontos]
-      .reverse()
-      .map(
-        (registro) =>
-          `L ${x(registro.passo)} ${y(Math.max(0, registro[campo] - registro.desvios[campo]))}`,
+      return null
+    const limites = pontos.map((registro) => ({
+      passo: registro.passo,
+      superior: Math.min(maximo, registro[campo] + registro.desvios[campo]!),
+      inferior: Math.max(0, registro[campo] - registro.desvios[campo]!),
+    }))
+    const borda = (campo: 'superior' | 'inferior') =>
+      limites.flatMap((registro, indice) =>
+        indice
+          ? [
+              [x(registro.passo), y(limites[indice - 1][campo])],
+              [x(registro.passo), y(registro[campo])],
+            ]
+          : [[x(registro.passo), y(registro[campo])]],
       )
-    return `${superior.join(' ')} ${inferior.join(' ')} Z`
+    return (
+      [...borda('superior'), ...borda('inferior').reverse()]
+        .map(([px, py], indice) => `${indice ? 'L' : 'M'} ${px} ${py}`)
+        .join(' ') + ' Z'
+    )
   }
 
   return (
@@ -467,6 +478,9 @@ export function GraficoTrajetorias({
                 : ''}
               Os filtros alteram somente o gráfico; métricas e histórico mantêm
               a execução selecionada no painel.
+              {comparacao && filtros.modo === 'medias'
+                ? ' As médias mantêm n constante por cenário e prolongam apenas extinções. O desvio amostral fica ausente com uma repetição.'
+                : ''}
             </desc>
             {[0, 0.25, 0.5, 0.75, 1].map((nivel) => (
               <g key={nivel}>
@@ -531,13 +545,16 @@ export function GraficoTrajetorias({
               >
                 {filtros.mostrarDesvio &&
                   noIntervalo(registros).length > 1 &&
-                  campos.map((campo) => (
-                    <path
-                      key={`${campo}-desvio`}
-                      d={areaDesvio(registros, campo)}
-                      className={`comparison-band band-${campo}`}
-                    />
-                  ))}
+                  campos.map((campo) => {
+                    const area = areaDesvio(registros, campo)
+                    return area ? (
+                      <path
+                        key={`${campo}-desvio`}
+                        d={area}
+                        className={`comparison-band band-${campo}`}
+                      />
+                    ) : null
+                  })}
                 {campos.map((campo) =>
                   curva(registros, campo, `comparison-${SERIES[campo].classe}`),
                 )}

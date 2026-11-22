@@ -6,6 +6,7 @@ import {
   NOMES_CENARIOS,
   csvMetricas,
   csvResultado,
+  dimensoesPng,
   linhasHistorico,
   maximoHistorico,
   pacoteExportacao,
@@ -390,14 +391,18 @@ export function ResultsPage() {
     const imagem = new Image()
     imagem.onload = () => {
       const canvas = document.createElement('canvas')
-      canvas.width = larguraExportada * 2
-      canvas.height = alturaExportada * 2
+      const dimensoes = dimensoesPng(larguraExportada, alturaExportada)
+      canvas.width = dimensoes.largura
+      canvas.height = dimensoes.altura
       const contexto = canvas.getContext('2d')
       if (!contexto) {
         setErro('Não foi possível preparar a exportação PNG.')
         return
       }
-      contexto.scale(2, 2)
+      contexto.scale(
+        dimensoes.largura / larguraExportada,
+        dimensoes.altura / alturaExportada,
+      )
       contexto.drawImage(imagem, 0, 0, larguraExportada, alturaExportada)
       canvas.toBlob((blob) => {
         if (blob) baixar(blob, 'trajetorias-epidemia.png', 'image/png')

@@ -864,12 +864,22 @@ test(
           ),
           [3, 10],
         )
-        assert.equal(
-          await avaliar(
-            "document.querySelector('.comparison-series path').getAttribute('d').split(' ').filter(parte=>parte==='M'||parte==='L').length",
-          ),
-          8,
+        const caminho = await avaliar(
+          "document.querySelector('.comparison-series path').getAttribute('d')",
         )
+        assert.equal(
+          caminho.split(' ').filter((parte) => parte === 'M').length,
+          1,
+        )
+        assert.equal(
+          caminho.split(' ').filter((parte) => parte === 'H').length,
+          7,
+        )
+        assert.equal(
+          caminho.split(' ').filter((parte) => parte === 'V').length,
+          7,
+        )
+        assert.doesNotMatch(caminho, /L /)
         await avaliar(
           `window.arquivos=[];window.blobs=new Map();const criar=URL.createObjectURL;URL.createObjectURL=blob=>{const endereco=criar(blob);window.blobs.set(endereco,blob);return endereco};HTMLAnchorElement.prototype.click=function(){window.arquivos.push({nome:this.download,blob:window.blobs.get(this.href)})};for(const botao of document.querySelectorAll('.export-actions button'))botao.click();`,
         )
@@ -878,7 +888,7 @@ test(
           const svg=new DOMParser().parseFromString(await window.arquivos.find(item=>item.nome.endsWith('.svg')).blob.text(),'image/svg+xml');
           const json=JSON.parse(await window.arquivos.find(item=>item.nome.endsWith('.json')).blob.text());
           const png=await createImageBitmap(window.arquivos.find(item=>item.nome.endsWith('.png')).blob);
-          return {escopo:svg.documentElement.getAttribute('aria-label'),grupos:svg.querySelectorAll('[data-repeticao="5"]').length,metadados:JSON.parse(svg.querySelector('metadata').textContent).visualizacao.filtros,visualizacao:json.visualizacao.filtros_grafico,execucoes:json.resultado.execucoes.length,alturaPng:png.height};
+          return {escopo:svg.documentElement.getAttribute('aria-label'),grupos:svg.querySelectorAll('[data-repeticao="5"]').length,metadados:JSON.parse(svg.querySelector('metadata').textContent).visualizacao.filtros,visualizacao:json.visualizacao.filtros_grafico,execucoes:json.resultado.execucoes.length,larguraPng:png.width,alturaPng:png.height,larguraSvg:svg.documentElement.viewBox.baseVal.width,alturaSvg:svg.documentElement.viewBox.baseVal.height};
         })()`)
         assert.match(exportacao.escopo, /passos 3 a 10/)
         assert.equal(exportacao.grupos, 1)
@@ -886,7 +896,14 @@ test(
         assert.equal(exportacao.visualizacao.inicio, 3)
         assert.equal(exportacao.visualizacao.fim, 10)
         assert.equal(exportacao.execucoes, 15)
-        assert.equal(exportacao.alturaPng, 904)
+        assert.ok(exportacao.larguraPng >= 2400)
+        assert.ok(
+          Math.abs(
+            exportacao.alturaPng -
+              (exportacao.larguraPng * exportacao.alturaSvg) /
+                exportacao.larguraSvg,
+          ) <= 1,
+        )
         await avaliar(
           `{const campo=document.getElementById('grafico-fim');Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(campo,'999');campo.dispatchEvent(new Event('input',{bubbles:true}));}`,
         )
@@ -1018,6 +1035,59 @@ test(
           }
         }
         await avaliar("document.documentElement.dataset.theme='light'")
+      },
+    )
+    await contexto.test(
+      'uma repetição mantém as médias sem inventar desvio e preserva os filtros',
+      async () => {
+        const anterior = await avaliar(
+          "sessionStorage.getItem('observatorio-resultado-execucao')",
+        )
+        try {
+          await avaliar(`(async()=>{
+            const salvo=JSON.parse(sessionStorage.getItem('observatorio-configuracao'));
+            const resposta=await fetch('/api/rede/comparacao/executar',{
+              method:'POST',headers:{'Content-Type':'application/json'},
+              body:JSON.stringify({configuracao:salvo.formulario,repeticoes:'1'})
+            });
+            if(!resposta.ok)throw new Error(await resposta.text());
+            const comparacao=await resposta.json();
+            sessionStorage.setItem('observatorio-resultado-execucao',JSON.stringify({tipo:'comparacao',comparacao}));
+          })()`)
+          await recarregar()
+          await ate("document.querySelectorAll('.comparison-mean').length===3")
+          assert.equal(
+            await avaliar(
+              "document.querySelectorAll('.comparison-band').length",
+            ),
+            0,
+          )
+          assert.equal(
+            await avaliar(
+              "document.querySelector('.trajectory-deviation input').checked",
+            ),
+            true,
+          )
+          assert.equal(
+            await avaliar(
+              "[...document.querySelectorAll('.comparison-series path')].every(linha=>!/(NaN|Infinity)/.test(linha.getAttribute('d')))",
+            ),
+            true,
+          )
+          assert.equal(
+            await avaliar(
+              "document.querySelectorAll('.trajectory-legend button').length",
+            ),
+            4,
+          )
+          await capturarArea('resultados-uma-repeticao', '.trajectory-panel')
+        } finally {
+          await avaliar(
+            `sessionStorage.setItem('observatorio-resultado-execucao',${JSON.stringify(anterior)})`,
+          )
+          await recarregar()
+          await ate("document.querySelectorAll('.comparison-mean').length===3")
+        }
       },
     )
     await contexto.test(

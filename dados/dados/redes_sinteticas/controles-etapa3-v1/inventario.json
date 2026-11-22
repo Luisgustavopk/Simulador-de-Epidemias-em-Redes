@@ -1,0 +1,765 @@
+{
+  "protocolo": "etapa3-base-v1",
+  "redes": [
+    {
+      "rede_id": "er_1000",
+      "metadados_geracao": {
+        "modelo": "erdos_renyi",
+        "parametros": {
+          "numero_individuos": 67,
+          "probabilidade_contato": 0.5992763455450023,
+          "peso": 1.0
+        },
+        "semente": 1000,
+        "versao_algoritmo": 1,
+        "detalhes_modelo": {}
+      },
+      "indicadores": {
+        "numero_individuos": 67,
+        "numero_contatos": 1291,
+        "grau_medio": 38.53731343283582,
+        "grau_minimo": 26,
+        "grau_maximo": 48,
+        "desvio_graus_populacional": 4.578758086880958,
+        "densidade": 0.5838986883763003,
+        "numero_componentes": 1,
+        "maior_componente": 67,
+        "individuos_sem_contatos": 0
+      },
+      "assinatura_rede": "37df09f45ae961728a39be9e0dd108e9780e6eca8755d8dfb91b47a560b7a318",
+      "sha256_csv": {
+        "componentes.csv": "c0bbf0d27f64cbc3d5ac1a173d223336a40a19cbfd7c7993b31b6c99f9de7a26",
+        "contatos.csv": "34fe5f5cb8c8be40c5611f91f3ad08f370e7072d6725b75d2475aa10b528e161",
+        "distribuicao_graus.csv": "ea9f44a25a3678209478c005b90996f1102e944db561fb468d7f6378ae004ecd",
+        "graus.csv": "624595141f5fbeb784dba154cc49af2174b42db83bc7a7866f6c277fd961256a",
+        "individuos.csv": "4f10518df73dbc91b80a0cdc918cc656733e2e7facca2c0ed8e336103f869d1a"
+      },
+      "sha256_gerador": "11e9a50717dbb345d3f2843bb409cb79c568f2d7c00b0f8f86a69ec41012e35e",
+      "biblioteca_grafos": "implementacao_nativa_simulador",
+      "reimportacao_identica": true
+    },
+    {
+      "rede_id": "er_1001",
+      "metadados_geracao": {
+        "modelo": "erdos_renyi",
+        "parametros": {
+          "numero_individuos": 67,
+          "probabilidade_contato": 0.5992763455450023,
+          "peso": 1.0
+        },
+        "semente": 1001,
+        "versao_algoritmo": 1,
+        "detalhes_modelo": {}
+      },
+      "indicadores": {
+        "numero_individuos": 67,
+        "numero_contatos": 1304,
+        "grau_medio": 38.92537313432836,
+        "grau_minimo": 27,
+        "grau_maximo": 51,
+        "desvio_graus_populacional": 4.365103930430219,
+        "densidade": 0.5897783808231569,
+        "numero_componentes": 1,
+        "maior_componente": 67,
+        "individuos_sem_contatos": 0
+      },
+      "assinatura_rede": "e8f96c99e122c389592945c24bed7bb43cacfdee0ff05303b040fae3299d02fd",
+      "sha256_csv": {
+        "componentes.csv": "c0bbf0d27f64cbc3d5ac1a173d223336a40a19cbfd7c7993b31b6c99f9de7a26",
+        "contatos.csv": "190acfa8e747297915a6de6fc4590688ee85ee71c5da3052133024781f82782f",
+        "distribuicao_graus.csv": "630652743622a0db7c8f9a5fb620bc920358a13b14368566a9c70008c8ab98e6",
+        "graus.csv": "16b99697b2a0b0fec53ec0c6c1e622f097319593e4fb78cd280aeb5b2565f551",
+        "individuos.csv": "4f10518df73dbc91b80a0cdc918cc656733e2e7facca2c0ed8e336103f869d1a"
+      },
+      "sha256_gerador": "11e9a50717dbb345d3f2843bb409cb79c568f2d7c00b0f8f86a69ec41012e35e",
+      "biblioteca_grafos": "implementacao_nativa_simulador",
+      "reimportacao_identica": true
+    },
+    {
+      "rede_id": "er_1002",
+      "metadados_geracao": {
+        "modelo": "erdos_renyi",
+        "parametros": {
+          "numero_individuos": 67,
+          "probabilidade_contato": 0.5992763455450023,
+          "peso": 1.0
+        },
+        "semente": 1002,
+        "versao_algoritmo": 1,
+        "detalhes_modelo": {}
+      },
+      "indicadores": {
+        "numero_individuos": 67,
+        "numero_contatos": 1302,
+        "grau_medio": 38.865671641791046,
+        "grau_minimo": 28,
+        "grau_maximo": 47,
+        "desvio_graus_populacional": 3.9470204987501676,
+        "densidade": 0.5888738127544098,
+        "numero_componentes": 1,
+        "maior_componente": 67,
+        "individuos_sem_contatos": 0
+      },
+      "assinatura_rede": "fbd84ee9b09296bd1646bec465020d2bb544489cd41911f1fb447a08306b4f0b",
+      "sha256_csv": {
+        "componentes.csv": "c0bbf0d27f64cbc3d5ac1a173d223336a40a19cbfd7c7993b31b6c99f9de7a26",
+        "contatos.csv": "f54c7c41d43f1add42b6e732de5331c878ad17afcada5ce8f472ad7f0602a218",
+        "distribuicao_graus.csv": "51e41079470757a30b70a2c361aa6d6eeb5869f44821a243d4ac4652a00d5eb6",
+        "graus.csv": "65b76aebc842d4915bdb886816eff0c913453d18437a35072db978853f26eda6",
+        "individuos.csv": "4f10518df73dbc91b80a0cdc918cc656733e2e7facca2c0ed8e336103f869d1a"
+      },
+      "sha256_gerador": "11e9a50717dbb345d3f2843bb409cb79c568f2d7c00b0f8f86a69ec41012e35e",
+      "biblioteca_grafos": "implementacao_nativa_simulador",
+      "reimportacao_identica": true
+    },
+    {
+      "rede_id": "er_1003",
+      "metadados_geracao": {
+        "modelo": "erdos_renyi",
+        "parametros": {
+          "numero_individuos": 67,
+          "probabilidade_contato": 0.5992763455450023,
+          "peso": 1.0
+        },
+        "semente": 1003,
+        "versao_algoritmo": 1,
+        "detalhes_modelo": {}
+      },
+      "indicadores": {
+        "numero_individuos": 67,
+        "numero_contatos": 1340,
+        "grau_medio": 40,
+        "grau_minimo": 32,
+        "grau_maximo": 49,
+        "desvio_graus_populacional": 3.4984004873869505,
+        "densidade": 0.6060606060606061,
+        "numero_componentes": 1,
+        "maior_componente": 67,
+        "individuos_sem_contatos": 0
+      },
+      "assinatura_rede": "42139f276eb6ae6cd23356870e487271ae7eda32780be836bd8d413ad2201248",
+      "sha256_csv": {
+        "componentes.csv": "c0bbf0d27f64cbc3d5ac1a173d223336a40a19cbfd7c7993b31b6c99f9de7a26",
+        "contatos.csv": "a4895ece66707f1f5e6d20364c26fae673aae47afc7cbf3d9760adcdb8f70291",
+        "distribuicao_graus.csv": "1e6bb1ccc49d30331fadf6d70282e450041e75a5fad6e709f3f520a27ee1a886",
+        "graus.csv": "33104f1c9148e425f2fd78ce099d2ba4042de9fa9071a61801920c09d1c4ed79",
+        "individuos.csv": "4f10518df73dbc91b80a0cdc918cc656733e2e7facca2c0ed8e336103f869d1a"
+      },
+      "sha256_gerador": "11e9a50717dbb345d3f2843bb409cb79c568f2d7c00b0f8f86a69ec41012e35e",
+      "biblioteca_grafos": "implementacao_nativa_simulador",
+      "reimportacao_identica": true
+    },
+    {
+      "rede_id": "er_1004",
+      "metadados_geracao": {
+        "modelo": "erdos_renyi",
+        "parametros": {
+          "numero_individuos": 67,
+          "probabilidade_contato": 0.5992763455450023,
+          "peso": 1.0
+        },
+        "semente": 1004,
+        "versao_algoritmo": 1,
+        "detalhes_modelo": {}
+      },
+      "indicadores": {
+        "numero_individuos": 67,
+        "numero_contatos": 1334,
+        "grau_medio": 39.82089552238806,
+        "grau_minimo": 32,
+        "grau_maximo": 47,
+        "desvio_graus_populacional": 3.792865939347257,
+        "densidade": 0.6033469018543646,
+        "numero_componentes": 1,
+        "maior_componente": 67,
+        "individuos_sem_contatos": 0
+      },
+      "assinatura_rede": "6ba17c33b4d721dc221a198d990fa84ecf818d34e6fa279b3b7a7407160f2872",
+      "sha256_csv": {
+        "componentes.csv": "c0bbf0d27f64cbc3d5ac1a173d223336a40a19cbfd7c7993b31b6c99f9de7a26",
+        "contatos.csv": "cbb68764474c08e4a8a8b6eaa8b01c024a941e271e74a67c323873c2e6f7d7b0",
+        "distribuicao_graus.csv": "fc57e82ae901d1de31982d3e43b9d2ba1f1a19e8cc77e41807f453717a48ce82",
+        "graus.csv": "9f0c0bea93c1df5f502435bd124064b6b6c04badf6b0c4e90796d3bef11ec83e",
+        "individuos.csv": "4f10518df73dbc91b80a0cdc918cc656733e2e7facca2c0ed8e336103f869d1a"
+      },
+      "sha256_gerador": "11e9a50717dbb345d3f2843bb409cb79c568f2d7c00b0f8f86a69ec41012e35e",
+      "biblioteca_grafos": "implementacao_nativa_simulador",
+      "reimportacao_identica": true
+    },
+    {
+      "rede_id": "er_1005",
+      "metadados_geracao": {
+        "modelo": "erdos_renyi",
+        "parametros": {
+          "numero_individuos": 67,
+          "probabilidade_contato": 0.5992763455450023,
+          "peso": 1.0
+        },
+        "semente": 1005,
+        "versao_algoritmo": 1,
+        "detalhes_modelo": {}
+      },
+      "indicadores": {
+        "numero_individuos": 67,
+        "numero_contatos": 1318,
+        "grau_medio": 39.343283582089555,
+        "grau_minimo": 27,
+        "grau_maximo": 50,
+        "desvio_graus_populacional": 3.9115299858276633,
+        "densidade": 0.5961103573043871,
+        "numero_componentes": 1,
+        "maior_componente": 67,
+        "individuos_sem_contatos": 0
+      },
+      "assinatura_rede": "86df13db099abdc4cd70da3d6637b36cc2b50fd98e493adfdc683e9989800681",
+      "sha256_csv": {
+        "componentes.csv": "c0bbf0d27f64cbc3d5ac1a173d223336a40a19cbfd7c7993b31b6c99f9de7a26",
+        "contatos.csv": "4895da13c429ec81ebcad5901211e6ddcc9b6503c4a2c40b1c7b3da84b8d9980",
+        "distribuicao_graus.csv": "55517d5593c7cf505d21f5b5e1782a90706d4313ad163b0ae811f101f99fedd4",
+        "graus.csv": "b4fa650651fe1d1af127c071b6091759b22f88aa618d7bd6856f0ee685b3a024",
+        "individuos.csv": "4f10518df73dbc91b80a0cdc918cc656733e2e7facca2c0ed8e336103f869d1a"
+      },
+      "sha256_gerador": "11e9a50717dbb345d3f2843bb409cb79c568f2d7c00b0f8f86a69ec41012e35e",
+      "biblioteca_grafos": "implementacao_nativa_simulador",
+      "reimportacao_identica": true
+    },
+    {
+      "rede_id": "er_1006",
+      "metadados_geracao": {
+        "modelo": "erdos_renyi",
+        "parametros": {
+          "numero_individuos": 67,
+          "probabilidade_contato": 0.5992763455450023,
+          "peso": 1.0
+        },
+        "semente": 1006,
+        "versao_algoritmo": 1,
+        "detalhes_modelo": {}
+      },
+      "indicadores": {
+        "numero_individuos": 67,
+        "numero_contatos": 1312,
+        "grau_medio": 39.16417910447761,
+        "grau_minimo": 31,
+        "grau_maximo": 47,
+        "desvio_graus_populacional": 4.2058843460205475,
+        "densidade": 0.5933966530981456,
+        "numero_componentes": 1,
+        "maior_componente": 67,
+        "individuos_sem_contatos": 0
+      },
+      "assinatura_rede": "de68aae4e2207f40b507a9ddff4fa59730fdc74a87199447a7900a95c9ee4be4",
+      "sha256_csv": {
+        "componentes.csv": "c0bbf0d27f64cbc3d5ac1a173d223336a40a19cbfd7c7993b31b6c99f9de7a26",
+        "contatos.csv": "9d70ddac029c56efeb3d02a251b0f902a244f67d27f92a0af60d384b606bc950",
+        "distribuicao_graus.csv": "cd07da90b0c0323c3fc0407862e84de81cc4d12a2d9a7d44c4d3aa0bc207d5f5",
+        "graus.csv": "13890cc1326937d7a3619f9d5794eb17c2d31e5b94ab8c0142276ec92c74f015",
+        "individuos.csv": "4f10518df73dbc91b80a0cdc918cc656733e2e7facca2c0ed8e336103f869d1a"
+      },
+      "sha256_gerador": "11e9a50717dbb345d3f2843bb409cb79c568f2d7c00b0f8f86a69ec41012e35e",
+      "biblioteca_grafos": "implementacao_nativa_simulador",
+      "reimportacao_identica": true
+    },
+    {
+      "rede_id": "er_1007",
+      "metadados_geracao": {
+        "modelo": "erdos_renyi",
+        "parametros": {
+          "numero_individuos": 67,
+          "probabilidade_contato": 0.5992763455450023,
+          "peso": 1.0
+        },
+        "semente": 1007,
+        "versao_algoritmo": 1,
+        "detalhes_modelo": {}
+      },
+      "indicadores": {
+        "numero_individuos": 67,
+        "numero_contatos": 1335,
+        "grau_medio": 39.850746268656714,
+        "grau_minimo": 30,
+        "grau_maximo": 50,
+        "desvio_graus_populacional": 3.852712676215442,
+        "densidade": 0.6037991858887382,
+        "numero_componentes": 1,
+        "maior_componente": 67,
+        "individuos_sem_contatos": 0
+      },
+      "assinatura_rede": "4dfec428f1e30ae47ad40e972a7ce720149e76cd6ad2862dcce25cb150f3c05c",
+      "sha256_csv": {
+        "componentes.csv": "c0bbf0d27f64cbc3d5ac1a173d223336a40a19cbfd7c7993b31b6c99f9de7a26",
+        "contatos.csv": "7f1423ce61ca2b002a6cef63458e28de657419bd8755d125eb6f8ce19474f793",
+        "distribuicao_graus.csv": "8520d1e16ef964b897ceb0e0f9e2630a56b3416c3f452423e9a2d9dad0cf4422",
+        "graus.csv": "1c6445c1fce30939aaa7afca1c1a45215e1fd2998a13ad6480afd9e9e039992e",
+        "individuos.csv": "4f10518df73dbc91b80a0cdc918cc656733e2e7facca2c0ed8e336103f869d1a"
+      },
+      "sha256_gerador": "11e9a50717dbb345d3f2843bb409cb79c568f2d7c00b0f8f86a69ec41012e35e",
+      "biblioteca_grafos": "implementacao_nativa_simulador",
+      "reimportacao_identica": true
+    },
+    {
+      "rede_id": "er_1008",
+      "metadados_geracao": {
+        "modelo": "erdos_renyi",
+        "parametros": {
+          "numero_individuos": 67,
+          "probabilidade_contato": 0.5992763455450023,
+          "peso": 1.0
+        },
+        "semente": 1008,
+        "versao_algoritmo": 1,
+        "detalhes_modelo": {}
+      },
+      "indicadores": {
+        "numero_individuos": 67,
+        "numero_contatos": 1360,
+        "grau_medio": 40.59701492537314,
+        "grau_minimo": 32,
+        "grau_maximo": 49,
+        "desvio_graus_populacional": 3.6530898861368226,
+        "densidade": 0.6151062867480778,
+        "numero_componentes": 1,
+        "maior_componente": 67,
+        "individuos_sem_contatos": 0
+      },
+      "assinatura_rede": "44d6e4db11d95e32074f4ffc3f84bf7b81eced44ee6de1ddb38fee04eb8e3141",
+      "sha256_csv": {
+        "componentes.csv": "c0bbf0d27f64cbc3d5ac1a173d223336a40a19cbfd7c7993b31b6c99f9de7a26",
+        "contatos.csv": "804610c5c3c679c94f9ef5473c7ee92c4c8b97766f328f6177d73abf02c21d0e",
+        "distribuicao_graus.csv": "82fe758b8de74affe70e40b9ddbacb684fa588fe8587b1ff77652c63034ac6a5",
+        "graus.csv": "d2775f4b95067d402e3e732d4a4666c261a85d93f651661cc099d601ff3d7ef6",
+        "individuos.csv": "4f10518df73dbc91b80a0cdc918cc656733e2e7facca2c0ed8e336103f869d1a"
+      },
+      "sha256_gerador": "11e9a50717dbb345d3f2843bb409cb79c568f2d7c00b0f8f86a69ec41012e35e",
+      "biblioteca_grafos": "implementacao_nativa_simulador",
+      "reimportacao_identica": true
+    },
+    {
+      "rede_id": "er_1009",
+      "metadados_geracao": {
+        "modelo": "erdos_renyi",
+        "parametros": {
+          "numero_individuos": 67,
+          "probabilidade_contato": 0.5992763455450023,
+          "peso": 1.0
+        },
+        "semente": 1009,
+        "versao_algoritmo": 1,
+        "detalhes_modelo": {}
+      },
+      "indicadores": {
+        "numero_individuos": 67,
+        "numero_contatos": 1340,
+        "grau_medio": 40,
+        "grau_minimo": 29,
+        "grau_maximo": 51,
+        "desvio_graus_populacional": 4.200213214204265,
+        "densidade": 0.6060606060606061,
+        "numero_componentes": 1,
+        "maior_componente": 67,
+        "individuos_sem_contatos": 0
+      },
+      "assinatura_rede": "c6d22f37349bbe9754873b3481a6dcfaab94dbecc9a2a4386e1d6ebeb43c0c03",
+      "sha256_csv": {
+        "componentes.csv": "c0bbf0d27f64cbc3d5ac1a173d223336a40a19cbfd7c7993b31b6c99f9de7a26",
+        "contatos.csv": "0704123fcdf9c147831604b57bcf794414f80eb5d180f69bdcfd54206f72bb3a",
+        "distribuicao_graus.csv": "e0cf64e2947acbb347b0aad9bccb70676b8034f1ce7701f38cc7a723ada19380",
+        "graus.csv": "ed70d885c59a9fce426e4d717fd03922bcd87cdd2e8c3d8bb9d6fc6d8da584d1",
+        "individuos.csv": "4f10518df73dbc91b80a0cdc918cc656733e2e7facca2c0ed8e336103f869d1a"
+      },
+      "sha256_gerador": "11e9a50717dbb345d3f2843bb409cb79c568f2d7c00b0f8f86a69ec41012e35e",
+      "biblioteca_grafos": "implementacao_nativa_simulador",
+      "reimportacao_identica": true
+    },
+    {
+      "rede_id": "ba_2000",
+      "metadados_geracao": {
+        "modelo": "barabasi_albert",
+        "parametros": {
+          "numero_individuos": 67,
+          "contatos_por_novo_individuo": 24,
+          "peso": 1.0
+        },
+        "semente": 2000,
+        "versao_algoritmo": 1,
+        "detalhes_modelo": {
+          "tamanho_nucleo_inicial": 25
+        }
+      },
+      "indicadores": {
+        "numero_individuos": 67,
+        "numero_contatos": 1308,
+        "grau_medio": 39.04477611940298,
+        "grau_minimo": 24,
+        "grau_maximo": 56,
+        "desvio_graus_populacional": 9.69140692745174,
+        "densidade": 0.5915875169606513,
+        "numero_componentes": 1,
+        "maior_componente": 67,
+        "individuos_sem_contatos": 0
+      },
+      "assinatura_rede": "7df0c59505536615d04232e42536bd92cab66604cf2eaa3f5219edd1b7557dbe",
+      "sha256_csv": {
+        "componentes.csv": "c0bbf0d27f64cbc3d5ac1a173d223336a40a19cbfd7c7993b31b6c99f9de7a26",
+        "contatos.csv": "5add2ce15c51662c98092e001006f965449d3b5b133cc336cba16c376467a344",
+        "distribuicao_graus.csv": "a46dac3df9553eee8eb709a9ba7b05c1b51ca512b40de0bff08d6a95d74861a5",
+        "graus.csv": "dc479d3725adb20919a032a360a9dbc4d6467ca5990d878e8f7323f98f54c13f",
+        "individuos.csv": "4f10518df73dbc91b80a0cdc918cc656733e2e7facca2c0ed8e336103f869d1a"
+      },
+      "sha256_gerador": "11e9a50717dbb345d3f2843bb409cb79c568f2d7c00b0f8f86a69ec41012e35e",
+      "biblioteca_grafos": "implementacao_nativa_simulador",
+      "reimportacao_identica": true
+    },
+    {
+      "rede_id": "ba_2001",
+      "metadados_geracao": {
+        "modelo": "barabasi_albert",
+        "parametros": {
+          "numero_individuos": 67,
+          "contatos_por_novo_individuo": 24,
+          "peso": 1.0
+        },
+        "semente": 2001,
+        "versao_algoritmo": 1,
+        "detalhes_modelo": {
+          "tamanho_nucleo_inicial": 25
+        }
+      },
+      "indicadores": {
+        "numero_individuos": 67,
+        "numero_contatos": 1308,
+        "grau_medio": 39.04477611940298,
+        "grau_minimo": 24,
+        "grau_maximo": 56,
+        "desvio_graus_populacional": 10.726495074891357,
+        "densidade": 0.5915875169606513,
+        "numero_componentes": 1,
+        "maior_componente": 67,
+        "individuos_sem_contatos": 0
+      },
+      "assinatura_rede": "78334ae0454de1f8b02cc0dff2c6489b01f0cfd193514dc2305ac4a49ab4a769",
+      "sha256_csv": {
+        "componentes.csv": "c0bbf0d27f64cbc3d5ac1a173d223336a40a19cbfd7c7993b31b6c99f9de7a26",
+        "contatos.csv": "9897a476f6a74ae3cafc02343234190733a28df1d04c20539e6ffac791dc539f",
+        "distribuicao_graus.csv": "8ec94935d35a1428f946c98f80477624bf124683546c6edbef3a20b90c17c160",
+        "graus.csv": "d8565ee211b2e4a447d94928e00651750727bb0e75f8aac7441e020c8f1ef80b",
+        "individuos.csv": "4f10518df73dbc91b80a0cdc918cc656733e2e7facca2c0ed8e336103f869d1a"
+      },
+      "sha256_gerador": "11e9a50717dbb345d3f2843bb409cb79c568f2d7c00b0f8f86a69ec41012e35e",
+      "biblioteca_grafos": "implementacao_nativa_simulador",
+      "reimportacao_identica": true
+    },
+    {
+      "rede_id": "ba_2002",
+      "metadados_geracao": {
+        "modelo": "barabasi_albert",
+        "parametros": {
+          "numero_individuos": 67,
+          "contatos_por_novo_individuo": 24,
+          "peso": 1.0
+        },
+        "semente": 2002,
+        "versao_algoritmo": 1,
+        "detalhes_modelo": {
+          "tamanho_nucleo_inicial": 25
+        }
+      },
+      "indicadores": {
+        "numero_individuos": 67,
+        "numero_contatos": 1308,
+        "grau_medio": 39.04477611940298,
+        "grau_minimo": 24,
+        "grau_maximo": 58,
+        "desvio_graus_populacional": 10.559614471451994,
+        "densidade": 0.5915875169606513,
+        "numero_componentes": 1,
+        "maior_componente": 67,
+        "individuos_sem_contatos": 0
+      },
+      "assinatura_rede": "dbcc344a7d70e0779815430536c9464f0b9bd5001d411e1e9c39ac721f082280",
+      "sha256_csv": {
+        "componentes.csv": "c0bbf0d27f64cbc3d5ac1a173d223336a40a19cbfd7c7993b31b6c99f9de7a26",
+        "contatos.csv": "647818d094572a33bb93d16e1b9f5bdfb2bc8ec9c2745f10fddb380d4c5a7bc6",
+        "distribuicao_graus.csv": "62aa8b347bb77e0ff277e28334153ee0d5fe29de016eccc38fdcf3158d2009b9",
+        "graus.csv": "66da7e62f24b2f81a37183202296a19e0bd2a918768b1082dd42b1cc592e334b",
+        "individuos.csv": "4f10518df73dbc91b80a0cdc918cc656733e2e7facca2c0ed8e336103f869d1a"
+      },
+      "sha256_gerador": "11e9a50717dbb345d3f2843bb409cb79c568f2d7c00b0f8f86a69ec41012e35e",
+      "biblioteca_grafos": "implementacao_nativa_simulador",
+      "reimportacao_identica": true
+    },
+    {
+      "rede_id": "ba_2003",
+      "metadados_geracao": {
+        "modelo": "barabasi_albert",
+        "parametros": {
+          "numero_individuos": 67,
+          "contatos_por_novo_individuo": 24,
+          "peso": 1.0
+        },
+        "semente": 2003,
+        "versao_algoritmo": 1,
+        "detalhes_modelo": {
+          "tamanho_nucleo_inicial": 25
+        }
+      },
+      "indicadores": {
+        "numero_individuos": 67,
+        "numero_contatos": 1308,
+        "grau_medio": 39.04477611940298,
+        "grau_minimo": 24,
+        "grau_maximo": 57,
+        "desvio_graus_populacional": 10.69444385779314,
+        "densidade": 0.5915875169606513,
+        "numero_componentes": 1,
+        "maior_componente": 67,
+        "individuos_sem_contatos": 0
+      },
+      "assinatura_rede": "5c9ef953edcab1bf1ee88cd7f744c5e73a24b7d956f05f68400df442e8c02b0b",
+      "sha256_csv": {
+        "componentes.csv": "c0bbf0d27f64cbc3d5ac1a173d223336a40a19cbfd7c7993b31b6c99f9de7a26",
+        "contatos.csv": "dc774fb9dc2043027d5c6542a24d043e2a0233895dc815443a0552c182e45aeb",
+        "distribuicao_graus.csv": "4193ff7e09a2661ae07c0705f8de2cc3905a00f65ad9d2796d55eeb330f174f6",
+        "graus.csv": "53088fc4b7877f57bcd9e199be7cbea8d8bab8d599e7504306cd81691f63c821",
+        "individuos.csv": "4f10518df73dbc91b80a0cdc918cc656733e2e7facca2c0ed8e336103f869d1a"
+      },
+      "sha256_gerador": "11e9a50717dbb345d3f2843bb409cb79c568f2d7c00b0f8f86a69ec41012e35e",
+      "biblioteca_grafos": "implementacao_nativa_simulador",
+      "reimportacao_identica": true
+    },
+    {
+      "rede_id": "ba_2004",
+      "metadados_geracao": {
+        "modelo": "barabasi_albert",
+        "parametros": {
+          "numero_individuos": 67,
+          "contatos_por_novo_individuo": 24,
+          "peso": 1.0
+        },
+        "semente": 2004,
+        "versao_algoritmo": 1,
+        "detalhes_modelo": {
+          "tamanho_nucleo_inicial": 25
+        }
+      },
+      "indicadores": {
+        "numero_individuos": 67,
+        "numero_contatos": 1308,
+        "grau_medio": 39.04477611940298,
+        "grau_minimo": 24,
+        "grau_maximo": 57,
+        "desvio_graus_populacional": 10.739010816089461,
+        "densidade": 0.5915875169606513,
+        "numero_componentes": 1,
+        "maior_componente": 67,
+        "individuos_sem_contatos": 0
+      },
+      "assinatura_rede": "cf619af7da3ba9df2a8d3f803c232df36914a7990a7918907ba76fcdb0bb30dd",
+      "sha256_csv": {
+        "componentes.csv": "c0bbf0d27f64cbc3d5ac1a173d223336a40a19cbfd7c7993b31b6c99f9de7a26",
+        "contatos.csv": "df9752bfe4a8e8972e8c93749334c2135f2103c31751f0027b8bd57a5cf0bb23",
+        "distribuicao_graus.csv": "c6e3fcdf944a271f06c34a6d01e2a9778cdc8317b820173f004b875336316365",
+        "graus.csv": "60464a1c185d8714f60f4ce5a46f7f139ec424c28ce1c574493b99f8e3a489d6",
+        "individuos.csv": "4f10518df73dbc91b80a0cdc918cc656733e2e7facca2c0ed8e336103f869d1a"
+      },
+      "sha256_gerador": "11e9a50717dbb345d3f2843bb409cb79c568f2d7c00b0f8f86a69ec41012e35e",
+      "biblioteca_grafos": "implementacao_nativa_simulador",
+      "reimportacao_identica": true
+    },
+    {
+      "rede_id": "ba_2005",
+      "metadados_geracao": {
+        "modelo": "barabasi_albert",
+        "parametros": {
+          "numero_individuos": 67,
+          "contatos_por_novo_individuo": 24,
+          "peso": 1.0
+        },
+        "semente": 2005,
+        "versao_algoritmo": 1,
+        "detalhes_modelo": {
+          "tamanho_nucleo_inicial": 25
+        }
+      },
+      "indicadores": {
+        "numero_individuos": 67,
+        "numero_contatos": 1308,
+        "grau_medio": 39.04477611940298,
+        "grau_minimo": 24,
+        "grau_maximo": 58,
+        "desvio_graus_populacional": 10.481587033504146,
+        "densidade": 0.5915875169606513,
+        "numero_componentes": 1,
+        "maior_componente": 67,
+        "individuos_sem_contatos": 0
+      },
+      "assinatura_rede": "229ac2fc47aa5f7cd0f241821031f426e88cdc0c63a38a60b88f63ac8b3df69e",
+      "sha256_csv": {
+        "componentes.csv": "c0bbf0d27f64cbc3d5ac1a173d223336a40a19cbfd7c7993b31b6c99f9de7a26",
+        "contatos.csv": "d877ae44759aea227471fffd9854ea4235575223d40db4e65ae1169da066603d",
+        "distribuicao_graus.csv": "d0bb3898b94f6db7056bee614759fa4cb5a4cc87a55704f1d356f5d1769953c1",
+        "graus.csv": "991a0edd4012ff202e6ac9d27bc9867093b5a9984aed76658c416ae48acaa853",
+        "individuos.csv": "4f10518df73dbc91b80a0cdc918cc656733e2e7facca2c0ed8e336103f869d1a"
+      },
+      "sha256_gerador": "11e9a50717dbb345d3f2843bb409cb79c568f2d7c00b0f8f86a69ec41012e35e",
+      "biblioteca_grafos": "implementacao_nativa_simulador",
+      "reimportacao_identica": true
+    },
+    {
+      "rede_id": "ba_2006",
+      "metadados_geracao": {
+        "modelo": "barabasi_albert",
+        "parametros": {
+          "numero_individuos": 67,
+          "contatos_por_novo_individuo": 24,
+          "peso": 1.0
+        },
+        "semente": 2006,
+        "versao_algoritmo": 1,
+        "detalhes_modelo": {
+          "tamanho_nucleo_inicial": 25
+        }
+      },
+      "indicadores": {
+        "numero_individuos": 67,
+        "numero_contatos": 1308,
+        "grau_medio": 39.04477611940298,
+        "grau_minimo": 24,
+        "grau_maximo": 58,
+        "desvio_graus_populacional": 10.515706569288152,
+        "densidade": 0.5915875169606513,
+        "numero_componentes": 1,
+        "maior_componente": 67,
+        "individuos_sem_contatos": 0
+      },
+      "assinatura_rede": "916abe5f79387e89542be7e740bedc237ea691f78404c85c1dca61b8fe31a033",
+      "sha256_csv": {
+        "componentes.csv": "c0bbf0d27f64cbc3d5ac1a173d223336a40a19cbfd7c7993b31b6c99f9de7a26",
+        "contatos.csv": "6b0a13bf3bf134cb5b805863153fffb6be74952a10a770428695b29d73891502",
+        "distribuicao_graus.csv": "5dd157f9ca857167b147619cc4db0e39d7f0189cf831b0e0db5e02b6a2494191",
+        "graus.csv": "b47734825f6ed4324f1707f2fb9bd48ac77115b9aa38397b1cb408db6308fac4",
+        "individuos.csv": "4f10518df73dbc91b80a0cdc918cc656733e2e7facca2c0ed8e336103f869d1a"
+      },
+      "sha256_gerador": "11e9a50717dbb345d3f2843bb409cb79c568f2d7c00b0f8f86a69ec41012e35e",
+      "biblioteca_grafos": "implementacao_nativa_simulador",
+      "reimportacao_identica": true
+    },
+    {
+      "rede_id": "ba_2007",
+      "metadados_geracao": {
+        "modelo": "barabasi_albert",
+        "parametros": {
+          "numero_individuos": 67,
+          "contatos_por_novo_individuo": 24,
+          "peso": 1.0
+        },
+        "semente": 2007,
+        "versao_algoritmo": 1,
+        "detalhes_modelo": {
+          "tamanho_nucleo_inicial": 25
+        }
+      },
+      "indicadores": {
+        "numero_individuos": 67,
+        "numero_contatos": 1308,
+        "grau_medio": 39.04477611940298,
+        "grau_minimo": 24,
+        "grau_maximo": 55,
+        "desvio_graus_populacional": 10.351195526627563,
+        "densidade": 0.5915875169606513,
+        "numero_componentes": 1,
+        "maior_componente": 67,
+        "individuos_sem_contatos": 0
+      },
+      "assinatura_rede": "55adf2034683ac71935aa35498986e5cf83defde27cbea0fd024f5ce7e01437d",
+      "sha256_csv": {
+        "componentes.csv": "c0bbf0d27f64cbc3d5ac1a173d223336a40a19cbfd7c7993b31b6c99f9de7a26",
+        "contatos.csv": "e7962214864f9e0137e80056df1b8d7d564fa7988eab22c53cea90cf8136e803",
+        "distribuicao_graus.csv": "4fc024db709406b0bad265c53352b977ece86484bfe05351e85097054bb65968",
+        "graus.csv": "8807a542aa3601c2bf7ccf9e5523a1a8f5c46e9925f7b3836acabdb951c25739",
+        "individuos.csv": "4f10518df73dbc91b80a0cdc918cc656733e2e7facca2c0ed8e336103f869d1a"
+      },
+      "sha256_gerador": "11e9a50717dbb345d3f2843bb409cb79c568f2d7c00b0f8f86a69ec41012e35e",
+      "biblioteca_grafos": "implementacao_nativa_simulador",
+      "reimportacao_identica": true
+    },
+    {
+      "rede_id": "ba_2008",
+      "metadados_geracao": {
+        "modelo": "barabasi_albert",
+        "parametros": {
+          "numero_individuos": 67,
+          "contatos_por_novo_individuo": 24,
+          "peso": 1.0
+        },
+        "semente": 2008,
+        "versao_algoritmo": 1,
+        "detalhes_modelo": {
+          "tamanho_nucleo_inicial": 25
+        }
+      },
+      "indicadores": {
+        "numero_individuos": 67,
+        "numero_contatos": 1308,
+        "grau_medio": 39.04477611940298,
+        "grau_minimo": 24,
+        "grau_maximo": 59,
+        "desvio_graus_populacional": 10.39579828415321,
+        "densidade": 0.5915875169606513,
+        "numero_componentes": 1,
+        "maior_componente": 67,
+        "individuos_sem_contatos": 0
+      },
+      "assinatura_rede": "86ab6484ef923a6c370956c8cdfc3459ed3d52c39d10ecc68bf0034f8d90392f",
+      "sha256_csv": {
+        "componentes.csv": "c0bbf0d27f64cbc3d5ac1a173d223336a40a19cbfd7c7993b31b6c99f9de7a26",
+        "contatos.csv": "815b81cbec397bb31fe7880eb8fb30583f57c2d91de30da483aa7f696c52d61c",
+        "distribuicao_graus.csv": "9d10785d9e6183c69b0854e11d4e774049353e6babaed13c058247124bc595a2",
+        "graus.csv": "0a811f898f86141d9d0b2e23f79488b263ef2f5000cc5ce0d3ecc049af72f02b",
+        "individuos.csv": "4f10518df73dbc91b80a0cdc918cc656733e2e7facca2c0ed8e336103f869d1a"
+      },
+      "sha256_gerador": "11e9a50717dbb345d3f2843bb409cb79c568f2d7c00b0f8f86a69ec41012e35e",
+      "biblioteca_grafos": "implementacao_nativa_simulador",
+      "reimportacao_identica": true
+    },
+    {
+      "rede_id": "ba_2009",
+      "metadados_geracao": {
+        "modelo": "barabasi_albert",
+        "parametros": {
+          "numero_individuos": 67,
+          "contatos_por_novo_individuo": 24,
+          "peso": 1.0
+        },
+        "semente": 2009,
+        "versao_algoritmo": 1,
+        "detalhes_modelo": {
+          "tamanho_nucleo_inicial": 25
+        }
+      },
+      "indicadores": {
+        "numero_individuos": 67,
+        "numero_contatos": 1308,
+        "grau_medio": 39.04477611940298,
+        "grau_minimo": 24,
+        "grau_maximo": 55,
+        "desvio_graus_populacional": 9.86389895334587,
+        "densidade": 0.5915875169606513,
+        "numero_componentes": 1,
+        "maior_componente": 67,
+        "individuos_sem_contatos": 0
+      },
+      "assinatura_rede": "6aaeb84150eca8ce4573cab4f054d9031ecd896fecf66c49222521659c89d8e7",
+      "sha256_csv": {
+        "componentes.csv": "c0bbf0d27f64cbc3d5ac1a173d223336a40a19cbfd7c7993b31b6c99f9de7a26",
+        "contatos.csv": "6a776edd1b663627b14cc18a508b1c7bdc7141f81068187dba453d786784e5b3",
+        "distribuicao_graus.csv": "7e4aaad725ccda876fc6f4641f0aa466adb305b5a35ed98ba59d3c17035e037a",
+        "graus.csv": "98a5ced9b5a7b6b50ba343ba79a4d6bae506d250f53c9ff3b14f2bad1ccf3f85",
+        "individuos.csv": "4f10518df73dbc91b80a0cdc918cc656733e2e7facca2c0ed8e336103f869d1a"
+      },
+      "sha256_gerador": "11e9a50717dbb345d3f2843bb409cb79c568f2d7c00b0f8f86a69ec41012e35e",
+      "biblioteca_grafos": "implementacao_nativa_simulador",
+      "reimportacao_identica": true
+    }
+  ]
+}

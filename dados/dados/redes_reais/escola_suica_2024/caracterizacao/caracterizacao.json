@@ -5,7 +5,7 @@
     "inicio": "2024-01-22",
     "fim": "2024-03-08"
   },
-  "calculado_em_utc": "2026-11-21T23:01:24.476939+00:00",
+  "calculado_em_utc": "2026-11-22T10:33:25.941226+00:00",
   "python": "3.13.3",
   "representacao": "União estática dos pares com duração > 0, ambos presentes e com movimento > 0; sem imputação. Peso 1.",
   "indicadores": {
@@ -30,7 +30,7 @@
     67
   ],
   "sha256_entradas": {
-    "manifesto.json": "8c9e27d53f450fba10cbe5e307bf68facd3b548bf5a01eb9bfe690d578a3f941",
+    "manifesto.json": "f062c31d82a0107edb38ab16fc602b09f9b46cef3e4adcac20fe35fa196a29a7",
     "contatos.csv": "039c17357fab1b5f5101d13837a5d8c0e2256fc40bc3e6fd05d84e2fded37188",
     "duracoes_observadas.csv": "1753703b00a5431271a446c25daa4772c147191e57054fdb829b4db285fe9829",
     "individuos.csv": "4f10518df73dbc91b80a0cdc918cc656733e2e7facca2c0ed8e336103f869d1a",
@@ -40,7 +40,7 @@
     "src/simulador/analise_estrutural.py": "57c7c406d80e9e5d9d6ee5518814478bf779c16f699e97a166ec31c94c06d278",
     "src/simulador/rede_contatos.py": "d820ce69f21e6ece33886eeae15150f7dbc1699637983c506760b8abf8e35a10",
     "src/simulador/importacao.py": "ee7f498b3f34a5e4f3396db3ee5161e7f90f6c7649f9c0759abd55cb621fe288",
-    "scripts/caracterizar_rede_real.py": "d330022b72f92382b1bf51d10c1ab90cb5924fdb54b1b747f0243019d04e9f34"
+    "scripts/caracterizar_rede_real.py": "ddacbe35e94ebc58f1b7cf928a19087e9a4ab7e76e8aff2003415bfe19b11c52"
   },
   "verificacoes": {
     "soma_graus_igual_2m": true,

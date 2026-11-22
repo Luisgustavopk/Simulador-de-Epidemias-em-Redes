@@ -47,7 +47,7 @@ PYTHONPATH=src python3 scripts/caracterizar_rede_real.py --graficos
 PYTHONPATH=src python3 scripts/caracterizar_rede_real.py --saida /tmp/caracterizacao-escola
 ```
 
-O [script](../../../../scripts/caracterizar_rede_real.py) verifica os hashes dos CSVs contra o manifesto antes de importar. Reutiliza `resumir_rede()`, `RedeContatos.grau()` e `componentes_conexas()`; esta última percorre a rede com BFS. O cálculo não depende de bibliotecas de grafos. ReportLab é usado somente na exportação opcional do desenho, sem alteração das dependências da aplicação.
+O [script](../../../../../scripts/caracterizar_rede_real.py) verifica os hashes dos CSVs contra o manifesto antes de importar. Reutiliza `resumir_rede()`, `RedeContatos.grau()` e `componentes_conexas()`; esta última percorre a rede com BFS. O cálculo não depende de bibliotecas de grafos. ReportLab é usado somente na exportação opcional do desenho, sem alteração das dependências da aplicação.
 
 Os CSVs são determinísticos. O horário do JSON muda em novas execuções. PDF e SVG foram reproduzidos com hashes idênticos no ambiente registrado. A [conferência independente](../../evidencias/caracterizacao-estrutural.json) conta os extremos dos CSVs e calcula componentes por união de conjuntos, além de verificar os arquivos exportados. Os 53 testes existentes de análise estrutural passaram.
 

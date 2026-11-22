@@ -138,10 +138,87 @@ def test_intervencao_futura_nao_antecipa_isolamento_nem_recupera_no_limite():
 
     resultado = Simulacao(rede, configuracao).executar()
 
-    assert [registro.isolados for registro in resultado.historico] == [0, 0, 1, 1]
+    assert [registro.isolados for registro in resultado.historico] == [0, 1, 1, 1]
     assert resultado.motivo_termino == 'limite_passos'
     assert resultado.historico[-1].infectados == 1
     assert resultado.historico[-1].recuperados == 0
+
+
+@pytest.mark.parametrize("mecanismo", list(MecanismoIsolamento))
+@pytest.mark.parametrize("legada", [False, True])
+def test_intervencao_em_um_consta_no_registro_e_bloqueia_proxima_transicao(
+    mecanismo: MecanismoIsolamento, legada: bool,
+) -> None:
+    from simulador.aleatoriedade import GeradorAleatorio
+    from simulador.configuracao import aplicar_condicoes_iniciais
+    from simulador.estrategias_isolamento import preparar_estrategia
+    from simulador.motor_sir import MotorSIR
+
+    rede = RedeContatos()
+    for identificador in range(3):
+        rede.adicionar_individuo(Individuo(identificador))
+    rede.adicionar_contato(0, 1)
+    rede.adicionar_contato(1, 2)
+    configuracao = ConfiguracaoSimulacao(
+        1.0, 0.0, 42, 43, 44, 3, 1, (0,),
+        intervencao=ConfiguracaoIntervencao(
+            "grau", 0.34, 1, mecanismo,
+            reducao=1.0 if mecanismo is MecanismoIsolamento.REDUCAO else None,
+        ),
+    )
+    if legada:
+        aplicar_condicoes_iniciais(rede, configuracao, 1)
+        estrategia = preparar_estrategia(rede, configuracao, revisao_rede=1)
+        simulacao = Simulacao(rede, limite_passos=3)
+    else:
+        simulacao = Simulacao(rede, configuracao)
+    registro_inicial = simulacao.registros[0]
+
+    if legada:
+        historico = simulacao.executar_motor(
+            MotorSIR(GeradorAleatorio(42)), configuracao, 1, estrategia,
+        )
+    else:
+        historico = simulacao.executar().historico
+
+    assert historico == (
+        RegistroPasso(0, 2, 1, 0, 0),
+        RegistroPasso(1, 1, 2, 0, 1),
+        RegistroPasso(2, 1, 2, 0, 1),
+        RegistroPasso(3, 1, 2, 0, 1),
+    )
+    assert historico[0] is registro_inicial
+    assert [p.id for p in simulacao.rede.individuos if p.isolamento] == [1]
+
+
+@pytest.mark.parametrize("mecanismo", list(MecanismoIsolamento))
+@pytest.mark.parametrize("estrategia", ["grau", "aleatoria"])
+def test_sem_infectados_nao_aplica_intervencao_em_zero(
+    mecanismo: MecanismoIsolamento, estrategia: str,
+) -> None:
+    rede = RedeContatos()
+    rede.adicionar_individuo(Individuo(0))
+    rede.adicionar_individuo(Individuo(1))
+    rede.adicionar_contato(0, 1, peso=0.8)
+    configuracao = ConfiguracaoSimulacao(
+        1.0, 0.0, 42, 43, 44, 3, 1, (),
+        intervencao=ConfiguracaoIntervencao(
+            estrategia, 1.0, 0, mecanismo,
+            reducao=0.5 if mecanismo is MecanismoIsolamento.REDUCAO else None,
+        ),
+    )
+    simulacao = Simulacao(rede, configuracao)
+
+    resultado = simulacao.executar()
+
+    assert resultado.historico == (RegistroPasso(0, 2, 0, 0, 0),)
+    assert resultado.motivo_termino == "extincao"
+    assert simulacao.executar_passo() is resultado.historico[0]
+    assert not any(p.isolamento for p in simulacao.rede.individuos)
+    contato = simulacao.rede.obter_contato(0, 1)
+    assert contato.ativa and contato.peso == 0.8
+    assert simulacao.inicializar() == list(resultado.historico)
+    assert simulacao.executar().historico == resultado.historico
 
 
 @pytest.fixture
@@ -227,7 +304,7 @@ def test_avanco_manual_aplica_intervencao_no_inicio_do_passo(inicio: int) -> Non
         simulacao.executar_passo()
 
     assert [registro.isolados for registro in simulacao.registros] == [
-        int(inicio == 0 or passo > inicio) for passo in range(5)
+        int(passo >= inicio) for passo in range(5)
     ]
     assert simulacao.passo == 4
     assert all(registro.infectados == 1 for registro in simulacao.registros)

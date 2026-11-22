@@ -12,3 +12,20 @@ dist/
 
 # Arquivos intermediários de geração e revisão da documentação.
 /tmp/documentacao/
+
+# Área local de redação e gerenciamento do artigo LaTeX.
+/gerenciamento-latex/
+
+# Exportações regeneráveis do bloco A; pacote de lotes, hash e resumos ficam no Git.
+# Restaurar localmente: PYTHONPATH=src python3 scripts/restaurar_artefatos_topologia.py
+/dados/dados/experimentos/topologia-v1/caracterizacao/
+/dados/dados/experimentos/topologia-v1/metricas.csv
+/dados/dados/experimentos/topologia-v1/diferencas_pareadas.csv
+/dados/dados/experimentos/topologia-v1/curvas_medias_por_rede.csv
+/dados/dados/experimentos/topologia-v1/historicos.csv.gz
+/dados/dados/experimentos/topologia-v1/execucao.log
+/dados/dados/experimentos/topologia-v1/lotes/
+
+# Os controles são reproduzidos pelas sementes e conferidos pelo inventário preservado.
+/dados/dados/redes_sinteticas/controles-etapa3-v1/er_*/
+/dados/dados/redes_sinteticas/controles-etapa3-v1/ba_*/

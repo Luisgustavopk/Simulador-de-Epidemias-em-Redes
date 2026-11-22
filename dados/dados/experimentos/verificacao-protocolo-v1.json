@@ -1,7 +1,7 @@
 {
   "conferido_em_utc": "2026-11-21T23:17:40.775816+00:00",
   "protocolo": "etapa3-base-v1",
-  "sha256_protocolo": "10cec077ac22299e6c643bc7a206858d923e98ee2aaef25dbcc6e693b27f327b",
+  "sha256_protocolo": "79059147a1db4d815e845c25df625da037b2867130a1df148556bea95dfd485e",
   "resultado": "aprovado",
   "lotes": 33,
   "configuracoes_repeticao_validadas": 3300,
@@ -15,5 +15,10 @@
     "arestas": 1308
   },
   "epidemias_executadas": false,
-  "redes_sinteticas_geradas": false
+  "redes_sinteticas_geradas": false,
+  "reconferido_em_data_local": "2026-11-22",
+  "reconferido_em_utc": "2026-11-22T10:35:32.975776+00:00",
+  "pasta_dados": "dados/dados/",
+  "lotes_validados_no_contrato_api": 33,
+  "simulacoes_executadas_na_validacao_api": 0
 }

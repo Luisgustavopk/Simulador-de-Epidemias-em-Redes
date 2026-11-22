@@ -121,6 +121,38 @@ def test_execucao_comparada_retorna_todos_cenarios_e_historicos(servico, campos)
 
 
 @pytest.mark.parametrize('comparar', [False, True])
+@pytest.mark.parametrize('ids,inicio,isolados', [
+    (['0'], '1', [0, 1, 1, 1]),
+    ([], '0', [0]),
+])
+def test_api_registra_isolamento_no_instante_e_respeita_extincao(
+    servico, campos, comparar, ids, inicio, isolados,
+):
+    configuracao = {
+        **campos, 'beta': '0', 'gamma': '0', 'limite_passos': '3',
+        'modo_iniciais': 'ids', 'ids_infectados_iniciais': ids,
+        'intervencao': {**campos['intervencao'], 'inicio': inicio},
+    }
+    configuracao.pop('quantidade_infectados')
+
+    resultado = atender(
+        servico, 'POST',
+        '/api/rede/comparacao/executar' if comparar else '/api/rede/simulacao/executar',
+        {}, {'configuracao': configuracao, 'repeticoes': '2'} if comparar else configuracao,
+    )
+
+    execucoes = resultado['execucoes'] if comparar else [resultado]
+    for execucao in execucoes:
+        esperado = (
+            [0] * len(isolados)
+            if execucao.get('cenario') == 'sem_intervencao' else isolados
+        )
+        assert [r['isolados'] for r in execucao['historico']] == esperado
+        assert [r['passo'] for r in execucao['historico']] == list(range(len(esperado)))
+        assert execucao['motivo_termino'] == ('limite_passos' if ids else 'extincao')
+
+
+@pytest.mark.parametrize('comparar', [False, True])
 def test_manifestos_preservam_ids_grandes_como_texto(campos, comparar):
     servico = ServicoCargaRede()
     identificador = '9007199254740993'

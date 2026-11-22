@@ -1,6 +1,6 @@
 {
   "base": "escola_suica_2024",
-  "preparado_em_utc": "2026-11-21T22:50:22.531396+00:00",
+  "preparado_em_utc": "2026-11-22T10:33:25.831555+00:00",
   "python": "3.13.3",
   "fonte": {
     "titulo": "Contatos presenciais em uma escola secundária de Berna",
@@ -46,7 +46,7 @@
     }
   ],
   "sha256_catalogo": "abefc8c9fe95bb557acf0c05f537638e164f91e3a291e5f6bad710fa361a9882",
-  "sha256_preparador": "e4d14a68404d460a0da98dc2f0a275b9d5547f2c26ae476952a101c5bed73bfa",
+  "sha256_preparador": "9dce17700d582cd10cd55ee98721a0b2237d7a02a79aed9e397c7150dac8f70c",
   "preparacao": {
     "linhas_lidas": 87932,
     "duracao_ausente": 36392,

@@ -26,4 +26,4 @@ Para repetir a partir da raiz, com as dependências existentes do frontend, Chro
 node scripts/verificar_base_escola_interface.mjs
 ```
 
-O [script](../../../../scripts/verificar_base_escola_interface.mjs) abre os arquivos pelo controle de upload do navegador e aciona os botões da interface. As consultas GET posteriores conferem os valores; a importação e a confirmação são feitas pelos controles. Ao concluir, encerra apenas os processos que iniciou. A conferência cobre a vista desktop registrada, sem representar um teste de desempenho, de dispositivos móveis ou de todos os navegadores.
+O [script](../../../../../scripts/verificar_base_escola_interface.mjs) abre os arquivos pelo controle de upload do navegador e aciona os botões da interface. As consultas GET posteriores conferem os valores; a importação e a confirmação são feitas pelos controles. Ao concluir, encerra apenas os processos que iniciou. A conferência cobre a vista desktop registrada, sem representar um teste de desempenho, de dispositivos móveis ou de todos os navegadores.

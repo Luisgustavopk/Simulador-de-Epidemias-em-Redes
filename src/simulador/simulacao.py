@@ -177,8 +177,9 @@ class Simulacao:
             self._estrategia = preparar_estrategia(
                 self.rede, self.configuracao, revisao_rede=revisao,
             )
-            self._aplicar_intervencao(self.configuracao, self._estrategia)
-        self.registrar_estado_atual()
+        self.registrar_estado_atual(
+            configuracao=self.configuracao, estrategia=self._estrategia,
+        )
         return list(self.historico)
 
     def contar_estados(self) -> tuple[int, int, int, int]:
@@ -201,9 +202,20 @@ class Simulacao:
 
         return suscetiveis, infectados, recuperados, isolados
 
-    def registrar_estado_atual(self) -> RegistroPasso:
-        """Cria e adiciona o RegistroPasso correspondente ao passo atual."""
+    def registrar_estado_atual(
+        self, *, configuracao: object = None, estrategia: object = None,
+    ) -> RegistroPasso:
+        """Registra o instante, preparando a intervenção se ainda pode avançar.
+
+        Sem os componentes opcionais, apenas registra o estado da rede.
+        Com eles, aplica a intervenção antes do registro, salvo em extinção
+        ou no limite. Cada instante do fluxo de execução é registrado uma vez.
+        """
         s, i, r, isolados = self.contar_estados()
+        if configuracao is not None and i > 0 and self.passo < self.limite_passos:
+            # O mecanismo preserva SIR; a seleção informa o acréscimo em Q
+            # sem exigir uma segunda contagem da população.
+            isolados += self._aplicar_intervencao(configuracao, estrategia)
         registro = RegistroPasso(
             passo=self.passo_atual,
             suscetiveis=s,
@@ -232,10 +244,14 @@ class Simulacao:
             )
         return self._avancar_relogio()
 
-    def _avancar_relogio(self) -> RegistroPasso:
+    def _avancar_relogio(
+        self, configuracao: object = None, estrategia: object = None,
+    ) -> RegistroPasso:
         self._resultado = None
         self.passo_atual += 1
-        return self.registrar_estado_atual()
+        return self.registrar_estado_atual(
+            configuracao=configuracao, estrategia=estrategia,
+        )
 
     def avancar(self) -> RegistroPasso:
         return self.executar_passo()
@@ -283,14 +299,13 @@ class Simulacao:
         revisao_rede: int,
         estrategia: object,
     ) -> RegistroPasso:
-        if self.passo > 0:
-            self._aplicar_intervencao(configuracao, estrategia)
         motor.avancar(
             self.rede, configuracao, self.passo, revisao_rede=revisao_rede,
         )
-        return self._avancar_relogio()
+        return self._avancar_relogio(configuracao, estrategia)
 
-    def _aplicar_intervencao(self, configuracao: object, estrategia: object) -> None:
+    def _aplicar_intervencao(self, configuracao: object, estrategia: object) -> int:
+        """Aplica a intervenção devida e devolve o número de novos isolados."""
         intervencao = configuracao.intervencao
         if (
             intervencao is not None
@@ -298,13 +313,15 @@ class Simulacao:
             and estrategia is not None
         ):
             quantidade = intervencao.quantidade_isolados(self.rede.numero_individuos)
-            aplicar_isolamento(
+            resultado = aplicar_isolamento(
                 self.rede,
                 estrategia.selecionar(self.rede, quantidade),
                 intervencao.mecanismo,
                 orcamento=quantidade,
                 reducao=intervencao.reducao,
             )
+            return len(resultado.ids_selecionados)
+        return 0
 
     def getPassoAtual(self) -> int:
         return self.passo_atual

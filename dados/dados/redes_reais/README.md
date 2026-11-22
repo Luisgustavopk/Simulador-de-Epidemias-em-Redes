@@ -6,7 +6,7 @@ A base real principal escolhida é a rede de contatos presenciais da escola de B
 | --- | --- | ---: | ---: | --- |
 | [Escola suíça](escola_suica_2024/) | Berna, Suíça; 22/01 a 08/03/2024; publicação de 2025 | 67 | 1.325 | Base real principal para a bateria epidemiológica |
 
-A base passou pelo importador Python e pelo serviço de carga usado pela interface, incluindo a confirmação da rede. Os resultados estão no manifesto da pasta escolar. A carga também foi conferida na Tela 01 com o Chrome, incluindo Mapa, 3D, inspeção e confirmação; as [evidências do navegador](evidencias/interface-escola/README.md) registram o percurso. Não houve execução de epidemias.
+A base passou pelo importador Python e pelo serviço de carga usado pela interface, incluindo a confirmação da rede. Os resultados estão no manifesto da pasta escolar. A carga também foi conferida na Tela 01 com o Chrome, incluindo Mapa, 3D, inspeção e confirmação; as [evidências do navegador](evidencias/interface-escola/README.md) registram o percurso. Essa conferência no navegador não executou epidemias. O [bloco A de topologias](../experimentos/topologia-v1/README.md) foi executado depois, em 22/11/2026, com a rede completa.
 
 ## Critérios de seleção e preferência por PT-BR
 
@@ -59,7 +59,7 @@ No Python, a partir da raiz do projeto:
 PYTHONPATH=src python3 - <<'PY'
 from simulador import importar_rede_csv
 
-pasta = "dados/redes_reais/escola_suica_2024"
+pasta = "dados/dados/redes_reais/escola_suica_2024"
 rede = importar_rede_csv(
     f"{pasta}/contatos.csv",
     arquivo_individuos=f"{pasta}/individuos.csv",
@@ -70,7 +70,7 @@ PY
 
 ## Reproduzir e conferir
 
-O [preparador](../../scripts/preparar_redes_reais.py) usa somente a biblioteca padrão e o próprio simulador. O arquivo original é preservado localmente em `originais/escola_suica_2024/`, ignorado pelo Git. Os CSVs preparados e o manifesto ficam em `escola_suica_2024/`; o catálogo [fontes.json](fontes.json) registra a seleção.
+O [preparador](../../../scripts/preparar_redes_reais.py) usa somente a biblioteca padrão e o próprio simulador. O arquivo original é preservado localmente em `originais/escola_suica_2024/`, ignorado pelo Git. Os CSVs preparados e o manifesto ficam em `escola_suica_2024/`; o catálogo [fontes.json](fontes.json) registra a seleção.
 
 ```bash
 # Base real principal: baixa as fontes ausentes.
@@ -108,6 +108,6 @@ PYTHONPATH=src python3 scripts/caracterizar_rede_real.py --graficos
 
 ## Protocolo definido e próximas execuções
 
-O usuário delegou a configuração-base em 21/11/2026. O [protocolo etapa3-base-v1](../experimentos/README.md) adota a janela completa de 22/01 a 08/03/2024 e peso unitário, β = 0,005, γ = 0,10, três infectados iniciais, 200 transições e 100 repetições por lote. A grade prevê a escola e vinte controles sintéticos, com sementes e condições registradas no JSON. O [aviso ao integrante B](../../docs/implementacao/Aviso-IntegranteB-Etapa3.md) reúne os cuidados de execução e análise.
+O usuário delegou a configuração-base em 21/11/2026. O [protocolo etapa3-base-v1](../experimentos/README.md) adota a janela completa de 22/01 a 08/03/2024 e peso unitário, β = 0,005, γ = 0,10, três infectados iniciais, 200 transições e 100 repetições por lote. A grade prevê a escola e vinte controles sintéticos, com sementes e condições registradas no JSON. O [aviso ao integrante B](../../../docs/implementacao/Aviso-IntegranteB-Etapa3.md) reúne os cuidados de execução e análise.
 
-A preparação, a importação, a caracterização e a conferência no navegador estão concluídas. Os controles ainda precisam ser gerados e caracterizados; a campanha, a instrumentação e suas medições permanecem por executar. As condições agora estão definidas e não devem ser tratadas como valores pendentes. A caracterização continua válida para esta projeção; mudanças na janela ou nos critérios de contato exigirão outra preparação e novo cálculo.
+A preparação, a importação, a caracterização e a conferência no navegador estão concluídas. Os [vinte controles](../redes_sinteticas/controles-etapa3-v1/README.md) foram gerados e caracterizados. O [bloco A](../experimentos/topologia-v1/README.md) concluiu 21 lotes e 6.300 trajetórias. Restam os blocos B/C/D e as medições de desempenho, conforme o [estado atual](../experimentos/estado-etapa3.json). As condições agora estão definidas e não devem ser tratadas como valores pendentes. A caracterização continua válida para esta projeção; mudanças na janela ou nos critérios de contato exigirão outra preparação e novo cálculo.

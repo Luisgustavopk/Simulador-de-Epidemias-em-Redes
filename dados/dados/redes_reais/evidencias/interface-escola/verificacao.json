@@ -1,5 +1,5 @@
 {
-  "conferido_em_utc": "2026-11-21T23:15:04.697Z",
+  "conferido_em_utc": "2026-11-22T10:33:28.072Z",
   "resultado": "aprovado",
   "navegador": {
     "protocolVersion": "1.3",
@@ -9,7 +9,7 @@
     "jsVersion": "15.8.62.31"
   },
   "node": "v24.22.1",
-  "revisao_codigo": "4326133702c0ca46bf0696e2529de8980d42e74d",
+  "revisao_codigo": "4ab90f7964373d98ab7bc8512f3d64024f316d87",
   "inclui_alteracoes_locais": true,
   "viewport": {
     "largura": 1440,
@@ -213,7 +213,7 @@
       ]
     },
     "interpretacao_pesos": "intensidade_normalizada_em_0_1",
-    "contexto_rede": "5dbe2fccd9b648f9937fff08f3831406"
+    "contexto_rede": "5a4921df889c4c3ca5131ebd2efa3e42"
   },
   "requisicoes": [
     {
@@ -331,13 +331,7 @@
   "ajuste_necessario": false,
   "epidemias_executadas": false,
   "inspecao_visual_concluida": true,
-  "inspecao_visual": "Mapa, 3D, medidas/inspeção e confirmação conferidos sem recorte de controles; página completa preservada.",
-  "sha256_script": "dcc8c588c0178e8cad7e46a35e63b6f4d78200e00decc7816e031084b3915c38",
-  "sha256_fontes": {
-    "src/simulador/api_local.py": "9c0e58e1715e6eeea16a8e5d5948f1e2b7b8a4da67b276a2499e5b3aacf3de78",
-    "src/simulador/carga_rede.py": "97a98ab9acc6fea4264fd2d322356188f3d6c2655306b551f017c42ca7395e87",
-    "frontend/src/pages/NetworkPage.tsx": "48df7ee36bdffbe39aad3ec0df2f5364437b4db4f6980390c8252c30f0e19be6",
-    "frontend/src/features/rede/components/NetworkSource.tsx": "db64b359c08a99ce983c9102d2c00a90000b876193e82d3d29cfb52a78f65900",
-    "frontend/src/features/rede/visualizacao/NetworkScene.tsx": "e87770999006662a08f1dcfe6be669e1d29599bf06df18f179c3ede373a8bb08"
-  }
+  "localizacao_dados": "dados/dados/",
+  "data_reconferencia_local": "2026-11-22",
+  "sha256_script": "522cd0da3fae56fff4219ac197abf1fb99a966ac924128bf064d808024675198"
 }

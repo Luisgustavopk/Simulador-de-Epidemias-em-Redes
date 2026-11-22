@@ -31,13 +31,13 @@
     "entrada_com_hash_alterado_rejeitada": true
   },
   "graficos_inspecionados_visualmente": true,
-  "sha256_caracterizacao_json": "25bb37bd6d1a14e830fa1c2d6c6564c12e9f8c9da5b7b6b11529ede0bd85052b",
+  "sha256_caracterizacao_json": "f0cbd3f6947b0500de563df4b2b9b80602568725e5aa2b54e8c6f8e80374cab0",
   "sha256_entradas": {
-    "individuos.csv": "4f10518df73dbc91b80a0cdc918cc656733e2e7facca2c0ed8e336103f869d1a",
-    "mapa_ids.csv": "5edcecab590a1d59c4f44307ec21751a66a0000ea93df1a370828ea6909b2cb8",
+    "manifesto.json": "f062c31d82a0107edb38ab16fc602b09f9b46cef3e4adcac20fe35fa196a29a7",
     "contatos.csv": "039c17357fab1b5f5101d13837a5d8c0e2256fc40bc3e6fd05d84e2fded37188",
     "duracoes_observadas.csv": "1753703b00a5431271a446c25daa4772c147191e57054fdb829b4db285fe9829",
-    "manifesto.json": "8c9e27d53f450fba10cbe5e307bf68facd3b548bf5a01eb9bfe690d578a3f941"
+    "individuos.csv": "4f10518df73dbc91b80a0cdc918cc656733e2e7facca2c0ed8e336103f869d1a",
+    "mapa_ids.csv": "5edcecab590a1d59c4f44307ec21751a66a0000ea93df1a370828ea6909b2cb8"
   },
   "sha256_saidas": {
     "resumo.csv": "fbdca8f378f15cf036ef62f922f3326f4de9f04488e0ca880e6d535dfd5a0999",
@@ -57,5 +57,11 @@
   "inspecao_visual": {
     "arquivo": "escola_suica_2024/caracterizacao/distribuicao_graus.pdf",
     "metodo": "PDF renderizado em PNG e conferido: títulos, eixos, frequências, média e notas sem recortes. SVG produzido a partir do mesmo objeto gráfico."
+  },
+  "reconferencia_apos_reorganizacao": {
+    "data_local": "2026-11-22",
+    "pasta": "dados/dados/",
+    "graus_e_componentes_independentes": "aprovados",
+    "saidas_csv_pdf_svg_preservadas": true
   }
 }

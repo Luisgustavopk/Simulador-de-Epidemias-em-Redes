@@ -20,17 +20,17 @@ Para garantir a qualidade técnica, a participação igualitária na codificaç�
 
 ### 2.1. Divisão Equilibrada de Tarefas (Etapa 3)
 
-#### **Integrante A — Datasets Reais, Experimentos Topológicos e Seção de Metodologia**
+#### **João — Datasets Reais, Experimentos Topológicos e Seção de Metodologia**
 * **Implementação/Ajustes:** Refinar a importação de grandes redes observadas na UI e otimizar consultas de vizinhança se necessário.
 * **Experimentação:** Selecionar e padronizar datasets de redes reais (ex: interação social) e gerar redes sintéticas de controle, executando cenários que avaliam o impacto da topologia na propagação.
 * **Documentação SBC:** Redigir a caracterização estrutural das redes e a metodologia experimental no artigo.
 
-#### **Integrante B — Bateria de Comparações Estocásticas e Análise Estatística**
+#### **Wesley — Bateria de Comparações Estocásticas e Análise Estatística**
 * **Implementação/Ajustes:** Implementar o suporte à execução de múltiplas repetições com sementes controladas na tela de configuração/execução (RF07).
 * **Experimentação:** Rodar baterias comparativas entre: (1) cenário sem intervenção, (2) isolamento aleatório e (3) isolamento por grau estrutural, variando orçamento e passo de início.
 * **Documentação SBC:** Consolidar médias e desvios-padrão das repetições e redigir a análise crítica sobre a eficácia das estratégias de isolamento.
 
-#### **Integrante C — Visualização Comparativa na UI, Testes Finais e Consolidação SBC**
+#### **Luis — Visualização Comparativa na UI, Testes Finais e Consolidação SBC**
 * **Implementação/Ajustes:** Aprimorar a tela de resultados para sobrepor/comparar graficamente curvas de diferentes estratégias e exportar gráficos em alta resolução (RF07, RF09).
 * **Validação:** Executar testes de regressão verificando 100% dos Requisitos Funcionais (RF01–RF10) e Não Funcionais (RNF01–RNF03).
 * **Documentação SBC:** Integrar todas as seções no template LaTeX da SBC, revisar diagramas UML, formatação e preparar o pacote final de entrega.

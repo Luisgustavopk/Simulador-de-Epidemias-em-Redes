@@ -40,7 +40,7 @@ Legenda: itens marcados **(enunciado)** vêm do PDF do trabalho; itens marcados 
 
 A divisão é por **área**, com revisão cruzada. Cada pessoa também vira dona de um conjunto de módulos na Etapa 2, o que facilita o vídeo e a avaliação dos commits.
 
-| | **Integrante A (Luis): Problema e epidemiologia** | **Integrante B (Wesley): Grafo e algoritmos** | **Integrante C (João): Arquitetura, interface e plano** |
+| | **Luis: Problema e epidemiologia** | **Wesley: Grafo e algoritmos** | **João: Arquitetura, interface e plano** |
 |---|---|---|---|
 | **Texto** | Contextualização, pergunta de pesquisa, objetivos, modelo SIR, parâmetros, métricas de resultado, dados | Modelagem do grafo, justificativas, atributos, mapeamento de algoritmos, complexidade esperada | Arquitetura, requisitos, wireframes, plano de desenvolvimento, cronograma, riscos, Git |
 | **Diagramas** | Casos de uso, diagrama de estados do indivíduo (S→I→R) | Diagrama de classes, exemplo ilustrado do grafo | Diagrama de sequência, componentes (opcional), wireframes |

@@ -20,7 +20,7 @@ Para garantir a qualidade técnica, a participação igualitária na codificaç�
 
 ### 2.1. Divisão Equilibrada de Tarefas (Etapa 2)
 
-#### **Integrante A — Topologia de Rede (Domínio) + Tela de Carga e Inspeção (UI)**
+#### **Wesley — Topologia de Rede (Domínio) + Tela de Carga e Inspeção (UI)**
 * **Núcleo (Lógica):**
   * Implementar nativamente as classes `RedeContatos`, `Individuo` e `Contato` utilizando listas de adjacência para grafos não direcionados e ponderados.
   * Desenvolver os leitores/parsers de arquivos externos (redes observadas) e os geradores de redes sintéticas (RF01).
@@ -28,7 +28,7 @@ Para garantir a qualidade técnica, a participação igualitária na codificaç�
 * **Interface Gráfica (UI):**
   * Desenvolver a **Aba/Área 1 (Carga e Inspeção da Rede)**: componentes para seleção de arquivo externo ou geração sintética, exibição de resumo estrutural (número de nós, arestas, grau médio) e mensagens de validação estrutural.
 
-#### **Integrante B — Motor SIR e Isolamento (Domínio) + Tela de Parâmetros e Intervenção (UI)**
+#### **Luis — Motor SIR e Isolamento (Domínio) + Tela de Parâmetros e Intervenção (UI)**
 * **Núcleo (Lógica):**
   * Implementar a classe `MotorSIR` com atualização síncrona passo a passo ($t \rightarrow t+1$), aplicando as probabilidades combinadas de infecção ($\beta$) e recuperação ($\gamma$) (RF06).
   * Implementar `GeradorAleatorio` encapsulando sementes (*seeds*) controladas e independentes para garantir reprodutibilidade estatística (RNF02).
@@ -36,7 +36,7 @@ Para garantir a qualidade técnica, a participação igualitária na codificaç�
 * **Interface Gráfica (UI):**
   * Desenvolver a **Aba/Área 2 (Configuração de Parâmetros e Isolamento)**: formulários rotulados com indicação de obrigatoriedade para taxas ($\beta, \gamma$), IDs iniciais, sementes, orçamento/estratégia de isolamento e feedback visual claro para entradas inválidas (RNF03).
 
-#### **Integrante C — Orquestração Temporal e Métricas (Domínio) + Tela de Execução e Resultados (UI)**
+#### **João — Orquestração Temporal e Métricas (Domínio) + Tela de Execução e Resultados (UI)**
 * **Núcleo (Lógica):**
   * Implementar a classe `Simulacao` gerenciando o ciclo por passos discretos ($t \rightarrow t+1$), os critérios de parada (extinção do surto ou limite de passos) e o disparo agendado das intervenções.
   * Implementar `RegistroPasso`, `ResultadoSimulacao` e `MetricasEpidemia` para armazenar o histórico ($S, I, R$, isolados) e calcular pico de infecção, instante do pico e fração acumulada (RF08, RF10).

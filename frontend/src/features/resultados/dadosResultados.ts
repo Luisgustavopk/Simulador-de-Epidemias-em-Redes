@@ -13,7 +13,9 @@ export const CAMPOS_CURVA = [
 export type CampoCurva = (typeof CAMPOS_CURVA)[number]
 export type RegistroAgregado = Record<CampoCurva, number> & {
   passo: number
-  desvios: Record<CampoCurva, number>
+  n: number
+  prolongadas: number
+  desvios: Record<CampoCurva, number | null>
 }
 export type DadosResultado = ResultadoSimulacao | ResultadoComparacaoExecutada
 export const CORES_CENARIOS = {
@@ -59,11 +61,18 @@ export function agregarCurvas(comparacao: ResultadoComparacaoExecutada) {
           )
             indices[indice]++
           const registro = execucao.historico[indices[indice]]
-          return registro && registro.passo <= passo ? [registro] : []
+          if (!registro) return []
+          if (registro.passo === passo) return [registro]
+          return execucao.motivo_termino === 'extincao' &&
+            registro.infectados === 0 &&
+            indices[indice] === execucao.historico.length - 1 &&
+            registro.passo < passo
+            ? [registro]
+            : []
         })
-        if (!observacoes.length) continue
+        if (observacoes.length !== execucoes.length) break
         const valores = {} as Record<CampoCurva, number>
-        const desvios = {} as Record<CampoCurva, number>
+        const desvios = {} as Record<CampoCurva, number | null>
         for (const campo of CAMPOS_CURVA) {
           valores[campo] =
             observacoes.reduce((soma, registro) => soma + registro[campo], 0) /
@@ -78,13 +87,79 @@ export function agregarCurvas(comparacao: ResultadoComparacaoExecutada) {
                   ) /
                     (observacoes.length - 1),
                 )
-              : 0
+              : null
         }
-        registros.push({ passo, ...valores, desvios })
+        registros.push({
+          passo,
+          ...valores,
+          n: observacoes.length,
+          prolongadas: observacoes.filter((registro) => registro.passo < passo)
+            .length,
+          desvios,
+        })
       }
       return [{ cenario, registros }]
     },
   )
+}
+
+export function escalaContagem(
+  maximo: number,
+  populacao: number,
+  ajustar: boolean,
+) {
+  const limite = Math.max(1, populacao)
+  const alvo = ajustar ? Math.min(limite, Math.max(1, maximo * 1.05)) : limite
+  const ordem = 10 ** Math.floor(Math.log10(alvo / 5))
+  const intervalo = Math.max(
+    1,
+    ([1, 2, 5, 10].find((fator) => fator * ordem >= alvo / 5) ?? 10) * ordem,
+  )
+  const teto = Math.min(limite, Math.ceil(alvo / intervalo) * intervalo)
+  const valores = [0]
+  for (let valor = intervalo; valor < teto; valor += intervalo)
+    valores.push(valor)
+  valores.push(teto)
+  return { maximo: teto, valores }
+}
+
+export function registroNoPasso<T extends { passo: number }>(
+  registros: readonly T[],
+  passo: number,
+): T | null {
+  let inicio = 0
+  let fim = registros.length - 1
+  while (inicio <= fim) {
+    const meio = Math.floor((inicio + fim) / 2)
+    const registro = registros[meio]
+    if (registro.passo === passo) return registro
+    if (registro.passo < passo) inicio = meio + 1
+    else fim = meio - 1
+  }
+  return null
+}
+
+export function caminhoEscalonado(
+  pontos: readonly (readonly [number, number])[],
+) {
+  return pontos
+    .map(([x, y], indice) => (indice ? `H ${x} V ${y}` : `M ${x} ${y}`))
+    .join(' ')
+}
+
+export function dimensoesPng(largura: number, altura: number) {
+  if (
+    !Number.isFinite(largura) ||
+    !Number.isFinite(altura) ||
+    largura <= 0 ||
+    altura <= 0
+  )
+    throw new Error('As dimensões do gráfico devem ser positivas e finitas.')
+  const escala = Math.max(1, 2400 / largura)
+  return {
+    largura: Math.ceil(largura * escala),
+    altura: Math.ceil(altura * escala),
+  }
 }
 
 export function pacoteExportacao(resultado: DadosResultado) {
@@ -178,73 +253,77 @@ export function serializarGrafico(
       )
     }
   })
+  clone
+    .querySelectorAll('[data-consulta]')
+    .forEach((elemento) => elemento.remove())
   const { width: largura, height: altura } = elemento.viewBox.baseVal
   const namespace = 'http://www.w3.org/2000/svg'
-  clone.setAttribute('xmlns', namespace)
-  clone.setAttribute('viewBox', `0 -128 ${largura} ${altura + 128}`)
-  clone.setAttribute('width', String(largura))
-  clone.setAttribute('height', String(altura + 128))
-  const metadados = document.createElementNS(namespace, 'metadata')
-  metadados.textContent = JSON.stringify(pacoteExportacao(dados))
-  clone.prepend(metadados)
-  const fundo = document.createElementNS(namespace, 'rect')
-  fundo.setAttribute('x', '0')
-  fundo.setAttribute('y', '-128')
-  fundo.setAttribute('width', String(largura))
-  fundo.setAttribute('height', String(altura + 128))
-  fundo.setAttribute('fill', '#ffffff')
-  clone.prepend(fundo)
-  const titulo = document.createElementNS(namespace, 'text')
-  titulo.setAttribute('x', '16')
-  titulo.setAttribute('y', '-104')
-  titulo.setAttribute('fill', '#161616')
-  titulo.setAttribute('font-size', '14')
-  titulo.textContent = `Observatório · revisão ${dados.revisao_rede} · ${new Date().toLocaleString()}`
-  clone.append(titulo)
   const configuracao = dados.manifesto?.configuracao ?? {}
   const sementes = (configuracao.sementes ?? {}) as Record<string, string>
   const intervencao = configuracao.intervencao as Record<string, unknown> | null
-  for (const [indice, texto] of [
-    `β: ${configuracao.beta ?? 'direto'} · γ: ${configuracao.gamma} · pessoas: ${dados.populacao} · repetições: ${'execucoes' in dados ? dados.manifesto?.repeticoes : 1}`,
-    `Sementes ${'execucoes' in dados ? 'base' : ''}: epidemia ${sementes.epidemia} · iniciais ${sementes.iniciais} · isolamento ${sementes.isolamento}`,
+  const descricao = [
+    `Observatório · revisão ${dados.revisao_rede} · ${new Date().toLocaleString('pt-BR')}`,
+    elemento.querySelector('title')?.textContent ??
+      'Trajetórias epidemiológicas',
+    `Eixo vertical: 0–${elemento.dataset.limiteVertical} pessoas · ${elemento.dataset.escala === 'ajustada' ? 'escala ajustada às curvas' : 'população total'}`,
+    `β: ${configuracao.beta ?? 'direto'} · γ: ${configuracao.gamma ?? '—'} · população: ${dados.populacao} · repetições: ${'execucoes' in dados ? (dados.manifesto?.repeticoes ?? '—') : 1}`,
+    `Sementes base: epidemia ${sementes.epidemia ?? '—'} · iniciais ${sementes.iniciais ?? '—'} · isolamento ${sementes.isolamento ?? '—'}`,
     intervencao
-      ? `Isolamento: ${intervencao.mecanismo} · fração ${intervencao.fracao} · início ${intervencao.inicio}`
+      ? `Intervenções: ${intervencao.mecanismo} · fração ${intervencao.fracao} · início ${intervencao.inicio} · redução ${intervencao.reducao ?? 'não aplicável'}`
       : 'Sem intervenção',
-  ].entries()) {
+    'execucoes' in dados
+      ? 'Médias com n constante; somente extinções prolongadas. Sem dados presumidos após censura.'
+      : 'Registros observados; isolamento independente do estado SIR.',
+  ].flatMap(
+    (linha) =>
+      linha
+        .match(/.{1,112}(?:\s|$)|.{1,112}/g)
+        ?.map((trecho) => trecho.trim()) ?? [],
+  )
+  const cabecalho = descricao.length * 20 + 24
+  clone.setAttribute('xmlns', namespace)
+  clone.setAttribute(
+    'viewBox',
+    `0 ${-cabecalho} ${largura} ${altura + cabecalho}`,
+  )
+  clone.setAttribute('width', String(largura))
+  clone.setAttribute('height', String(altura + cabecalho))
+  const metadados = document.createElementNS(namespace, 'metadata')
+  metadados.textContent = JSON.stringify({
+    ...pacoteExportacao(dados),
+    visualizacao: { ...elemento.dataset },
+  })
+  clone.prepend(metadados)
+  const fundo = document.createElementNS(namespace, 'rect')
+  for (const [chave, valor] of Object.entries({
+    x: '0',
+    y: String(-cabecalho),
+    width: String(largura),
+    height: String(altura + cabecalho),
+    fill: '#ffffff',
+  }))
+    fundo.setAttribute(chave, valor)
+  clone.prepend(fundo)
+  clone
+    .querySelectorAll('text')
+    .forEach((texto) => texto.setAttribute('fill', '#374151'))
+  descricao.forEach((texto, indice) => {
     const linha = document.createElementNS(namespace, 'text')
-    linha.setAttribute('x', '16')
-    linha.setAttribute('y', String(-84 + indice * 16))
-    linha.setAttribute('fill', '#161616')
-    linha.setAttribute('font-size', '11')
+    for (const [chave, valor] of Object.entries({
+      x: '20',
+      y: String(-cabecalho + 24 + indice * 20),
+      fill: '#161616',
+      'font-size': indice === 0 ? '16' : '13',
+      'font-family': 'Arial, sans-serif',
+    }))
+      linha.setAttribute(chave, valor)
     linha.textContent = texto
     clone.append(linha)
-  }
-  const legenda = document.createElementNS(namespace, 'text')
-  legenda.setAttribute('x', '16')
-  legenda.setAttribute('y', '-32')
-  legenda.setAttribute('fill', '#161616')
-  legenda.setAttribute('font-size', '11')
-  legenda.textContent =
-    'execucoes' in dados
-      ? 'S: contínua · I: tracejada · R: pontilhada · Q: mista · médias ± desvio amostral'
-      : 'S: suscetíveis · I: infectados · R: recuperados · Q: isolados'
-  clone.append(legenda)
-  if ('execucoes' in dados) {
-    Object.entries(CORES_CENARIOS).forEach(([cenario, cor], indice) => {
-      const rotulo = document.createElementNS(namespace, 'text')
-      rotulo.setAttribute('x', String(16 + indice * 240))
-      rotulo.setAttribute('y', '-14')
-      rotulo.setAttribute('fill', cor)
-      rotulo.setAttribute('font-size', '12')
-      rotulo.textContent =
-        NOMES_CENARIOS[cenario as keyof typeof NOMES_CENARIOS]
-      clone.append(rotulo)
-    })
-  }
+  })
   return {
     svg: new XMLSerializer().serializeToString(clone),
     largura,
-    altura: altura + 128,
+    altura: altura + cabecalho,
   }
 }
 

@@ -536,7 +536,7 @@ test(
         await avaliar(
           "sessionStorage.removeItem('observatorio-resultado-execucao');window.location.hash='#resultados'",
         )
-        await ate("document.querySelectorAll('[data-curva]').length===3")
+        await ate("document.querySelectorAll('.comparison-mean').length===3")
         assert.equal(
           await avaliar(
             "[...document.querySelectorAll('.export-actions button')].find(botao=>botao.textContent.trim()==='JSON').disabled",
@@ -552,78 +552,25 @@ test(
       },
     )
     await contexto.test(
-      'indicador e faixas acompanham as séries e preservam os três cenários',
+      'faixas são visíveis e acompanham os controles das séries',
       async () => {
-        assert.equal(
-          await avaliar("document.querySelectorAll('[data-curva]').length"),
-          3,
-        )
-        assert.equal(
-          await avaliar(
-            "document.querySelectorAll('path[fill-opacity]').length",
-          ),
-          0,
-        )
-        await avaliar("document.querySelector('.chart-check input').click()")
-        await ate("document.querySelectorAll('path[fill-opacity]').length===3")
         assert.notEqual(
           await avaliar(
-            "getComputedStyle(document.querySelector('path[fill-opacity]')).fill",
+            "getComputedStyle(document.querySelector('.band-infectados')).fill",
           ),
           'none',
         )
-        await avaliar(
-          `(()=>{const seletor=document.querySelector('select[aria-label="Indicador"]');seletor.value='todos';seletor.dispatchEvent(new Event('change',{bubbles:true}))})()`,
-        )
-        await ate("document.querySelectorAll('[data-curva]').length===12")
         assert.equal(
-          await avaliar(
-            "document.querySelectorAll('path[fill-opacity]').length",
-          ),
-          12,
-        )
-        await avaliar(
-          `(()=>{const seletor=document.querySelector('select[aria-label="Indicador"]');seletor.value='suscetiveis';seletor.dispatchEvent(new Event('change',{bubbles:true}))})()`,
-        )
-        await ate('!document.querySelector(\'[data-curva$="-infectados"]\')')
-        await avaliar(
-          `(()=>{const seletor=document.querySelector('select[aria-label="Indicador"]');seletor.value='infectados';seletor.dispatchEvent(new Event('change',{bubbles:true}))})()`,
-        )
-        await ate(
-          'document.querySelectorAll(\'[data-curva$="-infectados"]\').length===3',
-        )
-      },
-    )
-    await contexto.test(
-      'traçado discreto, seleção de repetição e dados acessíveis',
-      async () => {
-        assert.equal(
-          await avaliar(
-            "[...document.querySelectorAll('[data-curva]')].every(linha=>!linha.getAttribute('d').includes('L '))",
-          ),
-          true,
-        )
-        await avaliar("document.querySelector('.chart-data summary').click()")
-        await ate("document.querySelectorAll('.chart-data tbody tr').length>0")
-        assert.ok(
-          await avaliar(
-            "document.querySelectorAll('.chart-data tbody tr').length<=25",
-          ),
-        )
-        await avaliar(
-          `(()=>{const seletor=document.querySelector('select[aria-label="Visualização"]');seletor.value='repeticao';seletor.dispatchEvent(new Event('change',{bubbles:true}))})()`,
-        )
-        await ate(
-          '!!document.querySelector(\'select[aria-label="Repetição"]\')',
-        )
-        assert.equal(
-          await avaliar("document.querySelectorAll('[data-curva]').length"),
+          await avaliar("document.querySelectorAll('.comparison-band').length"),
           3,
         )
         await avaliar(
-          `(()=>{const seletor=document.querySelector('select[aria-label="Visualização"]');seletor.value='medias';seletor.dispatchEvent(new Event('change',{bubbles:true}))})()`,
+          "[...document.querySelectorAll('.trajectory-legend button')].find(botao=>botao.textContent.includes('Infectados')).click()",
         )
-        await ate("!!document.querySelector('.chart-check')")
+        await ate("!document.querySelector('.band-infectados')")
+        await avaliar(
+          "[...document.querySelectorAll('.trajectory-legend button')].find(botao=>botao.textContent.includes('Infectados')).click()",
+        )
       },
     )
     await contexto.test(
@@ -640,13 +587,6 @@ test(
         )
         assert.match(svg, /stroke="rgb\(/)
         assert.match(svg, /<metadata>/)
-        assert.ok(
-          await avaliar(
-            "(async()=>{const imagem=await createImageBitmap(window.arquivos.find(arquivo=>arquivo.nome.endsWith('.png')).blob);return imagem.width>=2400})()",
-          ),
-        )
-        assert.match(svg, /Passos \(dias do modelo\)/)
-
         assert.match(
           await avaliar(
             "window.arquivos.find(arquivo=>arquivo.nome.endsWith('metricas-agregadas.csv')).blob.text()",
@@ -802,6 +742,352 @@ test(
           ),
           50,
         )
+      },
+    )
+    await contexto.test(
+      'filtros abrem médias de infectados sem sobrepor as repetições',
+      async () => {
+        await avaliar(`(async()=>{
+          const rede=await(await fetch('/api/rede/gerar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({modelo:'barabasi_albert',numero_individuos:'60',contatos_por_novo_individuo:'2',semente:'42',peso:'1'})})).json();
+          await fetch('/api/rede/confirmar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({revisao:rede.revisao})});
+          const formulario={beta:'0.05',gamma:'0.10',modo_peso:'intensidade',modo_iniciais:'sorteio',quantidade_infectados:'3',semente_epidemia:'42',semente_iniciais:'43',semente_isolamento:'44',limite_passos:'120',revisao_rede:String(rede.revisao),contexto_rede:rede.contexto_rede,intervencao:{estrategia:'grau',fracao:'0.2',inicio:'3',mecanismo:'desativacao'}};
+          const resposta=await fetch('/api/rede/comparacao/executar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({configuracao:formulario,repeticoes:'5'})});
+          if(!resposta.ok)throw new Error(await resposta.text());
+          const comparacao=await resposta.json();
+          sessionStorage.setItem('observatorio-resultado-execucao',JSON.stringify({tipo:'comparacao',comparacao}));
+          sessionStorage.setItem('observatorio-configuracao',JSON.stringify({repeticoes:'5',formulario}));
+        })()`)
+        await recarregar()
+        await ate("document.querySelectorAll('.comparison-mean').length===3")
+        assert.equal(
+          await avaliar("document.querySelectorAll('[data-repeticao]').length"),
+          0,
+        )
+        assert.equal(
+          await avaliar(
+            "document.querySelectorAll('.comparison-mean .comparison-i').length",
+          ),
+          3,
+        )
+        assert.equal(
+          await avaliar(
+            "document.querySelectorAll('.comparison-mean .comparison-s, .comparison-mean .comparison-r, .comparison-mean .comparison-q').length",
+          ),
+          0,
+        )
+        assert.equal(
+          await avaliar("document.querySelectorAll('.comparison-key').length"),
+          0,
+        )
+        assert.match(
+          await avaliar(
+            "document.querySelector('.trajectory-summary').textContent",
+          ),
+          /Médias de 5 repetições/,
+        )
+        await capturarArea(
+          'resultados-filtros-medias-desktop',
+          '.trajectory-panel',
+        )
+        await avaliar(
+          "window.metricasAntesDosFiltros=document.querySelector('.result-metrics').textContent",
+        )
+      },
+    )
+    await contexto.test(
+      'cenário e repetição do gráfico não mudam o painel nem os dados originais',
+      async () => {
+        await avaliar(`for(const botao of document.querySelectorAll('.trajectory-scenarios button'))if(botao.textContent.trim()!=='Por grau')botao.click();
+          const modo=document.querySelector('#grafico-modo');modo.value='repeticao';modo.dispatchEvent(new Event('change',{bubbles:true}));`)
+        await ate("!!document.querySelector('#grafico-repeticao')")
+        await avaliar(
+          "const repeticao=document.querySelector('#grafico-repeticao');repeticao.value='5';repeticao.dispatchEvent(new Event('change',{bubbles:true}))",
+        )
+        await ate(
+          'document.querySelectorAll(\'[data-repeticao="5"]\').length===1',
+        )
+        assert.equal(
+          await avaliar(
+            "document.querySelectorAll('.comparison-series').length",
+          ),
+          1,
+        )
+        assert.equal(
+          await avaliar(
+            "document.querySelectorAll('.comparison-mean, .comparison-band').length",
+          ),
+          0,
+        )
+        assert.match(
+          await avaliar(
+            "document.querySelector('.comparison-series title').textContent",
+          ),
+          /Por grau.*repetição 5/,
+        )
+        assert.equal(
+          await avaliar(
+            "document.querySelector('.result-metrics').textContent === window.metricasAntesDosFiltros",
+          ),
+          true,
+        )
+        assert.equal(
+          await avaliar(
+            "JSON.parse(sessionStorage.getItem('observatorio-resultado-execucao')).comparacao.execucoes.length",
+          ),
+          15,
+        )
+        assert.equal(
+          await avaliar("document.querySelector('#execucao-principal').value"),
+          'grau-1',
+        )
+      },
+    )
+    await contexto.test(
+      'intervalo recorta curvas e eixos; SVG, PNG e JSON conservam o escopo',
+      async () => {
+        await avaliar(
+          `const alterar=(id,valor)=>{const campo=document.getElementById(id);Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(campo,valor);campo.dispatchEvent(new Event('input',{bubbles:true}))};alterar('grafico-fim','10');document.querySelector('.trajectory-apply').click();`,
+        )
+        await ate(
+          "document.querySelector('#grafico-fim').value==='10' && document.querySelector('.trajectory-summary').textContent.includes('a 10')",
+        )
+        await avaliar(
+          `{const campo=document.getElementById('grafico-inicio');Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(campo,'3');campo.dispatchEvent(new Event('input',{bubbles:true}));}`,
+        )
+        await avaliar("document.querySelector('.trajectory-apply').click()")
+        await ate(
+          "document.querySelector('.trajectory-summary').textContent.includes('passos 3 a 10')",
+        )
+        assert.deepEqual(
+          await avaliar(
+            "(()=>{const marcas=[...document.querySelectorAll('.chart-step')].map(item=>Number(item.textContent));return [marcas[0],marcas.at(-1)]})()",
+          ),
+          [3, 10],
+        )
+        const caminho = await avaliar(
+          "document.querySelector('.comparison-series path').getAttribute('d')",
+        )
+        assert.equal(
+          caminho.split(' ').filter((parte) => parte === 'M').length,
+          1,
+        )
+        assert.equal(
+          caminho.split(' ').filter((parte) => parte === 'H').length,
+          7,
+        )
+        assert.equal(
+          caminho.split(' ').filter((parte) => parte === 'V').length,
+          7,
+        )
+        assert.doesNotMatch(caminho, /L /)
+        await avaliar(
+          `window.arquivos=[];window.blobs=new Map();const criar=URL.createObjectURL;URL.createObjectURL=blob=>{const endereco=criar(blob);window.blobs.set(endereco,blob);return endereco};HTMLAnchorElement.prototype.click=function(){window.arquivos.push({nome:this.download,blob:window.blobs.get(this.href)})};for(const botao of document.querySelectorAll('.export-actions button'))botao.click();`,
+        )
+        await ate("window.arquivos.some(item=>item.nome.endsWith('.png'))")
+        const exportacao = await avaliar(`(async()=>{
+          const svg=new DOMParser().parseFromString(await window.arquivos.find(item=>item.nome.endsWith('.svg')).blob.text(),'image/svg+xml');
+          const json=JSON.parse(await window.arquivos.find(item=>item.nome.endsWith('.json')).blob.text());
+          const png=await createImageBitmap(window.arquivos.find(item=>item.nome.endsWith('.png')).blob);
+          return {escopo:svg.documentElement.getAttribute('aria-label'),grupos:svg.querySelectorAll('[data-repeticao="5"]').length,metadados:JSON.parse(svg.querySelector('metadata').textContent).visualizacao.filtros,visualizacao:json.visualizacao.filtros_grafico,execucoes:json.resultado.execucoes.length,larguraPng:png.width,alturaPng:png.height,larguraSvg:svg.documentElement.viewBox.baseVal.width,alturaSvg:svg.documentElement.viewBox.baseVal.height};
+        })()`)
+        assert.match(exportacao.escopo, /passos 3 a 10/)
+        assert.equal(exportacao.grupos, 1)
+        assert.equal(exportacao.metadados.repeticao, 5)
+        assert.equal(exportacao.visualizacao.inicio, 3)
+        assert.equal(exportacao.visualizacao.fim, 10)
+        assert.equal(exportacao.execucoes, 15)
+        assert.ok(exportacao.larguraPng >= 2400)
+        assert.ok(
+          Math.abs(
+            exportacao.alturaPng -
+              (exportacao.larguraPng * exportacao.alturaSvg) /
+                exportacao.larguraSvg,
+          ) <= 1,
+        )
+        await avaliar(
+          `{const campo=document.getElementById('grafico-fim');Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(campo,'999');campo.dispatchEvent(new Event('input',{bubbles:true}));}`,
+        )
+        await avaliar("document.querySelector('.trajectory-apply').click()")
+        await ate("!!document.querySelector('#grafico-intervalo-erro')")
+        assert.equal(
+          await avaliar(
+            "[...document.querySelectorAll('.chart-step')].at(-1).textContent",
+          ),
+          '10',
+        )
+        assert.equal(
+          await avaliar(
+            "document.querySelector('#grafico-fim').getAttribute('aria-invalid')",
+          ),
+          'true',
+        )
+        await avaliar(
+          `{const campo=document.getElementById('grafico-fim');Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(campo,'10');campo.dispatchEvent(new Event('input',{bubbles:true}));campo.focus();}`,
+        )
+        await comando('Input.dispatchKeyEvent', {
+          type: 'keyDown',
+          key: 'Enter',
+          code: 'Enter',
+          text: '\r',
+          unmodifiedText: '\r',
+          windowsVirtualKeyCode: 13,
+        })
+        await comando('Input.dispatchKeyEvent', {
+          type: 'keyUp',
+          key: 'Enter',
+          code: 'Enter',
+          windowsVirtualKeyCode: 13,
+        })
+        await ate("!document.querySelector('#grafico-intervalo-erro')")
+        assert.equal(await avaliar('document.activeElement.id'), 'grafico-fim')
+        await capturarArea('resultados-filtros-repeticao', '.trajectory-panel')
+      },
+    )
+    await contexto.test(
+      'filtros têm estados vazios, passo único e restauração por teclado',
+      async () => {
+        await avaliar(
+          `{const campo=document.getElementById('grafico-inicio');Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(campo,'0');campo.dispatchEvent(new Event('input',{bubbles:true}));}`,
+        )
+        await avaliar(
+          `{const campo=document.getElementById('grafico-fim');Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(campo,'0');campo.dispatchEvent(new Event('input',{bubbles:true}));}`,
+        )
+        await avaliar("document.querySelector('.trajectory-apply').click()")
+        await ate(
+          "document.querySelectorAll('.comparison-series circle').length===1",
+        )
+        assert.equal(
+          await avaliar("document.querySelectorAll('.chart-step').length"),
+          1,
+        )
+        await avaliar(
+          "document.querySelector('.trajectory-legend button[aria-pressed=true]').click()",
+        )
+        await ate("!!document.querySelector('.chart-empty')")
+        assert.match(
+          await avaliar("document.querySelector('.chart-empty').textContent"),
+          /Selecione pelo menos um estado/,
+        )
+        assert.equal(
+          await avaliar(
+            "[...document.querySelectorAll('.trajectory-actions .export-actions button')].every(botao=>botao.disabled)",
+          ),
+          true,
+        )
+        await avaliar("document.querySelector('.trajectory-reset').focus()")
+        await comando('Input.dispatchKeyEvent', {
+          type: 'keyDown',
+          key: 'Enter',
+          code: 'Enter',
+          text: '\r',
+          unmodifiedText: '\r',
+          windowsVirtualKeyCode: 13,
+        })
+        await comando('Input.dispatchKeyEvent', {
+          type: 'keyUp',
+          key: 'Enter',
+          code: 'Enter',
+          windowsVirtualKeyCode: 13,
+        })
+        await ate("document.querySelectorAll('.comparison-mean').length===3")
+        assert.equal(
+          await avaliar("document.querySelector('#grafico-inicio').value"),
+          '0',
+        )
+        await avaliar(
+          "for(const botao of document.querySelectorAll('.trajectory-scenarios button'))botao.click()",
+        )
+        await ate("!!document.querySelector('.chart-empty')")
+        assert.match(
+          await avaliar("document.querySelector('.chart-empty').textContent"),
+          /Selecione pelo menos um cenário/,
+        )
+        await avaliar(
+          "document.querySelector('.trajectory-reset').click();document.querySelector('.trajectory-deviation input').click()",
+        )
+        await ate("document.querySelectorAll('.comparison-band').length===0")
+        await avaliar(
+          "{const modo=document.querySelector('#grafico-modo');modo.value='todas';modo.dispatchEvent(new Event('change',{bubbles:true}))}",
+        )
+        await ate("document.querySelectorAll('[data-repeticao]').length===15")
+        await avaliar("document.querySelector('.trajectory-reset').click()")
+        for (const largura of [390, 820, 1365]) {
+          await comando('Emulation.setDeviceMetricsOverride', {
+            width: largura,
+            height: 1000,
+            deviceScaleFactor: 1,
+            mobile: largura === 390,
+          })
+          for (const tema of ['light', 'dark']) {
+            await avaliar(`document.documentElement.dataset.theme='${tema}'`)
+            await avaliar(
+              'Promise.all(document.getAnimations().filter(animacao=>animacao.effect?.getComputedTiming().iterations!==Infinity).map(animacao=>animacao.finished.catch(()=>{})))',
+            )
+            assert.ok(
+              await avaliar(
+                'document.documentElement.scrollWidth <= innerWidth',
+              ),
+            )
+            await capturarArea(
+              `resultados-filtros-${largura}-${tema}`,
+              '.trajectory-panel',
+            )
+          }
+        }
+        await avaliar("document.documentElement.dataset.theme='light'")
+      },
+    )
+    await contexto.test(
+      'uma repetição mantém as médias sem inventar desvio e preserva os filtros',
+      async () => {
+        const anterior = await avaliar(
+          "sessionStorage.getItem('observatorio-resultado-execucao')",
+        )
+        try {
+          await avaliar(`(async()=>{
+            const salvo=JSON.parse(sessionStorage.getItem('observatorio-configuracao'));
+            const resposta=await fetch('/api/rede/comparacao/executar',{
+              method:'POST',headers:{'Content-Type':'application/json'},
+              body:JSON.stringify({configuracao:salvo.formulario,repeticoes:'1'})
+            });
+            if(!resposta.ok)throw new Error(await resposta.text());
+            const comparacao=await resposta.json();
+            sessionStorage.setItem('observatorio-resultado-execucao',JSON.stringify({tipo:'comparacao',comparacao}));
+          })()`)
+          await recarregar()
+          await ate("document.querySelectorAll('.comparison-mean').length===3")
+          assert.equal(
+            await avaliar(
+              "document.querySelectorAll('.comparison-band').length",
+            ),
+            0,
+          )
+          assert.equal(
+            await avaliar(
+              "document.querySelector('.trajectory-deviation input').checked",
+            ),
+            true,
+          )
+          assert.equal(
+            await avaliar(
+              "[...document.querySelectorAll('.comparison-series path')].every(linha=>!/(NaN|Infinity)/.test(linha.getAttribute('d')))",
+            ),
+            true,
+          )
+          assert.equal(
+            await avaliar(
+              "document.querySelectorAll('.trajectory-legend button').length",
+            ),
+            4,
+          )
+          await capturarArea('resultados-uma-repeticao', '.trajectory-panel')
+        } finally {
+          await avaliar(
+            `sessionStorage.setItem('observatorio-resultado-execucao',${JSON.stringify(anterior)})`,
+          )
+          await recarregar()
+          await ate("document.querySelectorAll('.comparison-mean').length===3")
+        }
       },
     )
     await contexto.test(

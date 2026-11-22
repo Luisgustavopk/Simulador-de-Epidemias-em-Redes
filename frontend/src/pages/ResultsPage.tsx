@@ -6,14 +6,15 @@ import {
   NOMES_CENARIOS,
   csvMetricas,
   csvResultado,
+  dimensoesPng,
   linhasHistorico,
   maximoHistorico,
   pacoteExportacao,
   serializarGrafico,
-  dimensoesPng,
 } from '../features/resultados/dadosResultados'
-import { GraficoResultados } from '../features/resultados/GraficoResultados'
 import { TabelaHistorico } from '../features/resultados/TabelaHistorico'
+import { GraficoTrajetorias } from '../features/resultados/GraficoTrajetorias'
+import { filtrosTrajetoriasPadrao } from '../features/resultados/filtrosTrajetorias'
 import {
   executarComparacao,
   executarSimulacao,
@@ -49,14 +50,14 @@ function formatarPercentual(valor: number) {
 
 export function ResultsPage() {
   const carga = useCargaRede()
-  const totalRede = carga.rede?.resumo?.numero_individuos ?? 0
+  const totalRede = carga.rede?.resumo?.numero_individuos ?? 100
   const [historicoBase, setHistorico] = useState<RegistroResultado[]>([])
   const [resultado, setResultado] = useState<ResultadoSimulacao | null>(null)
   const [comparacao, setComparacao] =
     useState<ResultadoComparacaoExecutada | null>(null)
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState('')
-  const [exportando, setExportando] = useState(false)
+  const [filtrosGrafico, setFiltrosGrafico] = useState(filtrosTrajetoriasPadrao)
   const grafico = useRef<SVGSVGElement | null>(null)
   const consulta = useRef<AbortController | null>(null)
   const [anteriores, setAnteriores] = useState<ResultadoResumo[]>([])
@@ -98,6 +99,8 @@ export function ResultsPage() {
     consulta.current = controlador
     setCarregando(true)
     setErro('')
+    setFiltrosGrafico(filtrosTrajetoriasPadrao())
+    setChaveExecucao('')
     try {
       const salvo = await consultarResultado(identificador, controlador.signal)
       if (controlador.signal.aborted) return
@@ -142,6 +145,8 @@ export function ResultsPage() {
       setCarregando(true)
       setErro('')
       try {
+        setFiltrosGrafico(filtrosTrajetoriasPadrao())
+        setChaveExecucao('')
         setResultado(null)
         setComparacao(null)
         setHistorico([])
@@ -353,10 +358,8 @@ export function ResultsPage() {
           {
             ...pacoteExportacao(dadosAtuais),
             visualizacao: {
-              indicador: grafico.current?.dataset.indicador,
-              modo: grafico.current?.dataset.modo,
-              cenarios: grafico.current?.dataset.cenarios,
-              repeticao_grafico: grafico.current?.dataset.repeticao,
+              series_visiveis: filtrosGrafico.series,
+              filtros_grafico: filtrosGrafico,
               cenario: execucaoSelecionada?.cenario,
               repeticao: execucaoSelecionada?.repeticao,
             },
@@ -370,61 +373,62 @@ export function ResultsPage() {
   }
 
   function exportarSvg() {
-    if (!grafico.current || !dadosAtuais) {
-      setErro('Selecione pelo menos uma série com dados para exportar.')
-      return
-    }
-    try {
-      setErro('')
-      baixar(
-        serializarGrafico(grafico.current, dadosAtuais).svg,
-        'trajetorias-epidemia.svg',
-        'image/svg+xml;charset=utf-8',
-      )
-    } catch {
-      setErro('Não foi possível gerar o arquivo SVG. Tente novamente.')
-    }
+    if (!grafico.current || !dadosAtuais) return
+    baixar(
+      serializarGrafico(grafico.current, dadosAtuais, opcoesExportacao()).svg,
+      'trajetorias-epidemia.svg',
+      'image/svg+xml;charset=utf-8',
+    )
   }
 
   function exportarPng() {
-    if (!grafico.current || !dadosAtuais) {
-      setErro('Selecione pelo menos uma série com dados para exportar.')
-      return
-    }
-    setErro('')
-    setExportando(true)
-    try {
-      const { svg, largura, altura } = serializarGrafico(
-        grafico.current,
-        dadosAtuais,
+    if (!grafico.current || !dadosAtuais) return
+    const {
+      svg,
+      largura: larguraExportada,
+      altura: alturaExportada,
+    } = serializarGrafico(grafico.current, dadosAtuais, opcoesExportacao())
+    const imagem = new Image()
+    imagem.onload = () => {
+      const canvas = document.createElement('canvas')
+      const dimensoes = dimensoesPng(larguraExportada, alturaExportada)
+      canvas.width = dimensoes.largura
+      canvas.height = dimensoes.altura
+      const contexto = canvas.getContext('2d')
+      if (!contexto) {
+        setErro('Não foi possível preparar a exportação PNG.')
+        return
+      }
+      contexto.scale(
+        dimensoes.largura / larguraExportada,
+        dimensoes.altura / alturaExportada,
       )
-      const dimensoes = dimensoesPng(largura, altura)
-      const imagem = new Image()
-      imagem.onload = () => {
-        const canvas = document.createElement('canvas')
-        canvas.width = dimensoes.largura
-        canvas.height = dimensoes.altura
-        const contexto = canvas.getContext('2d')
-        if (!contexto) {
-          setErro('Não foi possível preparar a exportação PNG.')
-          setExportando(false)
-          return
-        }
-        contexto.drawImage(imagem, 0, 0, canvas.width, canvas.height)
-        canvas.toBlob((blob) => {
-          if (blob) baixar(blob, 'trajetorias-epidemia.png', 'image/png')
-          else setErro('Não foi possível gerar o arquivo PNG.')
-          setExportando(false)
-        }, 'image/png')
-      }
-      imagem.onerror = () => {
-        setErro('Não foi possível gerar o arquivo PNG.')
-        setExportando(false)
-      }
-      imagem.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`
-    } catch {
-      setErro('Não foi possível gerar o arquivo PNG. Tente novamente.')
-      setExportando(false)
+      contexto.drawImage(imagem, 0, 0, larguraExportada, alturaExportada)
+      canvas.toBlob((blob) => {
+        if (blob) baixar(blob, 'trajetorias-epidemia.png', 'image/png')
+        else setErro('Não foi possível gerar o arquivo PNG.')
+      }, 'image/png')
+    }
+    imagem.onerror = () => setErro('Não foi possível gerar o arquivo PNG.')
+    imagem.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`
+  }
+
+  function opcoesExportacao() {
+    return {
+      filtros: filtrosGrafico,
+      descricao: grafico.current
+        ?.getAttribute('aria-label')
+        ?.replace('Curvas SIR ao longo do tempo. ', ''),
+      cenarios: comparacao
+        ? (
+            Object.keys(
+              filtrosGrafico.cenarios,
+            ) as (keyof typeof NOMES_CENARIOS)[]
+          ).filter((cenario) => filtrosGrafico.cenarios[cenario])
+        : [],
+      legenda: comparacao
+        ? `S: contínua · I: tracejada · R: pontilhada · Q: mista${filtrosGrafico.modo === 'medias' && filtrosGrafico.mostrarDesvio ? ' · faixas: desvio amostral' : ''}`
+        : 'S: suscetíveis · I: infectados · R: recuperados · Q: isolados',
     }
   }
 
@@ -442,21 +446,21 @@ export function ResultsPage() {
           <div className="sir-model" role="img" aria-label="Modelo SIR">
             <span>
               <b>S</b>
-              <small>{atual?.suscetiveis ?? '—'}</small>
+              <small>{atual?.suscetiveis ?? total}</small>
             </span>
             <i>
               β<Icon nome="arrow" size={33} />
             </i>
             <span>
               <b>I</b>
-              <small>{atual?.infectados ?? '—'}</small>
+              <small>{atual?.infectados ?? 0}</small>
             </span>
             <i>
               γ<Icon nome="arrow" size={33} />
             </i>
             <span>
               <b>R</b>
-              <small>{atual?.recuperados ?? '—'}</small>
+              <small>{atual?.recuperados ?? 0}</small>
             </span>
           </div>
         </div>
@@ -520,15 +524,11 @@ export function ResultsPage() {
           <article>
             <span>Situação do ensaio</span>
             <strong>
-              {carregando
-                ? 'Carregando…'
-                : atual
-                  ? `Ensaio em t = ${passoAtual}`
-                  : 'Sem resultado'}
+              {carregando ? 'Calculando…' : `Ensaio em t = ${passoAtual}`}
             </strong>
             <small>
               {descricaoCenario ?? 'Nenhum cenário selecionado'} · Horizonte
-              observado: {atual ? `t = ${horizonteObservado}` : '—'}
+              observado: t = {horizonteObservado}
             </small>
           </article>
           <article>
@@ -547,65 +547,49 @@ export function ResultsPage() {
             </small>
           </article>
           <article>
-            <span>Pico observado de infectados</span>
-            <strong>
-              {atual ? formatarPercentual(pico / Math.max(total, 1)) : '—'}
-            </strong>
+            <span>Pico de infectados</span>
+            <strong>{formatarPercentual(pico / Math.max(total, 1))}</strong>
             <small>
-              {atual
-                ? `${pico} pessoas em t = ${passoPico}`
-                : 'Nenhuma observação disponível'}
+              {pico} nós em t = {passoPico}
             </small>
           </article>
           <article>
-            <span>Fração acumulada observada</span>
-            <strong>{atual ? formatarPercentual(fracaoAcumulada) : '—'}</strong>
+            <span>Fração acumulada</span>
+            <strong>{formatarPercentual(fracaoAcumulada)}</strong>
             <small>
-              {atual
-                ? `${Math.round(fracaoAcumulada * total)} pessoas ao menos uma vez`
-                : 'Nenhuma observação disponível'}
+              {Math.round(fracaoAcumulada * total)} nós ao menos uma vez
             </small>
           </article>
           <article>
             <span>Fração final recuperada</span>
             <strong>
-              {atual
-                ? formatarPercentual(
-                    resultado?.metrica.fracao_final_recuperados ??
-                      atual.recuperados / Math.max(total, 1),
-                  )
-                : '—'}
+              {formatarPercentual(
+                resultado?.metrica.fracao_final_recuperados ??
+                  (atual ? atual.recuperados / Math.max(total, 1) : 0),
+              )}
             </strong>
-            <small>
-              {atual
-                ? 'Recuperados no último registro'
-                : 'Nenhuma observação disponível'}
-            </small>
+            <small>Recuperados no último registro</small>
           </article>
           <article>
             <span>Nós sob intervenção</span>
-            <strong>{atual ? isolados : '—'}</strong>
+            <strong>{isolados}</strong>
             <small>
-              {atual
-                ? `${isolados === 1 ? 'Pessoa isolada' : 'Pessoas isoladas'}; também pertencem a S, I ou R`
-                : 'Nenhuma observação disponível'}
+              {isolados === 1 ? 'nó isolado' : 'nós isolados'} estruturalmente
             </small>
           </article>
         </section>
 
-        {motivoTermino === 'limite_passos' && atual && atual.infectados > 0 && (
-          <p className="results-warning" role="status">
-            Execução censurada: ainda há infectados em t = {horizonteObservado}.
-            Pico e acumulado são observados até esse instante; a duração até
-            extinção não foi observada.
-          </p>
-        )}
-        <GraficoResultados
-          key={resultadoId ?? 'sem-resultado'}
+        <GraficoTrajetorias
+          key={resultadoId ?? 'atual'}
           historico={historico}
           comparacao={comparacao}
           populacao={total}
+          carregando={carregando}
+          filtros={filtrosGrafico}
+          onAlterar={setFiltrosGrafico}
           grafico={grafico}
+          onExportarSvg={exportarSvg}
+          onExportarPng={exportarPng}
         />
 
         {comparacao && (
@@ -670,22 +654,7 @@ export function ResultsPage() {
             >
               ↓ Exportar histórico (.CSV)
             </button>
-            <div className="export-actions" aria-busy={exportando}>
-              <button
-                type="button"
-                onClick={exportarSvg}
-                disabled={!historico.length}
-              >
-                SVG
-              </button>
-              <button
-                type="button"
-                onClick={exportarPng}
-                disabled={!historico.length || exportando}
-              >
-                PNG
-              </button>
-              {exportando && <span role="status">Preparando PNG…</span>}
+            <div className="export-actions">
               {comparacao && (
                 <button type="button" onClick={exportarCsvAgregado}>
                   CSV agregado

@@ -1,0 +1,110 @@
+{
+  "data": "2026-11-22",
+  "concluido_em_utc": "2026-11-22T21:40:33.266073+00:00",
+  "campanha": {
+    "concluida": true,
+    "lotes": 33,
+    "trajetorias": 9900,
+    "registros": 635259,
+    "censuradas": 1,
+    "condicoes_distintas": 8900,
+    "trajetorias_extras_reproducao": 2700
+  },
+  "benchmark": {
+    "redes": 3,
+    "cronometragens": 15,
+    "chamadas_instrumentadas": 6,
+    "copias_por_lote": 301,
+    "assinaturas_iguais_ao_bloco_A": true
+  },
+  "protocolo_original_preservado": true,
+  "artefatos_do_bloco_A_preservados": 15,
+  "codigo_dominio_identico_ao_bloco_A": true,
+  "lotes_BCD_auditados": 12,
+  "trajetorias_extras_reproducao_formal": 2700,
+  "restauracao_BCD_sem_novas_trajetorias_conferida": true,
+  "testes": {
+    "python": 825,
+    "frontend": 60,
+    "regressoes_executor_final": 4
+  },
+  "navegador": {
+    "telas": 4,
+    "downloads": 6,
+    "excecoes_js": 0
+  },
+  "relatorio_local": {
+    "pdf": "gerenciamento-latex/main.pdf",
+    "paginas": 15,
+    "secoes": 10,
+    "figuras": 9,
+    "tabelas": 4,
+    "rotulos_unicos": 24,
+    "referencias": 9,
+    "arquivos_no_zip": 24,
+    "compilador": "Tectonic 0.17.0, XeTeX + BibTeX",
+    "zip_compilado_em_diretorio_limpo": true,
+    "template_fonte_margens_preservados": true,
+    "paginas_inspecionadas": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15
+    ],
+    "erros": [],
+    "avisos": [
+      "warning: secoes/02-fundamentacao-decisoes-projeto:24: Underfull \\hbox (badness 10000) in paragraph at lines 23--24",
+      "warning: secoes/03-modelagem-rede-dinamica:1: Underfull \\hbox (badness 1122) in paragraph at lines 35--1",
+      "warning: secoes/03-modelagem-rede-dinamica:33: Underfull \\vbox (badness 1635) has occurred while \\output is active",
+      "warning: secoes/06-verificacao-complexidade:64: Underfull \\vbox (badness 10000) has occurred while \\output is active",
+      "warning: secoes/07-protocolo-experimental:6: Underfull \\hbox (badness 10000) in paragraph at lines 5--6"
+    ],
+    "sha256_pdf": "5789820325680da3e5e7388bb472a649a76458646c97d961743b6e07577a2f67",
+    "sha256_zip": "3b4e0d59bb0ec68950d6a4ffac80ac2dd2916e5c9ca8d8ffa8699db9b0cda06e",
+    "nota": "Pasta LaTeX local ignorada pelo Git; o pacote contém as fontes e imagens completas para exportação."
+  },
+  "uml": "Diagramas originais consultados e preservados; contratos de projeto e implementação distinguidos em docs/modelagem/simulador-epidemias/revisao-modelagem-implementacao.md.",
+  "hashes_scripts_entregues": {
+    "scripts/experimentos_intervencoes.py": "57bbc406432f3d5ec4520c75de0d356b70da1ce8040d010a5b5fb668b0593d6e",
+    "scripts/benchmark_etapa3.py": "7afe29e3eae7b669b288714bf51d9265c8733187ae0267cd9f224979378d034d",
+    "scripts/analisar_intervencoes.py": "ed7ee8434e6f9a6b16664be575823bce433d2d2546b04f9462434a197047208c",
+    "tests/test_experimentos_intervencoes.py": "f80340c6109daf3c658783be84ebe6cd49fdc49887ea66269497b23656703dd7"
+  },
+  "hashes_artefatos": {
+    "dados/dados/experimentos/intervencoes-v1/lotes-intervencoes-v1.zip": "f01d9f393f438e0f6c870a7315fc1047d5e4c6ac726455c9efd44b4dcf101ce2",
+    "dados/dados/experimentos/desempenho-v1/medicoes.json": "a0ca8d29a8b5b1e98301fdf044800872f57ffbe68e61d50898a4ed5b5e0259c7",
+    "dados/dados/experimentos/intervencoes-v1/verificacao.json": "245b46a0d968cade1670bb7da81f3b894394a8085fc23afa5c34af32828fe270"
+  },
+  "links_locais_conferidos": 33,
+  "atualizacao_identificacao_relatorio": {
+    "data": "2026-11-22",
+    "professor": "Leonardo Vilela Cardoso",
+    "emails": [
+      "joao09calixto@gmail.com",
+      "luisgustavoxavier1234@gmail.com",
+      "wdomingos@sga.pucminas.br"
+    ],
+    "paginas": 15,
+    "pagina_inicial_inspecionada": true,
+    "texto_do_resumo_ao_fim_preservado": true,
+    "texto_das_paginas_2_a_15_identico": true,
+    "zip_fontes_compilado_em_diretorio_limpo": true,
+    "arquivos_no_zip": 24,
+    "somente_main_tex_alterado_no_pacote": true,
+    "sem_overfull_ou_referencias_indefinidas": true,
+    "sha256_pdf": "5789820325680da3e5e7388bb472a649a76458646c97d961743b6e07577a2f67",
+    "sha256_zip": "3b4e0d59bb0ec68950d6a4ffac80ac2dd2916e5c9ca8d8ffa8699db9b0cda06e",
+    "novos_testes_ou_experimentos": false
+  }
+}

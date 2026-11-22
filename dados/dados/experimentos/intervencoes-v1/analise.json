@@ -1,0 +1,20 @@
+{
+  "protocolo": "etapa3-base-v1",
+  "lotes_novos": 12,
+  "trajetorias_novas": 3600,
+  "registros_novos": 226345,
+  "censuradas_novas": 0,
+  "baseline_reutilizado": "A_escola_suica_2024; não soma repetições à amostra por condição",
+  "exclusao_desativacao": "Históricos e métricas idênticos nos 300 pares de cenário/repetição; ver verificacao.json.",
+  "escopo": "Uma escola estática, 100 repetições por condição. Desvios amostrais; sem testes de significância ou calibração clínica.",
+  "figuras_sha256": {
+    "mecanismos.pdf": "d4f1371630f532e2481dfe0f058df2141a880780a7466b0e0a6346ce3b63f847",
+    "mecanismos.svg": "946dc62ef1769728ec2ac1965ccf6f3875b323d0188b41357eea54bf708cb368",
+    "orcamento-inicio.pdf": "5ed6e4a1e582e16b0589b4065a6fb2b1f57bd83eb06e5874657124a52b78c38d",
+    "orcamento-inicio.svg": "621d2820cce7b3d798baf07cca9cbc0f7fb268677259a6a73bb3aa7ff9fc6a59",
+    "sensibilidade-beta.pdf": "00f87625f553f31e3f145ec5bb92fa5c5c0a4f22ca2a6ddc143832edd53007d7",
+    "sensibilidade-beta.svg": "299e2a5bfdeef1286c468cb934510de4dd36259a1ba078300d77bc738e711075",
+    "sintese-orcamento.pdf": "07d3dcd45ad911a08ffb3553c1044ff17b52b35a462adb6a3d41dff9bf071397",
+    "sintese-orcamento.svg": "38823b489d0580b5195f6ec38543020734fd6393f7d60a73806d36fbab0b428f"
+  }
+}

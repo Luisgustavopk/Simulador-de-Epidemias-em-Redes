@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE svg
+  PUBLIC '-//W3C//DTD SVG 1.0//EN'
+  'http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd'>
+<svg width="880" height="330" preserveAspectRatio="xMinYMin meet" viewBox="0 0 880 330" xmlns="http://www.w3.org/2000/svg" version="1.0" fill-rule="evenodd" xmlns:xlink="http://www.w3.org/1999/xlink">
+	<title>...</title>
+	<desc>...</desc>
+	<clipPath id="clip">
+		<rect x="0" y="0" width="880" height="330"/>
+	</clipPath>
+	<g id="group" transform="scale(1,-1) translate(0,-330)" style="clip-path: url(#clip)">
+		<g transform="">
+			<text x="45" y="305" style="font-family: DejaVu; font-size: 15px;fill: rgb(13%,13%,13%); stroke:none;" transform="translate(0,610) scale(1,-1)">Lote de 300 trajetórias — medição sequencial</text>
+			<text x="55" y="262" style="font-family: DejaVu; font-size: 12px;fill: rgb(13%,13%,13%); stroke:none;" transform="translate(0,524) scale(1,-1)">Tempo (s) — cinco chamadas</text>
+			<path d="M 55,65 L 420,65 Z" style="stroke: rgb(86%,86%,86%); stroke-linecap: butt; stroke-width: 0.5;"/>
+			<text x="32.68701171875" y="62.0" style="font-family: DejaVu; font-size: 9px;fill: rgb(13%,13%,13%); stroke:none;" transform="translate(0,124) scale(1,-1)">0.0</text>
+			<path d="M 55,108.75 L 420,108.75 Z" style="stroke: rgb(86%,86%,86%); stroke-linecap: butt; stroke-width: 0.5;"/>
+			<text x="32.68701171875" y="105.75" style="font-family: DejaVu; font-size: 9px;fill: rgb(13%,13%,13%); stroke:none;" transform="translate(0,211) scale(1,-1)">1.3</text>
+			<path d="M 55,152.5 L 420,152.5 Z" style="stroke: rgb(86%,86%,86%); stroke-linecap: butt; stroke-width: 0.5;"/>
+			<text x="32.68701171875" y="149.5" style="font-family: DejaVu; font-size: 9px;fill: rgb(13%,13%,13%); stroke:none;" transform="translate(0,299) scale(1,-1)">2.5</text>
+			<path d="M 55,196.25 L 420,196.25 Z" style="stroke: rgb(86%,86%,86%); stroke-linecap: butt; stroke-width: 0.5;"/>
+			<text x="32.68701171875" y="193.25" style="font-family: DejaVu; font-size: 9px;fill: rgb(13%,13%,13%); stroke:none;" transform="translate(0,386) scale(1,-1)">3.8</text>
+			<path d="M 55,240 L 420,240 Z" style="stroke: rgb(86%,86%,86%); stroke-linecap: butt; stroke-width: 0.5;"/>
+			<text x="32.68701171875" y="237.0" style="font-family: DejaVu; font-size: 9px;fill: rgb(13%,13%,13%); stroke:none;" transform="translate(0,474) scale(1,-1)">5.0</text>
+			<rect x="91.83333333333334" y="65" width="48.0" height="142.499085091609" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(0%,41%,50%); fill-rule: evenodd;"/>
+			<text x="99.80794270833334" y="47" style="font-family: DejaVu; font-size: 10px;fill: rgb(13%,13%,13%); stroke:none;" transform="translate(0,94) scale(1,-1)">Escola</text>
+			<text x="104.70052083333334" y="216.499085091609" style="font-family: DejaVu; font-size: 10px;fill: rgb(13%,13%,13%); stroke:none;" transform="translate(0,432) scale(1,-1)">4.09</text>
+			<circle cx="115.83333333333334" cy="209.1914576860668" r="2" style="stroke: rgb(100%,100%,100%); stroke-linecap: butt; stroke-width: 0.3; fill: rgb(70%,37%,7%); fill-rule: evenodd;"/>
+			<circle cx="115.83333333333334" cy="201.91355011631006" r="2" style="stroke: rgb(100%,100%,100%); stroke-linecap: butt; stroke-width: 0.3; fill: rgb(70%,37%,7%); fill-rule: evenodd;"/>
+			<circle cx="115.83333333333334" cy="207.63823575397006" r="2" style="stroke: rgb(100%,100%,100%); stroke-linecap: butt; stroke-width: 0.3; fill: rgb(70%,37%,7%); fill-rule: evenodd;"/>
+			<circle cx="115.83333333333334" cy="207.499085091609" r="2" style="stroke: rgb(100%,100%,100%); stroke-linecap: butt; stroke-width: 0.3; fill: rgb(70%,37%,7%); fill-rule: evenodd;"/>
+			<circle cx="115.83333333333334" cy="205.90497279620638" r="2" style="stroke: rgb(100%,100%,100%); stroke-linecap: butt; stroke-width: 0.3; fill: rgb(70%,37%,7%); fill-rule: evenodd;"/>
+			<rect x="213.5" y="65" width="48.0" height="143.85512710135146" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(0%,41%,50%); fill-rule: evenodd;"/>
+			<text x="216.552734375" y="47" style="font-family: DejaVu; font-size: 10px;fill: rgb(13%,13%,13%); stroke:none;" transform="translate(0,94) scale(1,-1)">ER 1000</text>
+			<text x="226.3671875" y="217.85512710135146" style="font-family: DejaVu; font-size: 10px;fill: rgb(13%,13%,13%); stroke:none;" transform="translate(0,435) scale(1,-1)">4.13</text>
+			<circle cx="237.5" cy="213.3050847457627" r="2" style="stroke: rgb(100%,100%,100%); stroke-linecap: butt; stroke-width: 0.3; fill: rgb(70%,37%,7%); fill-rule: evenodd;"/>
+			<circle cx="237.5" cy="203.68210347157378" r="2" style="stroke: rgb(100%,100%,100%); stroke-linecap: butt; stroke-width: 0.3; fill: rgb(70%,37%,7%); fill-rule: evenodd;"/>
+			<circle cx="237.5" cy="204.67506595564552" r="2" style="stroke: rgb(100%,100%,100%); stroke-linecap: butt; stroke-width: 0.3; fill: rgb(70%,37%,7%); fill-rule: evenodd;"/>
+			<circle cx="237.5" cy="208.85512710135146" r="2" style="stroke: rgb(100%,100%,100%); stroke-linecap: butt; stroke-width: 0.3; fill: rgb(70%,37%,7%); fill-rule: evenodd;"/>
+			<circle cx="237.5" cy="209.05825469706494" r="2" style="stroke: rgb(100%,100%,100%); stroke-linecap: butt; stroke-width: 0.3; fill: rgb(70%,37%,7%); fill-rule: evenodd;"/>
+			<rect x="335.1666666666667" y="65" width="48.0" height="141.72168430265668" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(0%,41%,50%); fill-rule: evenodd;"/>
+			<text x="338.0021158854167" y="47" style="font-family: DejaVu; font-size: 10px;fill: rgb(13%,13%,13%); stroke:none;" transform="translate(0,94) scale(1,-1)">BA 2000</text>
+			<text x="348.0338541666667" y="215.72168430265668" style="font-family: DejaVu; font-size: 10px;fill: rgb(13%,13%,13%); stroke:none;" transform="translate(0,431) scale(1,-1)">4.07</text>
+			<circle cx="359.1666666666667" cy="206.72168430265668" r="2" style="stroke: rgb(100%,100%,100%); stroke-linecap: butt; stroke-width: 0.3; fill: rgb(70%,37%,7%); fill-rule: evenodd;"/>
+			<circle cx="359.1666666666667" cy="207.17506270574816" r="2" style="stroke: rgb(100%,100%,100%); stroke-linecap: butt; stroke-width: 0.3; fill: rgb(70%,37%,7%); fill-rule: evenodd;"/>
+			<circle cx="359.1666666666667" cy="204.18953376751696" r="2" style="stroke: rgb(100%,100%,100%); stroke-linecap: butt; stroke-width: 0.3; fill: rgb(70%,37%,7%); fill-rule: evenodd;"/>
+			<circle cx="359.1666666666667" cy="203.82669134208066" r="2" style="stroke: rgb(100%,100%,100%); stroke-linecap: butt; stroke-width: 0.3; fill: rgb(70%,37%,7%); fill-rule: evenodd;"/>
+			<circle cx="359.1666666666667" cy="208.03740034199345" r="2" style="stroke: rgb(100%,100%,100%); stroke-linecap: butt; stroke-width: 0.3; fill: rgb(70%,37%,7%); fill-rule: evenodd;"/>
+			<text x="495" y="262" style="font-family: DejaVu; font-size: 12px;fill: rgb(13%,13%,13%); stroke:none;" transform="translate(0,524) scale(1,-1)">Pico adicional Python (MiB)</text>
+			<path d="M 495,65 L 860,65 Z" style="stroke: rgb(86%,86%,86%); stroke-linecap: butt; stroke-width: 0.5;"/>
+			<text x="472.68701171875" y="62.0" style="font-family: DejaVu; font-size: 9px;fill: rgb(13%,13%,13%); stroke:none;" transform="translate(0,124) scale(1,-1)">0.0</text>
+			<path d="M 495,108.75 L 860,108.75 Z" style="stroke: rgb(86%,86%,86%); stroke-linecap: butt; stroke-width: 0.5;"/>
+			<text x="472.68701171875" y="105.75" style="font-family: DejaVu; font-size: 9px;fill: rgb(13%,13%,13%); stroke:none;" transform="translate(0,211) scale(1,-1)">2.0</text>
+			<path d="M 495,152.5 L 860,152.5 Z" style="stroke: rgb(86%,86%,86%); stroke-linecap: butt; stroke-width: 0.5;"/>
+			<text x="472.68701171875" y="149.5" style="font-family: DejaVu; font-size: 9px;fill: rgb(13%,13%,13%); stroke:none;" transform="translate(0,299) scale(1,-1)">3.9</text>
+			<path d="M 495,196.25 L 860,196.25 Z" style="stroke: rgb(86%,86%,86%); stroke-linecap: butt; stroke-width: 0.5;"/>
+			<text x="472.68701171875" y="193.25" style="font-family: DejaVu; font-size: 9px;fill: rgb(13%,13%,13%); stroke:none;" transform="translate(0,386) scale(1,-1)">5.9</text>
+			<path d="M 495,240 L 860,240 Z" style="stroke: rgb(86%,86%,86%); stroke-linecap: butt; stroke-width: 0.5;"/>
+			<text x="472.68701171875" y="237.0" style="font-family: DejaVu; font-size: 9px;fill: rgb(13%,13%,13%); stroke:none;" transform="translate(0,474) scale(1,-1)">7.8</text>
+			<rect x="531.8333333333334" y="65" width="48.0" height="141.65909549786844" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(0%,41%,50%); fill-rule: evenodd;"/>
+			<text x="539.8079427083334" y="47" style="font-family: DejaVu; font-size: 10px;fill: rgb(13%,13%,13%); stroke:none;" transform="translate(0,94) scale(1,-1)">Escola</text>
+			<text x="544.7005208333334" y="215.65909549786844" style="font-family: DejaVu; font-size: 10px;fill: rgb(13%,13%,13%); stroke:none;" transform="translate(0,431) scale(1,-1)">6.35</text>
+			<rect x="653.5" y="65" width="48.0" height="148.3050847457627" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(0%,41%,50%); fill-rule: evenodd;"/>
+			<text x="656.552734375" y="47" style="font-family: DejaVu; font-size: 10px;fill: rgb(13%,13%,13%); stroke:none;" transform="translate(0,94) scale(1,-1)">ER 1000</text>
+			<text x="666.3671875" y="222.3050847457627" style="font-family: DejaVu; font-size: 10px;fill: rgb(13%,13%,13%); stroke:none;" transform="translate(0,444) scale(1,-1)">6.65</text>
+			<rect x="775.1666666666667" y="65" width="48.0" height="140.89542737960213" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(0%,41%,50%); fill-rule: evenodd;"/>
+			<text x="778.0021158854167" y="47" style="font-family: DejaVu; font-size: 10px;fill: rgb(13%,13%,13%); stroke:none;" transform="translate(0,94) scale(1,-1)">BA 2000</text>
+			<text x="788.0338541666667" y="214.89542737960213" style="font-family: DejaVu; font-size: 10px;fill: rgb(13%,13%,13%); stroke:none;" transform="translate(0,429) scale(1,-1)">6.32</text>
+			<text x="40" y="20" style="font-family: DejaVu; font-size: 9px;fill: rgb(13%,13%,13%); stroke:none;" transform="translate(0,40) scale(1,-1)">Tempo sem instrumentação; memória em chamada separada. Preparo, HTTP e navegador excluídos. Não é RSS.</text>
+		</g>
+	</g>
+</svg>

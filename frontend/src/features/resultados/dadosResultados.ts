@@ -225,6 +225,12 @@ export function csvMetricas(comparacao: ResultadoComparacaoExecutada) {
 export function serializarGrafico(
   elemento: SVGSVGElement,
   dados: DadosResultado,
+  visualizacao?: {
+    filtros: unknown
+    descricao?: string
+    cenarios: (keyof typeof NOMES_CENARIOS)[]
+    legenda: string
+  },
 ) {
   const clone = elemento.cloneNode(true) as SVGSVGElement
   const originais = [elemento, ...elemento.querySelectorAll('*')]
@@ -256,70 +262,98 @@ export function serializarGrafico(
   clone
     .querySelectorAll('[data-consulta]')
     .forEach((elemento) => elemento.remove())
+  clone
+    .querySelectorAll('.chart-label')
+    .forEach((elemento) => elemento.setAttribute('fill', '#374151'))
   const { width: largura, height: altura } = elemento.viewBox.baseVal
   const namespace = 'http://www.w3.org/2000/svg'
-  const configuracao = dados.manifesto?.configuracao ?? {}
-  const sementes = (configuracao.sementes ?? {}) as Record<string, string>
-  const intervencao = configuracao.intervencao as Record<string, unknown> | null
-  const descricao = [
-    `Observatório · revisão ${dados.revisao_rede} · ${new Date().toLocaleString('pt-BR')}`,
-    elemento.querySelector('title')?.textContent ??
-      'Trajetórias epidemiológicas',
-    `Eixo vertical: 0–${elemento.dataset.limiteVertical} pessoas · ${elemento.dataset.escala === 'ajustada' ? 'escala ajustada às curvas' : 'população total'}`,
-    `β: ${configuracao.beta ?? 'direto'} · γ: ${configuracao.gamma ?? '—'} · população: ${dados.populacao} · repetições: ${'execucoes' in dados ? (dados.manifesto?.repeticoes ?? '—') : 1}`,
-    `Sementes base: epidemia ${sementes.epidemia ?? '—'} · iniciais ${sementes.iniciais ?? '—'} · isolamento ${sementes.isolamento ?? '—'}`,
-    intervencao
-      ? `Intervenções: ${intervencao.mecanismo} · fração ${intervencao.fracao} · início ${intervencao.inicio} · redução ${intervencao.reducao ?? 'não aplicável'}`
-      : 'Sem intervenção',
-    'execucoes' in dados
-      ? 'Médias com n constante; somente extinções prolongadas. Sem dados presumidos após censura.'
-      : 'Registros observados; isolamento independente do estado SIR.',
-  ].flatMap(
-    (linha) =>
-      linha
-        .match(/.{1,112}(?:\s|$)|.{1,112}/g)
-        ?.map((trecho) => trecho.trim()) ?? [],
-  )
-  const cabecalho = descricao.length * 20 + 24
   clone.setAttribute('xmlns', namespace)
+  const cabecalho = visualizacao ? 152 : 128
+  const deslocamento = cabecalho - 128
   clone.setAttribute(
     'viewBox',
-    `0 ${-cabecalho} ${largura} ${altura + cabecalho}`,
+    `0 -${cabecalho} ${largura} ${altura + cabecalho}`,
   )
   clone.setAttribute('width', String(largura))
   clone.setAttribute('height', String(altura + cabecalho))
   const metadados = document.createElementNS(namespace, 'metadata')
   metadados.textContent = JSON.stringify({
     ...pacoteExportacao(dados),
-    visualizacao: { ...elemento.dataset },
+    ...(visualizacao ? { visualizacao } : {}),
   })
   clone.prepend(metadados)
   const fundo = document.createElementNS(namespace, 'rect')
-  for (const [chave, valor] of Object.entries({
-    x: '0',
-    y: String(-cabecalho),
-    width: String(largura),
-    height: String(altura + cabecalho),
-    fill: '#ffffff',
-  }))
-    fundo.setAttribute(chave, valor)
+  fundo.setAttribute('x', '0')
+  fundo.setAttribute('y', String(-cabecalho))
+  fundo.setAttribute('width', String(largura))
+  fundo.setAttribute('height', String(altura + cabecalho))
+  fundo.setAttribute('fill', '#ffffff')
   clone.prepend(fundo)
-  clone
-    .querySelectorAll('text')
-    .forEach((texto) => texto.setAttribute('fill', '#374151'))
-  descricao.forEach((texto, indice) => {
+  const titulo = document.createElementNS(namespace, 'text')
+  titulo.setAttribute('x', '16')
+  titulo.setAttribute('y', String(-104 - deslocamento))
+  titulo.setAttribute('fill', '#161616')
+  titulo.setAttribute('font-size', '14')
+  titulo.textContent = `Observatório · revisão ${dados.revisao_rede} · ${new Date().toLocaleString()}`
+  clone.append(titulo)
+  const configuracao = dados.manifesto?.configuracao ?? {}
+  const sementes = (configuracao.sementes ?? {}) as Record<string, string>
+  const intervencao = configuracao.intervencao as Record<string, unknown> | null
+  for (const [indice, texto] of [
+    `β: ${configuracao.beta ?? 'direto'} · γ: ${configuracao.gamma} · pessoas: ${dados.populacao} · repetições: ${'execucoes' in dados ? dados.manifesto?.repeticoes : 1}`,
+    `Sementes ${'execucoes' in dados ? 'base' : ''}: epidemia ${sementes.epidemia} · iniciais ${sementes.iniciais} · isolamento ${sementes.isolamento}`,
+    intervencao
+      ? `Isolamento: ${intervencao.mecanismo} · fração ${intervencao.fracao} · início ${intervencao.inicio}`
+      : 'Sem intervenção',
+  ].entries()) {
     const linha = document.createElementNS(namespace, 'text')
-    for (const [chave, valor] of Object.entries({
-      x: '20',
-      y: String(-cabecalho + 24 + indice * 20),
-      fill: '#161616',
-      'font-size': indice === 0 ? '16' : '13',
-      'font-family': 'Arial, sans-serif',
-    }))
-      linha.setAttribute(chave, valor)
+    linha.setAttribute('x', '16')
+    linha.setAttribute('y', String(-84 - deslocamento + indice * 16))
+    linha.setAttribute('fill', '#161616')
+    linha.setAttribute('font-size', '11')
     linha.textContent = texto
     clone.append(linha)
-  })
+  }
+  if (visualizacao?.descricao) {
+    const escopo = document.createElementNS(namespace, 'text')
+    escopo.setAttribute('x', '16')
+    escopo.setAttribute('y', '-56')
+    escopo.setAttribute('fill', '#161616')
+    escopo.setAttribute('font-size', '11')
+    escopo.textContent = visualizacao.descricao
+    clone.append(escopo)
+  }
+  const legenda = document.createElementNS(namespace, 'text')
+  legenda.setAttribute('x', '16')
+  legenda.setAttribute('y', '-32')
+  legenda.setAttribute('fill', '#161616')
+  legenda.setAttribute('font-size', '11')
+  legenda.textContent =
+    visualizacao?.legenda ??
+    ('execucoes' in dados
+      ? 'S: contínua · I: tracejada · R: pontilhada · Q: mista · médias ± desvio amostral'
+      : 'S: suscetíveis · I: infectados · R: recuperados · Q: isolados')
+  clone.append(legenda)
+  if ('execucoes' in dados) {
+    Object.entries(CORES_CENARIOS)
+      .filter(
+        ([cenario]) =>
+          !visualizacao ||
+          visualizacao.cenarios.includes(
+            cenario as keyof typeof NOMES_CENARIOS,
+          ),
+      )
+      .forEach(([cenario, cor], indice) => {
+        const rotulo = document.createElementNS(namespace, 'text')
+        rotulo.setAttribute('x', String(16 + indice * 240))
+        rotulo.setAttribute('y', '-14')
+        rotulo.setAttribute('fill', cor)
+        rotulo.setAttribute('font-size', '12')
+        rotulo.textContent =
+          NOMES_CENARIOS[cenario as keyof typeof NOMES_CENARIOS]
+        clone.append(rotulo)
+      })
+  }
   return {
     svg: new XMLSerializer().serializeToString(clone),
     largura,

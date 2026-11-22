@@ -1,0 +1,146 @@
+{
+  "iniciado_em_utc": "2026-11-22T21:13:54.951262+00:00",
+  "python": "3.13.3",
+  "plataforma": "Linux-6.17.6-lux-amd64-x86_64-with-glibc2.41",
+  "cpu": "AMD Ryzen 7 7735HS with Radeon Graphics",
+  "ram_bytes": 14320279552,
+  "revisao_git": "f69ad669153cb0d85a7c5561ef3c45f14e6db4f7",
+  "arvore_com_alteracoes": true,
+  "sha256_codigo_dominio": {
+    "src/simulador/__init__.py": "06bf86fcee03f46eb9a587c5cbab6421ad9afd173a7c3de7ca856a8c3bf5f3da",
+    "src/simulador/aleatoriedade.py": "7463e8f2d4df9609a3fb0934884ea5416e364e799989c2b92a45f5fe0ca5719d",
+    "src/simulador/analise_estrutural.py": "57c7c406d80e9e5d9d6ee5518814478bf779c16f699e97a166ec31c94c06d278",
+    "src/simulador/api_local.py": "9c0e58e1715e6eeea16a8e5d5948f1e2b7b8a4da67b276a2499e5b3aacf3de78",
+    "src/simulador/carga_rede.py": "97a98ab9acc6fea4264fd2d322356188f3d6c2655306b551f017c42ca7395e87",
+    "src/simulador/comparacao.py": "41625b16b4cfda356dc48c24d78fb58a37b2010ee44afa575feb136591bec0f9",
+    "src/simulador/comparacao_api.py": "816e30020a363e7fbb49700d1367cffeb6799e22cd5d21a492730612498b997c",
+    "src/simulador/configuracao.py": "40bb060f22bb7c4594fe63aa17eb197a92ca382e3c552921caaadcfeb7435193",
+    "src/simulador/configuracao_api.py": "e0470f5b93c161eff8d17fd64d2c0525109d18d771175c74c7017b93dd2c6efe",
+    "src/simulador/contato.py": "f2969e04d8f590429a223549b9a4d6626f6217d9ad86f603434a8d3c9940f0c8",
+    "src/simulador/estrategias_isolamento.py": "3f2150480edd3332314ecbe30057377a027dc4b4d5202dab74fa3b1cd724fcc0",
+    "src/simulador/geracao.py": "11e9a50717dbb345d3f2843bb409cb79c568f2d7c00b0f8f86a69ec41012e35e",
+    "src/simulador/importacao.py": "ee7f498b3f34a5e4f3396db3ee5161e7f90f6c7649f9c0759abd55cb621fe288",
+    "src/simulador/individuo.py": "72c330bf74a59d3c30655095968a81c13b75bddf90342c3fe475137c7a5b724c",
+    "src/simulador/isolamento.py": "60c7cf37888c8ca6a44aac157b50ad829ee2895280eca6ff3b72872cc11fbba3",
+    "src/simulador/metricas.py": "2f210856af7d007addb0c50d7528af1f1cf9f20b2968a5c49d790c5fdc4fd0fd",
+    "src/simulador/motor_sir.py": "cc687e6000c08aa64bbc048614e06dafe3c0fc54a41420dd0f998d1b656b17c0",
+    "src/simulador/rede_contatos.py": "d820ce69f21e6ece33886eeae15150f7dbc1699637983c506760b8abf8e35a10",
+    "src/simulador/resultado.py": "77f6706a74928deb80f4ab55d83fb7d7e6fd9cca886f89ec6be8d0ade0c419c9",
+    "src/simulador/simulacao.py": "a0848a13f109daa8adf669d51a3cd402a01ee57b654ebc7d24ee22f8570c7938"
+  },
+  "sha256_protocolo": "79059147a1db4d815e845c25df625da037b2867130a1df148556bea95dfd485e",
+  "sha256_executor": "5a5b9cfc87e8fea1ef07a7cb5e5fa1d72b943f9d8226484f46300fe23cb15b23",
+  "escopo": "B/C/D na escola; condições fixadas no protocolo etapa3-base-v1",
+  "lotes": [
+    {
+      "id": "B_reducao",
+      "bloco": "B_mecanismos",
+      "sha256": "da7abcbb0935f5e16cf3b69e717c59725b6ecf4fca1f7c3410ea423ba5a1c794",
+      "origem": "execucao_nova",
+      "execucoes": 300,
+      "registros": 21669,
+      "repeticoes_pareadas": 100
+    },
+    {
+      "id": "B_exclusao",
+      "bloco": "B_mecanismos",
+      "sha256": "3480dd826e4df23eb6381566ce15868ac500de3566679d314065bbae474e9bd0",
+      "origem": "execucao_nova",
+      "execucoes": 300,
+      "registros": 18986,
+      "repeticoes_pareadas": 100
+    },
+    {
+      "id": "C_f10_t0",
+      "bloco": "C_orcamento_inicio",
+      "sha256": "31a36b8cf9f66c2d1dba81147790d2b783307d97f6e46a92eb57b163d423f8f8",
+      "origem": "execucao_nova",
+      "execucoes": 300,
+      "registros": 20796,
+      "repeticoes_pareadas": 100
+    },
+    {
+      "id": "C_f10_t5",
+      "bloco": "C_orcamento_inicio",
+      "sha256": "740cd7a5f181f30b743adeaaf9e5d95f5bbb2c81b9d560d79a513b9cd1a38197",
+      "origem": "execucao_nova",
+      "execucoes": 300,
+      "registros": 21822,
+      "repeticoes_pareadas": 100
+    },
+    {
+      "id": "C_f10_t10",
+      "bloco": "C_orcamento_inicio",
+      "sha256": "d5a0db45f3b3d019fa13795b72332baca18f316b8ba990ed9eaa6093d238ab8e",
+      "origem": "execucao_nova",
+      "execucoes": 300,
+      "registros": 22512,
+      "repeticoes_pareadas": 100
+    },
+    {
+      "id": "C_f20_t0",
+      "bloco": "C_orcamento_inicio",
+      "sha256": "fdfafacb3372bb67c34b7081f7855e743a78c176c5dea345c70887b892dfa27d",
+      "origem": "execucao_nova",
+      "execucoes": 300,
+      "registros": 18170,
+      "repeticoes_pareadas": 100
+    },
+    {
+      "id": "C_f20_t10",
+      "bloco": "C_orcamento_inicio",
+      "sha256": "084dc476710661fedf907c25fdd81504e418aa9e03f80086c8d46f6d556f3c11",
+      "origem": "execucao_nova",
+      "execucoes": 300,
+      "registros": 20092,
+      "repeticoes_pareadas": 100
+    },
+    {
+      "id": "C_f30_t0",
+      "bloco": "C_orcamento_inicio",
+      "sha256": "a9822d938b3d3ce8d7dc0b83c4d7846bf2c0845c5009489792c9785e595c66fe",
+      "origem": "execucao_nova",
+      "execucoes": 300,
+      "registros": 16160,
+      "repeticoes_pareadas": 100
+    },
+    {
+      "id": "C_f30_t5",
+      "bloco": "C_orcamento_inicio",
+      "sha256": "2160e22b1ad299072207cfc92af88ea24a3b7bf25fa51ba29a7bba516d7887c4",
+      "origem": "execucao_nova",
+      "execucoes": 300,
+      "registros": 17567,
+      "repeticoes_pareadas": 100
+    },
+    {
+      "id": "C_f30_t10",
+      "bloco": "C_orcamento_inicio",
+      "sha256": "96b87af7e307512b0d57afa7ea74f05544b4b0f1aaa63d5b37b4f978bdd7d0c4",
+      "origem": "execucao_nova",
+      "execucoes": 300,
+      "registros": 18759,
+      "repeticoes_pareadas": 100
+    },
+    {
+      "id": "D_beta0.0025",
+      "bloco": "D_sensibilidade_beta",
+      "sha256": "b9c7cfe18e463848af95ca9284e3b680f49536949599c019a1192605190cfc40",
+      "origem": "execucao_nova",
+      "execucoes": 300,
+      "registros": 10617,
+      "repeticoes_pareadas": 100
+    },
+    {
+      "id": "D_beta0.01",
+      "bloco": "D_sensibilidade_beta",
+      "sha256": "fc7f00af150748af4ae8752aab7185de843436987eb0704f939805f0e8a13710",
+      "origem": "execucao_nova",
+      "execucoes": 300,
+      "registros": 19195,
+      "repeticoes_pareadas": 100
+    }
+  ],
+  "concluido": true,
+  "concluido_em_utc": "2026-11-22T21:14:44.220728+00:00"
+}

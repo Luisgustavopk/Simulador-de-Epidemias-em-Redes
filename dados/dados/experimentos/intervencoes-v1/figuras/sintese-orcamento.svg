@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE svg
+  PUBLIC '-//W3C//DTD SVG 1.0//EN'
+  'http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd'>
+<svg width="450" height="222" preserveAspectRatio="xMinYMin meet" viewBox="0 0 450 222" xmlns="http://www.w3.org/2000/svg" version="1.0" fill-rule="evenodd" xmlns:xlink="http://www.w3.org/1999/xlink">
+	<title>...</title>
+	<desc>...</desc>
+	<clipPath id="clip">
+		<rect x="0" y="0" width="450" height="222"/>
+	</clipPath>
+	<g id="group" transform="scale(1,-1) translate(0,-222)" style="clip-path: url(#clip)">
+		<g transform="">
+			<text x="47" y="205" style="font-family: DejaVu; font-size: 10px;fill: rgb(54%,23%,52%); stroke:none;" transform="translate(0,410) scale(1,-1)">Fração 10%</text>
+			<text x="172" y="205" style="font-family: DejaVu; font-size: 10px;fill: rgb(0%,41%,50%); stroke:none;" transform="translate(0,410) scale(1,-1)">Fração 20%</text>
+			<text x="297" y="205" style="font-family: DejaVu; font-size: 10px;fill: rgb(67%,36%,0%); stroke:none;" transform="translate(0,410) scale(1,-1)">Fração 30%</text>
+			<text x="34" y="194" style="font-family: DejaVu; font-size: 12px;fill: rgb(13%,13%,13%); stroke:none;" transform="translate(0,388) scale(1,-1)">Aleatória</text>
+			<path d="M 34,38 L 211,38 Z" style="stroke: rgb(86%,86%,86%); stroke-linecap: butt; stroke-width: 0.5;"/>
+			<text x="20.27392578125" y="35.0" style="font-family: DejaVu; font-size: 9px;fill: rgb(13%,13%,13%); stroke:none;" transform="translate(0,70) scale(1,-1)">0</text>
+			<path d="M 34,65.4 L 211,65.4 Z" style="stroke: rgb(86%,86%,86%); stroke-linecap: butt; stroke-width: 0.5;"/>
+			<text x="14.547851562499998" y="62.400000000000006" style="font-family: DejaVu; font-size: 9px;fill: rgb(13%,13%,13%); stroke:none;" transform="translate(0,124) scale(1,-1)">20</text>
+			<path d="M 34,92.8 L 211,92.8 Z" style="stroke: rgb(86%,86%,86%); stroke-linecap: butt; stroke-width: 0.5;"/>
+			<text x="14.547851562499998" y="89.80000000000001" style="font-family: DejaVu; font-size: 9px;fill: rgb(13%,13%,13%); stroke:none;" transform="translate(0,179) scale(1,-1)">40</text>
+			<path d="M 34,120.2 L 211,120.2 Z" style="stroke: rgb(86%,86%,86%); stroke-linecap: butt; stroke-width: 0.5;"/>
+			<text x="14.547851562499998" y="117.2" style="font-family: DejaVu; font-size: 9px;fill: rgb(13%,13%,13%); stroke:none;" transform="translate(0,234) scale(1,-1)">60</text>
+			<path d="M 34,147.6 L 211,147.6 Z" style="stroke: rgb(86%,86%,86%); stroke-linecap: butt; stroke-width: 0.5;"/>
+			<text x="14.547851562499998" y="144.60000000000002" style="font-family: DejaVu; font-size: 9px;fill: rgb(13%,13%,13%); stroke:none;" transform="translate(0,289) scale(1,-1)">80</text>
+			<path d="M 34,175 L 211,175 Z" style="stroke: rgb(86%,86%,86%); stroke-linecap: butt; stroke-width: 0.5;"/>
+			<text x="8.821777343749996" y="172.0" style="font-family: DejaVu; font-size: 9px;fill: rgb(13%,13%,13%); stroke:none;" transform="translate(0,344) scale(1,-1)">100</text>
+			<path d="M 34,38 L 34,175 Z" style="stroke: rgb(40%,40%,40%); stroke-linecap: butt; stroke-width: 0.6;"/>
+			<text x="60.31884765625" y="20" style="font-family: DejaVu; font-size: 10px;fill: rgb(13%,13%,13%); stroke:none;" transform="translate(0,40) scale(1,-1)">0</text>
+			<text x="119.31884765625" y="20" style="font-family: DejaVu; font-size: 10px;fill: rgb(13%,13%,13%); stroke:none;" transform="translate(0,40) scale(1,-1)">5</text>
+			<text x="175.1376953125" y="20" style="font-family: DejaVu; font-size: 10px;fill: rgb(13%,13%,13%); stroke:none;" transform="translate(0,40) scale(1,-1)">10</text>
+			<path d="M 34,136.82403 L 211,136.82403 Z" style="stroke: rgb(33%,33%,33%); stroke-linecap: butt; stroke-width: 0.6; stroke-dasharray: 2, 2;"/>
+			<polyline points="63.5 112.6343, 122.5 117.9099, 181.5 124.6576" style="stroke: rgb(54%,23%,52%); stroke-linecap: butt; stroke-width: 1.2; fill: None; fill-rule: evenodd;"/>
+			<circle cx="63.5" cy="112.63432835820896" r="2.6" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(54%,23%,52%); fill-rule: evenodd;"/>
+			<circle cx="122.5" cy="117.90985074626866" r="2.6" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(54%,23%,52%); fill-rule: evenodd;"/>
+			<circle cx="181.5" cy="124.65761194029851" r="2.6" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(54%,23%,52%); fill-rule: evenodd;"/>
+			<polyline points="63.5 91.16418, 122.5 98.36179, 181.5 105.2731" style="stroke: rgb(0%,41%,50%); stroke-linecap: butt; stroke-width: 1.2; fill: None; fill-rule: evenodd;"/>
+			<circle cx="63.5" cy="91.16417910447761" r="2.6" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(0%,41%,50%); fill-rule: evenodd;"/>
+			<circle cx="122.5" cy="98.36179104477611" r="2.6" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(0%,41%,50%); fill-rule: evenodd;"/>
+			<circle cx="181.5" cy="105.27313432835821" r="2.6" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(0%,41%,50%); fill-rule: evenodd;"/>
+			<polyline points="63.5 75.60343, 122.5 85.66373, 181.5 95.25373" style="stroke: rgb(67%,36%,0%); stroke-linecap: butt; stroke-width: 1.2; fill: None; fill-rule: evenodd;"/>
+			<circle cx="63.5" cy="75.6034328358209" r="2.6" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(67%,36%,0%); fill-rule: evenodd;"/>
+			<circle cx="122.5" cy="85.66373134328359" r="2.6" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(67%,36%,0%); fill-rule: evenodd;"/>
+			<circle cx="181.5" cy="95.25373134328359" r="2.6" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(67%,36%,0%); fill-rule: evenodd;"/>
+			<text x="83.25341796875" y="8" style="font-family: DejaVu; font-size: 9px;fill: rgb(13%,13%,13%); stroke:none;" transform="translate(0,16) scale(1,-1)">Instante de início</text>
+			<text x="259" y="194" style="font-family: DejaVu; font-size: 12px;fill: rgb(13%,13%,13%); stroke:none;" transform="translate(0,388) scale(1,-1)">Por grau</text>
+			<path d="M 259,38 L 436,38 Z" style="stroke: rgb(86%,86%,86%); stroke-linecap: butt; stroke-width: 0.5;"/>
+			<text x="245.27392578125" y="35.0" style="font-family: DejaVu; font-size: 9px;fill: rgb(13%,13%,13%); stroke:none;" transform="translate(0,70) scale(1,-1)">0</text>
+			<path d="M 259,65.4 L 436,65.4 Z" style="stroke: rgb(86%,86%,86%); stroke-linecap: butt; stroke-width: 0.5;"/>
+			<text x="239.5478515625" y="62.400000000000006" style="font-family: DejaVu; font-size: 9px;fill: rgb(13%,13%,13%); stroke:none;" transform="translate(0,124) scale(1,-1)">20</text>
+			<path d="M 259,92.8 L 436,92.8 Z" style="stroke: rgb(86%,86%,86%); stroke-linecap: butt; stroke-width: 0.5;"/>
+			<text x="239.5478515625" y="89.80000000000001" style="font-family: DejaVu; font-size: 9px;fill: rgb(13%,13%,13%); stroke:none;" transform="translate(0,179) scale(1,-1)">40</text>
+			<path d="M 259,120.2 L 436,120.2 Z" style="stroke: rgb(86%,86%,86%); stroke-linecap: butt; stroke-width: 0.5;"/>
+			<text x="239.5478515625" y="117.2" style="font-family: DejaVu; font-size: 9px;fill: rgb(13%,13%,13%); stroke:none;" transform="translate(0,234) scale(1,-1)">60</text>
+			<path d="M 259,147.6 L 436,147.6 Z" style="stroke: rgb(86%,86%,86%); stroke-linecap: butt; stroke-width: 0.5;"/>
+			<text x="239.5478515625" y="144.60000000000002" style="font-family: DejaVu; font-size: 9px;fill: rgb(13%,13%,13%); stroke:none;" transform="translate(0,289) scale(1,-1)">80</text>
+			<path d="M 259,175 L 436,175 Z" style="stroke: rgb(86%,86%,86%); stroke-linecap: butt; stroke-width: 0.5;"/>
+			<text x="233.82177734375" y="172.0" style="font-family: DejaVu; font-size: 9px;fill: rgb(13%,13%,13%); stroke:none;" transform="translate(0,344) scale(1,-1)">100</text>
+			<path d="M 259,38 L 259,175 Z" style="stroke: rgb(40%,40%,40%); stroke-linecap: butt; stroke-width: 0.6;"/>
+			<text x="285.31884765625" y="20" style="font-family: DejaVu; font-size: 10px;fill: rgb(13%,13%,13%); stroke:none;" transform="translate(0,40) scale(1,-1)">0</text>
+			<text x="344.31884765625" y="20" style="font-family: DejaVu; font-size: 10px;fill: rgb(13%,13%,13%); stroke:none;" transform="translate(0,40) scale(1,-1)">5</text>
+			<text x="400.1376953125" y="20" style="font-family: DejaVu; font-size: 10px;fill: rgb(13%,13%,13%); stroke:none;" transform="translate(0,40) scale(1,-1)">10</text>
+			<path d="M 259,136.82403 L 436,136.82403 Z" style="stroke: rgb(33%,33%,33%); stroke-linecap: butt; stroke-width: 0.6; stroke-dasharray: 2, 2;"/>
+			<polyline points="288.5 105.907, 347.5 115.9673, 406.5 119.6479" style="stroke: rgb(54%,23%,52%); stroke-linecap: butt; stroke-width: 1.2; fill: None; fill-rule: evenodd;"/>
+			<circle cx="288.5" cy="105.90701492537313" r="2.6" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(54%,23%,52%); fill-rule: evenodd;"/>
+			<circle cx="347.5" cy="115.96731343283582" r="2.6" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(54%,23%,52%); fill-rule: evenodd;"/>
+			<circle cx="406.5" cy="119.64791044776119" r="2.6" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(54%,23%,52%); fill-rule: evenodd;"/>
+			<polyline points="288.5 78.09806, 347.5 83.76209, 406.5 94.29269" style="stroke: rgb(0%,41%,50%); stroke-linecap: butt; stroke-width: 1.2; fill: None; fill-rule: evenodd;"/>
+			<circle cx="288.5" cy="78.09805970149253" r="2.6" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(0%,41%,50%); fill-rule: evenodd;"/>
+			<circle cx="347.5" cy="83.7620895522388" r="2.6" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(0%,41%,50%); fill-rule: evenodd;"/>
+			<circle cx="406.5" cy="94.29268656716418" r="2.6" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(0%,41%,50%); fill-rule: evenodd;"/>
+			<polyline points="288.5 58.99985, 347.5 69.0397, 406.5 80.53134" style="stroke: rgb(67%,36%,0%); stroke-linecap: butt; stroke-width: 1.2; fill: None; fill-rule: evenodd;"/>
+			<circle cx="288.5" cy="58.999850746268656" r="2.6" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(67%,36%,0%); fill-rule: evenodd;"/>
+			<circle cx="347.5" cy="69.0397014925373" r="2.6" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(67%,36%,0%); fill-rule: evenodd;"/>
+			<circle cx="406.5" cy="80.53134328358209" r="2.6" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(67%,36%,0%); fill-rule: evenodd;"/>
+			<text x="308.25341796875" y="8" style="font-family: DejaVu; font-size: 9px;fill: rgb(13%,13%,13%); stroke:none;" transform="translate(0,16) scale(1,-1)">Instante de início</text>
+		</g>
+	</g>
+</svg>

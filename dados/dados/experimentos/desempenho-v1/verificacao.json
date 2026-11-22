@@ -1,0 +1,10 @@
+{
+  "concluida": true,
+  "redes": 3,
+  "cronometragens": 15,
+  "execucoes_com_tracemalloc": 3,
+  "execucoes_com_contagem_copias": 3,
+  "trajetorias_extras_fora_da_amostra": 6300,
+  "todas_assinaturas_identicas_ao_bloco_A": true,
+  "sha256_medicoes": "a0ca8d29a8b5b1e98301fdf044800872f57ffbe68e61d50898a4ed5b5e0259c7"
+}

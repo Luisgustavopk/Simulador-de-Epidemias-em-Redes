@@ -40,22 +40,50 @@
       "resultado": "topologia-v1/README.md"
     },
     "B_mecanismos": {
-      "situacao": "pendente",
+      "situacao": "concluido",
       "lotes": 2,
-      "trajetorias": 600
+      "trajetorias": 600,
+      "registros": 40655,
+      "censuradas": 0,
+      "resultado": "intervencoes-v1/README.md"
     },
     "C_orcamento_inicio": {
-      "situacao": "pendente",
+      "situacao": "concluido",
       "lotes": 8,
-      "trajetorias": 2400
+      "trajetorias": 2400,
+      "registros": 155878,
+      "censuradas": 0,
+      "resultado": "intervencoes-v1/README.md"
     },
     "D_sensibilidade_beta": {
-      "situacao": "pendente",
+      "situacao": "concluido",
       "lotes": 2,
-      "trajetorias": 600
+      "trajetorias": 600,
+      "registros": 29812,
+      "censuradas": 0,
+      "resultado": "intervencoes-v1/README.md"
     }
   },
-  "benchmark": "pendente",
-  "autorizacao": "Pedido explícito do usuário para gerar/caracterizar controles e executar comparações sobre topologia. Não registra autoria ou aceite individual dos integrantes.",
-  "evidencia": "topologia-v1/verificacao.json"
+  "benchmark": {
+    "situacao": "concluido",
+    "redes": 3,
+    "cronometragens": 15,
+    "trajetorias_extras": 6300,
+    "resultado": "desempenho-v1/README.md"
+  },
+  "autorizacao": "Pedido explícito do usuário para concluir B/C/D, medir desempenho e consolidar o relatório SBC, em 22/11/2026. Não registra autoria ou aceite individual dos integrantes.",
+  "evidencia": [
+    "topologia-v1/verificacao.json",
+    "intervencoes-v1/verificacao.json",
+    "desempenho-v1/verificacao.json"
+  ],
+  "campanha": {
+    "concluida": true,
+    "lotes": 33,
+    "trajetorias": 9900,
+    "registros": 635259,
+    "censuradas": 1,
+    "condicoes_distintas": 8900,
+    "trajetorias_extras_reproducao": 2700
+  }
 }

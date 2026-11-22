@@ -150,6 +150,12 @@ export function csvMetricas(comparacao: ResultadoComparacaoExecutada) {
 export function serializarGrafico(
   elemento: SVGSVGElement,
   dados: DadosResultado,
+  visualizacao?: {
+    filtros: unknown
+    descricao?: string
+    cenarios: (keyof typeof NOMES_CENARIOS)[]
+    legenda: string
+  },
 ) {
   const clone = elemento.cloneNode(true) as SVGSVGElement
   const originais = [elemento, ...elemento.querySelectorAll('*')]
@@ -181,22 +187,30 @@ export function serializarGrafico(
   const { width: largura, height: altura } = elemento.viewBox.baseVal
   const namespace = 'http://www.w3.org/2000/svg'
   clone.setAttribute('xmlns', namespace)
-  clone.setAttribute('viewBox', `0 -128 ${largura} ${altura + 128}`)
+  const cabecalho = visualizacao ? 152 : 128
+  const deslocamento = cabecalho - 128
+  clone.setAttribute(
+    'viewBox',
+    `0 -${cabecalho} ${largura} ${altura + cabecalho}`,
+  )
   clone.setAttribute('width', String(largura))
-  clone.setAttribute('height', String(altura + 128))
+  clone.setAttribute('height', String(altura + cabecalho))
   const metadados = document.createElementNS(namespace, 'metadata')
-  metadados.textContent = JSON.stringify(pacoteExportacao(dados))
+  metadados.textContent = JSON.stringify({
+    ...pacoteExportacao(dados),
+    ...(visualizacao ? { visualizacao } : {}),
+  })
   clone.prepend(metadados)
   const fundo = document.createElementNS(namespace, 'rect')
   fundo.setAttribute('x', '0')
-  fundo.setAttribute('y', '-128')
+  fundo.setAttribute('y', String(-cabecalho))
   fundo.setAttribute('width', String(largura))
-  fundo.setAttribute('height', String(altura + 128))
+  fundo.setAttribute('height', String(altura + cabecalho))
   fundo.setAttribute('fill', '#ffffff')
   clone.prepend(fundo)
   const titulo = document.createElementNS(namespace, 'text')
   titulo.setAttribute('x', '16')
-  titulo.setAttribute('y', '-104')
+  titulo.setAttribute('y', String(-104 - deslocamento))
   titulo.setAttribute('fill', '#161616')
   titulo.setAttribute('font-size', '14')
   titulo.textContent = `Observatório · revisão ${dados.revisao_rede} · ${new Date().toLocaleString()}`
@@ -213,11 +227,20 @@ export function serializarGrafico(
   ].entries()) {
     const linha = document.createElementNS(namespace, 'text')
     linha.setAttribute('x', '16')
-    linha.setAttribute('y', String(-84 + indice * 16))
+    linha.setAttribute('y', String(-84 - deslocamento + indice * 16))
     linha.setAttribute('fill', '#161616')
     linha.setAttribute('font-size', '11')
     linha.textContent = texto
     clone.append(linha)
+  }
+  if (visualizacao?.descricao) {
+    const escopo = document.createElementNS(namespace, 'text')
+    escopo.setAttribute('x', '16')
+    escopo.setAttribute('y', '-56')
+    escopo.setAttribute('fill', '#161616')
+    escopo.setAttribute('font-size', '11')
+    escopo.textContent = visualizacao.descricao
+    clone.append(escopo)
   }
   const legenda = document.createElementNS(namespace, 'text')
   legenda.setAttribute('x', '16')
@@ -225,26 +248,35 @@ export function serializarGrafico(
   legenda.setAttribute('fill', '#161616')
   legenda.setAttribute('font-size', '11')
   legenda.textContent =
-    'execucoes' in dados
+    visualizacao?.legenda ??
+    ('execucoes' in dados
       ? 'S: contínua · I: tracejada · R: pontilhada · Q: mista · médias ± desvio amostral'
-      : 'S: suscetíveis · I: infectados · R: recuperados · Q: isolados'
+      : 'S: suscetíveis · I: infectados · R: recuperados · Q: isolados')
   clone.append(legenda)
   if ('execucoes' in dados) {
-    Object.entries(CORES_CENARIOS).forEach(([cenario, cor], indice) => {
-      const rotulo = document.createElementNS(namespace, 'text')
-      rotulo.setAttribute('x', String(16 + indice * 240))
-      rotulo.setAttribute('y', '-14')
-      rotulo.setAttribute('fill', cor)
-      rotulo.setAttribute('font-size', '12')
-      rotulo.textContent =
-        NOMES_CENARIOS[cenario as keyof typeof NOMES_CENARIOS]
-      clone.append(rotulo)
-    })
+    Object.entries(CORES_CENARIOS)
+      .filter(
+        ([cenario]) =>
+          !visualizacao ||
+          visualizacao.cenarios.includes(
+            cenario as keyof typeof NOMES_CENARIOS,
+          ),
+      )
+      .forEach(([cenario, cor], indice) => {
+        const rotulo = document.createElementNS(namespace, 'text')
+        rotulo.setAttribute('x', String(16 + indice * 240))
+        rotulo.setAttribute('y', '-14')
+        rotulo.setAttribute('fill', cor)
+        rotulo.setAttribute('font-size', '12')
+        rotulo.textContent =
+          NOMES_CENARIOS[cenario as keyof typeof NOMES_CENARIOS]
+        clone.append(rotulo)
+      })
   }
   return {
     svg: new XMLSerializer().serializeToString(clone),
     largura,
-    altura: altura + 128,
+    altura: altura + cabecalho,
   }
 }
 

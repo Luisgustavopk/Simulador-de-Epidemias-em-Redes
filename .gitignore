@@ -12,6 +12,8 @@ dist/
 
 # Arquivos intermediários de geração e revisão da documentação.
 /tmp/documentacao/
+/docs/Artefatos/apoio-etapa1/
+/docs/Artefatos/apoio-etapa2/
 
 # Área local de redação e gerenciamento do artigo LaTeX.
 /gerenciamento-latex/

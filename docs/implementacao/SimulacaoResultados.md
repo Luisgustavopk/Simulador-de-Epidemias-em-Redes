@@ -41,7 +41,11 @@ A barra de distribuição contém somente S/I/R, cuja soma corresponde a 100% da
 
 Há quatro séries: suscetíveis, infectados, recuperados e isolados. Todas usam o mesmo eixo temporal. O painel e a tabela acompanham a execução selecionada, inclusive seu horizonte e motivo de término.
 
-Na comparação, cores identificam estratégias e padrões de traço distinguem estados. As linhas mais grossas representam médias, e as áreas representam um desvio-padrão amostral. Os controles de estado ocultam linhas e áreas correspondentes.
+O gráfico abre com infectados e, em lotes, médias por cenário. Os filtros permitem ativar outros estados, escolher cenários, alternar entre médias, uma repetição e todas as repetições, selecionar a repetição e definir os passos inicial/final. O intervalo é confirmado por Aplicar ou Enter; valores inválidos recebem mensagem próxima aos campos e preservam o gráfico anterior. A faixa de desvio pode ser ocultada no modo de médias. A legenda não enumera cada combinação de cenário e repetição. O botão de restauração retorna à visualização inicial.
+
+Esses filtros atuam somente no gráfico, sem alterar o painel, a tabela ou as métricas consolidadas. As médias continuam usando todas as repetições do cenário; selecionar uma repetição exibe suas trajetórias individuais. SVG e PNG usam o desenho filtrado e identificam o intervalo; o JSON conserva o lote completo e os filtros escolhidos. CSVs mantêm seu escopo completo. Sem estados, cenários ou registros no intervalo, a tela informa a ausência de curvas e desabilita as imagens.
+
+Na comparação, cores identificam estratégias e padrões de traço distinguem estados. As linhas mais grossas representam médias, e as áreas representam um desvio-padrão amostral quando habilitadas. Os controles de estado ocultam linhas e áreas correspondentes.
 
 A agregação usa apenas repetições do mesmo cenário do lote. O horizonte é comum aos cenários. Após extinção, o último registro é mantido até esse horizonte, pois não haverá novas transições. Uma observação isolada usa desvio visual zero; nas estatísticas das métricas, o desvio indefinido permanece ausente. Não são misturados resultados de lotes diferentes.
 

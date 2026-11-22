@@ -1,5 +1,7 @@
 # Planejamento da Etapa 1 — Simulador de Epidemias em Redes
 
+> **Planejamento inicial.** A divisão adotada é A — Wesley, B — Luis e C — João. O plano de desenvolvimento está na seção 3 do [PDF da Etapa 1](../Etapa1-Problema-Modelagem-Plano.pdf).
+
 Trabalho Prático de Grafos — Tema 7 (grupo de 3 integrantes).
 
 Legenda: itens marcados **(enunciado)** vêm do PDF do trabalho; itens marcados **(recomendação)** são sugestões para o grupo discutir e aceitar ou rejeitar.

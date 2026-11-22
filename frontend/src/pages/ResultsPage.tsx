@@ -1,10 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { AppShell } from '../components/AppShell'
 import { Icon } from '../components/Icon'
 import { useCargaRede } from '../hooks/useCargaRede'
 import {
-  agregarCurvas,
-  CORES_CENARIOS,
   NOMES_CENARIOS,
   csvMetricas,
   csvResultado,
@@ -12,10 +10,10 @@ import {
   maximoHistorico,
   pacoteExportacao,
   serializarGrafico,
-  type CampoCurva,
-  type RegistroAgregado,
 } from '../features/resultados/dadosResultados'
 import { TabelaHistorico } from '../features/resultados/TabelaHistorico'
+import { GraficoTrajetorias } from '../features/resultados/GraficoTrajetorias'
+import { filtrosTrajetoriasPadrao } from '../features/resultados/filtrosTrajetorias'
 import {
   executarComparacao,
   executarSimulacao,
@@ -58,12 +56,7 @@ export function ResultsPage() {
     useState<ResultadoComparacaoExecutada | null>(null)
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState('')
-  const [visiveis, setVisiveis] = useState({
-    suscetiveis: true,
-    infectados: true,
-    recuperados: true,
-    isolados: true,
-  })
+  const [filtrosGrafico, setFiltrosGrafico] = useState(filtrosTrajetoriasPadrao)
   const grafico = useRef<SVGSVGElement | null>(null)
   const consulta = useRef<AbortController | null>(null)
   const [anteriores, setAnteriores] = useState<ResultadoResumo[]>([])
@@ -105,6 +98,8 @@ export function ResultsPage() {
     consulta.current = controlador
     setCarregando(true)
     setErro('')
+    setFiltrosGrafico(filtrosTrajetoriasPadrao())
+    setChaveExecucao('')
     try {
       const salvo = await consultarResultado(identificador, controlador.signal)
       if (controlador.signal.aborted) return
@@ -149,6 +144,8 @@ export function ResultsPage() {
       setCarregando(true)
       setErro('')
       try {
+        setFiltrosGrafico(filtrosTrajetoriasPadrao())
+        setChaveExecucao('')
         setResultado(null)
         setComparacao(null)
         setHistorico([])
@@ -281,15 +278,6 @@ export function ResultsPage() {
     resultado?.metrica.horizonte_observado ??
     execucaoSelecionada?.metrica.horizonte_observado ??
     passoAtual
-  const trajetoriasComparadas = useMemo(() => {
-    if (!comparacao) return []
-    return comparacao.execucoes
-  }, [comparacao])
-
-  const curvasAgregadas = useMemo(
-    () => (comparacao ? agregarCurvas(comparacao) : []),
-    [comparacao],
-  )
   const dadosAtuais = resultado ?? comparacao
 
   const descricaoCenario = execucaoSelecionada
@@ -369,7 +357,8 @@ export function ResultsPage() {
           {
             ...pacoteExportacao(dadosAtuais),
             visualizacao: {
-              series_visiveis: visiveis,
+              series_visiveis: filtrosGrafico.series,
+              filtros_grafico: filtrosGrafico,
               cenario: execucaoSelecionada?.cenario,
               repeticao: execucaoSelecionada?.repeticao,
             },
@@ -385,7 +374,7 @@ export function ResultsPage() {
   function exportarSvg() {
     if (!grafico.current || !dadosAtuais) return
     baixar(
-      serializarGrafico(grafico.current, dadosAtuais).svg,
+      serializarGrafico(grafico.current, dadosAtuais, opcoesExportacao()).svg,
       'trajetorias-epidemia.svg',
       'image/svg+xml;charset=utf-8',
     )
@@ -397,7 +386,7 @@ export function ResultsPage() {
       svg,
       largura: larguraExportada,
       altura: alturaExportada,
-    } = serializarGrafico(grafico.current, dadosAtuais)
+    } = serializarGrafico(grafico.current, dadosAtuais, opcoesExportacao())
     const imagem = new Image()
     imagem.onload = () => {
       const canvas = document.createElement('canvas')
@@ -419,73 +408,23 @@ export function ResultsPage() {
     imagem.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`
   }
 
-  const largura = 760
-  const altura = 280
-  const margem = { esquerda: 46, direita: 18, superior: 18, inferior: 32 }
-  const ultimoPasso = useMemo(
-    () =>
-      trajetoriasComparadas.reduce(
-        (maior, execucao) =>
-          Math.max(maior, maximoHistorico(execucao.historico, 'passo')),
-        Math.max(1, maximoHistorico(historico, 'passo')),
-      ),
-    [historico, trajetoriasComparadas],
-  )
-  const maximo = Math.max(total, 1)
-  const x = (passo: number) =>
-    margem.esquerda +
-    (passo / ultimoPasso) * (largura - margem.esquerda - margem.direita)
-  const y = (valor: number) =>
-    margem.superior +
-    (1 - valor / maximo) * (altura - margem.superior - margem.inferior)
-  function linha(
-    campo: 'suscetiveis' | 'infectados' | 'recuperados' | 'isolados',
-  ) {
-    return historico
-      .map(
-        (registro, indice) =>
-          `${indice ? 'L' : 'M'} ${x(registro.passo)} ${y(registro[campo])}`,
-      )
-      .join(' ')
-  }
-
-  function linhaComparada(
-    execucao: ExecucaoComparadaResultado,
-    campo: 'suscetiveis' | 'infectados' | 'recuperados' | 'isolados',
-  ) {
-    return execucao.historico
-      .map(
-        (registro, indice) =>
-          `${indice ? 'L' : 'M'} ${x(registro.passo)} ${y(registro[campo])}`,
-      )
-      .join(' ')
-  }
-
-  function linhaAgregada(registros: RegistroAgregado[], campo: CampoCurva) {
-    return registros
-      .map(
-        (registro, indice) =>
-          `${indice ? 'L' : 'M'} ${x(registro.passo)} ${y(registro[campo])}`,
-      )
-      .join(' ')
-  }
-
-  function areaDesvio(registros: RegistroAgregado[], campo: CampoCurva) {
-    const superior = registros.map(
-      (registro, indice) =>
-        `${indice ? 'L' : 'M'} ${x(registro.passo)} ${y(
-          Math.min(maximo, registro[campo] + registro.desvios[campo]),
-        )}`,
-    )
-    const inferior = [...registros]
-      .reverse()
-      .map(
-        (registro) =>
-          `L ${x(registro.passo)} ${y(
-            Math.max(0, registro[campo] - registro.desvios[campo]),
-          )}`,
-      )
-    return `${superior.join(' ')} ${inferior.join(' ')} Z`
+  function opcoesExportacao() {
+    return {
+      filtros: filtrosGrafico,
+      descricao: grafico.current
+        ?.getAttribute('aria-label')
+        ?.replace('Curvas SIR ao longo do tempo. ', ''),
+      cenarios: comparacao
+        ? (
+            Object.keys(
+              filtrosGrafico.cenarios,
+            ) as (keyof typeof NOMES_CENARIOS)[]
+          ).filter((cenario) => filtrosGrafico.cenarios[cenario])
+        : [],
+      legenda: comparacao
+        ? `S: contínua · I: tracejada · R: pontilhada · Q: mista${filtrosGrafico.modo === 'medias' && filtrosGrafico.mostrarDesvio ? ' · faixas: desvio amostral' : ''}`
+        : 'S: suscetíveis · I: infectados · R: recuperados · Q: isolados',
+    }
   }
 
   return (
@@ -635,246 +574,18 @@ export function ResultsPage() {
           </article>
         </section>
 
-        <section
-          className="trajectory-panel"
-          aria-labelledby="trajectory-title"
-        >
-          <div className="results-section-heading">
-            <div>
-              <h2 id="trajectory-title">
-                Trajetórias da epidemia <span>RF09</span>
-              </h2>
-              <p>Evolução temporal dos estados da população</p>
-            </div>
-            {carregando && (
-              <span className="loading-label">Consultando backend…</span>
-            )}
-          </div>
-          <div className="trajectory-legend" aria-label="Legenda das curvas">
-            <button
-              type="button"
-              className={visiveis.suscetiveis ? 'active' : ''}
-              aria-pressed={visiveis.suscetiveis}
-              onClick={() =>
-                setVisiveis((atual) => ({
-                  ...atual,
-                  suscetiveis: !atual.suscetiveis,
-                }))
-              }
-            >
-              <i className="curve-s" /> Suscetíveis (S)
-            </button>
-            <button
-              type="button"
-              className={visiveis.infectados ? 'active' : ''}
-              aria-pressed={visiveis.infectados}
-              onClick={() =>
-                setVisiveis((atual) => ({
-                  ...atual,
-                  infectados: !atual.infectados,
-                }))
-              }
-            >
-              <i className="curve-i" /> Infectados (I)
-            </button>
-            <button
-              type="button"
-              className={visiveis.recuperados ? 'active' : ''}
-              aria-pressed={visiveis.recuperados}
-              onClick={() =>
-                setVisiveis((atual) => ({
-                  ...atual,
-                  recuperados: !atual.recuperados,
-                }))
-              }
-            >
-              <i className="curve-r" /> Recuperados (R)
-            </button>
-            <button
-              type="button"
-              className={visiveis.isolados ? 'active' : ''}
-              aria-pressed={visiveis.isolados}
-              onClick={() =>
-                setVisiveis((atual) => ({
-                  ...atual,
-                  isolados: !atual.isolados,
-                }))
-              }
-            >
-              <i className="curve-q" /> Isolados (Q)
-            </button>
-            {trajetoriasComparadas.map((execucao) => (
-              <span
-                key={`${execucao.cenario}-${execucao.repeticao}`}
-                className="comparison-key"
-                style={{ color: CORES_CENARIOS[execucao.cenario] }}
-              >
-                {execucao.cenario === 'sem_intervencao'
-                  ? `Sem intervenção · r${execucao.repeticao}`
-                  : execucao.cenario === 'aleatoria'
-                    ? `Aleatória · r${execucao.repeticao}`
-                    : `Por grau · r${execucao.repeticao}`}
-              </span>
-            ))}
-            {curvasAgregadas.length > 0 && (
-              <span className="comparison-key">
-                Cores: estratégias · S: contínua · I: tracejada · R: pontilhada
-                · Q: mista · linhas grossas: média · faixas: desvio amostral
-              </span>
-            )}
-          </div>
-          <div className="trajectory-chart">
-            {historico.length ? (
-              <svg
-                ref={grafico}
-                viewBox={`0 0 ${largura} ${altura}`}
-                role="img"
-                aria-label="Curvas SIR ao longo do tempo"
-              >
-                {[0, 0.25, 0.5, 0.75, 1].map((nivel) => (
-                  <g key={nivel}>
-                    <line
-                      x1={margem.esquerda}
-                      x2={largura - margem.direita}
-                      y1={y(nivel * maximo)}
-                      y2={y(nivel * maximo)}
-                      className="chart-grid"
-                    />
-                    <text
-                      x={margem.esquerda - 8}
-                      y={y(nivel * maximo) + 4}
-                      textAnchor="end"
-                      className="chart-label"
-                    >
-                      {Math.round(nivel * maximo)}
-                    </text>
-                  </g>
-                ))}
-                {[
-                  0,
-                  ultimoPasso / 4,
-                  ultimoPasso / 2,
-                  (ultimoPasso * 3) / 4,
-                  ultimoPasso,
-                ].map((passo) => (
-                  <text
-                    key={passo}
-                    x={x(passo)}
-                    y={altura - 8}
-                    textAnchor="middle"
-                    className="chart-label"
-                  >
-                    {Math.round(passo)}
-                  </text>
-                ))}
-                {!comparacao && visiveis.suscetiveis && (
-                  <path d={linha('suscetiveis')} className="chart-s" />
-                )}
-                {!comparacao && visiveis.infectados && (
-                  <path d={linha('infectados')} className="chart-i" />
-                )}
-                {!comparacao && visiveis.recuperados && (
-                  <path d={linha('recuperados')} className="chart-r" />
-                )}
-                {!comparacao && visiveis.isolados && (
-                  <path d={linha('isolados')} className="chart-q" />
-                )}
-                {trajetoriasComparadas.map((execucao, indice) => (
-                  <g
-                    key={`${execucao.cenario}-${execucao.repeticao}`}
-                    className={`comparison-series comparison-${execucao.cenario}`}
-                    style={{ color: CORES_CENARIOS[execucao.cenario] }}
-                    opacity={0.72}
-                  >
-                    {visiveis.suscetiveis && (
-                      <path
-                        d={linhaComparada(execucao, 'suscetiveis')}
-                        className="comparison-s"
-                        strokeDasharray={indice % 2 ? '7 4' : undefined}
-                      />
-                    )}
-                    {visiveis.infectados && (
-                      <path
-                        d={linhaComparada(execucao, 'infectados')}
-                        className="comparison-i"
-                        strokeDasharray={indice % 2 ? '7 4' : undefined}
-                      />
-                    )}
-                    {visiveis.recuperados && (
-                      <path
-                        d={linhaComparada(execucao, 'recuperados')}
-                        className="comparison-r"
-                        strokeDasharray={indice % 2 ? '7 4' : undefined}
-                      />
-                    )}
-                    {visiveis.isolados && (
-                      <path
-                        d={linhaComparada(execucao, 'isolados')}
-                        className="comparison-q"
-                        strokeDasharray={indice % 2 ? '7 4' : undefined}
-                      />
-                    )}
-                  </g>
-                ))}
-                {curvasAgregadas.map(({ cenario, registros }, indice) => (
-                  <g
-                    key={`media-${cenario}`}
-                    className={`comparison-series comparison-mean comparison-${cenario}`}
-                    style={{ color: CORES_CENARIOS[cenario] }}
-                    aria-label={`Média e desvio-padrão do cenário ${cenario}`}
-                  >
-                    {(
-                      [
-                        'suscetiveis',
-                        'infectados',
-                        'recuperados',
-                        'isolados',
-                      ] as const
-                    )
-                      .filter((campo) => visiveis[campo])
-                      .map((campo) => (
-                        <path
-                          key={`${cenario}-${campo}-desvio`}
-                          d={areaDesvio(registros, campo)}
-                          className={`comparison-band band-${campo}`}
-                        />
-                      ))}
-                    {visiveis.suscetiveis && (
-                      <path
-                        d={linhaAgregada(registros, 'suscetiveis')}
-                        className="comparison-s"
-                        strokeDasharray={indice % 2 ? '3 3' : undefined}
-                      />
-                    )}
-                    {visiveis.infectados && (
-                      <path
-                        d={linhaAgregada(registros, 'infectados')}
-                        className="comparison-i"
-                        strokeDasharray={indice % 2 ? '3 3' : undefined}
-                      />
-                    )}
-                    {visiveis.recuperados && (
-                      <path
-                        d={linhaAgregada(registros, 'recuperados')}
-                        className="comparison-r"
-                        strokeDasharray={indice % 2 ? '3 3' : undefined}
-                      />
-                    )}
-                    {visiveis.isolados && (
-                      <path
-                        d={linhaAgregada(registros, 'isolados')}
-                        className="comparison-q"
-                        strokeDasharray={indice % 2 ? '3 3' : undefined}
-                      />
-                    )}
-                  </g>
-                ))}
-              </svg>
-            ) : (
-              <p className="chart-empty">Nenhum registro disponível.</p>
-            )}
-          </div>
-        </section>
+        <GraficoTrajetorias
+          key={resultadoId ?? 'atual'}
+          historico={historico}
+          comparacao={comparacao}
+          populacao={total}
+          carregando={carregando}
+          filtros={filtrosGrafico}
+          onAlterar={setFiltrosGrafico}
+          grafico={grafico}
+          onExportarSvg={exportarSvg}
+          onExportarPng={exportarPng}
+        />
 
         {comparacao && (
           <section className="history-panel" aria-labelledby="statistics-title">
@@ -939,20 +650,6 @@ export function ResultsPage() {
               ↓ Exportar histórico (.CSV)
             </button>
             <div className="export-actions">
-              <button
-                type="button"
-                onClick={exportarSvg}
-                disabled={!historico.length}
-              >
-                SVG
-              </button>
-              <button
-                type="button"
-                onClick={exportarPng}
-                disabled={!historico.length}
-              >
-                PNG
-              </button>
               {comparacao && (
                 <button type="button" onClick={exportarCsvAgregado}>
                   CSV agregado

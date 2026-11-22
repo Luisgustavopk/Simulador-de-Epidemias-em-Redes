@@ -83,34 +83,160 @@
     color: var(--color-text-muted);
     font-size: 11px;
   }
-  .trajectory-legend {
-    min-height: 48px;
+  .trajectory-filters {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px 24px;
+    padding: 16px;
+    border-top: 1px solid var(--color-border);
+  }
+  .trajectory-filters fieldset {
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    margin: 0;
+  }
+  .trajectory-filters legend,
+  .trajectory-field {
+    color: var(--color-text-secondary);
+    font-size: 12px;
+    font-weight: 500;
+  }
+  .trajectory-filters legend {
+    margin-bottom: 8px;
+  }
+  .trajectory-legend,
+  .trajectory-scenarios {
     display: flex;
     align-items: center;
     flex-wrap: wrap;
     gap: 8px;
-    padding: 8px 16px;
-    border-top: 1px solid var(--color-border);
-    border-bottom: 1px solid var(--color-border);
   }
-  .trajectory-legend button {
+  .trajectory-legend button,
+  .trajectory-scenarios button,
+  .trajectory-apply,
+  .trajectory-reset {
     display: inline-flex;
     align-items: center;
     gap: 7px;
-    min-height: 32px;
-    padding: 5px 9px;
-    border: 1px solid transparent;
-    border-radius: 999px;
-    color: var(--color-text-muted);
-    font-size: 11px;
+    min-height: 40px;
+    padding: 8px 12px;
+    border: 1px solid var(--color-control-border);
+    border-radius: var(--radius-control);
+    color: var(--color-text-secondary);
+    background: var(--color-surface);
+    font: inherit;
+    font-size: 12px;
+    cursor: pointer;
   }
-  .trajectory-legend button.active {
-    border-color: var(--color-border);
+  .trajectory-legend button[aria-pressed='true'],
+  .trajectory-scenarios button[aria-pressed='true'] {
+    border-color: var(--color-action);
     color: var(--color-text);
+    background: var(--color-accent-soft);
+    box-shadow: inset 0 -2px var(--color-action);
   }
-  .trajectory-legend i {
+  .trajectory-legend i,
+  .trajectory-scenarios i {
     width: 14px;
     height: 3px;
+    flex: 0 0 14px;
+  }
+  .trajectory-options {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 16px;
+  }
+  .trajectory-panel {
+    container-type: inline-size;
+  }
+  @container (max-width: 680px) {
+    .trajectory-filters {
+      grid-template-columns: 1fr;
+    }
+  }
+  .trajectory-field {
+    display: grid;
+    gap: 8px;
+    min-width: 0;
+  }
+  .trajectory-field select,
+  .trajectory-range input {
+    min-height: 40px;
+    padding: 8px 12px;
+    border: 1px solid var(--color-control-border);
+    border-radius: var(--radius-control);
+    color: var(--color-text);
+    background: var(--color-surface);
+    font: inherit;
+    font-size: 13px;
+    max-width: 100%;
+  }
+  .trajectory-deviation {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 40px;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  .trajectory-deviation input {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--color-action);
+  }
+  .trajectory-options .trajectory-range {
+    min-width: 0;
+    margin-left: auto;
+  }
+  .trajectory-range fieldset {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .trajectory-range-error {
+    margin-top: 8px;
+    color: var(--color-danger);
+    font-size: 12px;
+  }
+  .trajectory-range label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+  }
+  .trajectory-range input {
+    width: 88px;
+    font-variant-numeric: tabular-nums;
+  }
+  .trajectory-summary {
+    padding: 12px 16px;
+    border-block: 1px solid var(--color-border);
+    background: var(--color-surface-subtle);
+    color: var(--color-text-secondary);
+    font-size: 12px;
+  }
+  .trajectory-help {
+    padding: 0 16px 16px;
+    color: var(--color-text-secondary);
+    font-size: 12px;
+    line-height: 1.5;
+  }
+  .trajectory-filters :is(button, select, input):focus-visible,
+  .trajectory-reset:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 3px;
+  }
+  @media (hover: hover) {
+    .trajectory-legend button:hover,
+    .trajectory-scenarios button:hover,
+    .trajectory-apply:hover,
+    .trajectory-reset:hover {
+      background: var(--color-accent-soft);
+    }
   }
   .curve-s,
   .chart-s {
@@ -132,17 +258,24 @@
     background: #8c6bb1;
     stroke: #8c6bb1;
   }
-  .comparison-key {
-    color: var(--color-text-muted);
-    font-size: 10px;
-  }
   .trajectory-chart {
     min-height: 300px;
     padding: 10px 14px;
   }
+  .trajectory-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .trajectory-actions .export-actions button {
+    min-width: 44px;
+    min-height: 40px;
+  }
   .trajectory-chart svg {
     width: 100%;
-    height: 280px;
+    height: auto;
+    display: block;
   }
   .trajectory-chart path {
     fill: none;
@@ -151,6 +284,10 @@
   .comparison-series path {
     fill: none;
     stroke-width: 1.5;
+  }
+  .comparison-series circle {
+    fill: currentColor;
+    stroke: currentColor;
   }
   .comparison-mean path:not(.comparison-band) {
     stroke-width: 3;
@@ -286,6 +423,22 @@
     }
   }
   @media (max-width: 600px) {
+    .trajectory-filters {
+      grid-template-columns: 1fr;
+    }
+    .trajectory-options {
+      align-items: stretch;
+      flex-direction: column;
+    }
+    .trajectory-options .trajectory-range {
+      margin-left: 0;
+    }
+    .trajectory-reset,
+    .trajectory-apply,
+    .trajectory-legend button,
+    .trajectory-scenarios button {
+      min-height: 44px;
+    }
     .result-metrics {
       grid-template-columns: 1fr;
     }

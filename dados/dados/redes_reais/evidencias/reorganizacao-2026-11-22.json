@@ -1,0 +1,196 @@
+{
+  "data_local": "2026-11-22",
+  "origem": "dados/",
+  "destino": "dados/dados/",
+  "copia_identica_removida": 31,
+  "unicos_movidos": 1,
+  "arquivos": [
+    {
+      "arquivo": "redes_reais/.gitignore",
+      "sha256": "f97f3da4a58a88b96e4d4294f036651aa9b34922bc9d7bd509db8dc82336ddf2",
+      "acao": "remover_copia_identica"
+    },
+    {
+      "arquivo": "redes_reais/fontes.json",
+      "sha256": "abefc8c9fe95bb557acf0c05f537638e164f91e3a291e5f6bad710fa361a9882",
+      "acao": "remover_copia_identica"
+    },
+    {
+      "arquivo": "redes_reais/README.md",
+      "sha256": "c8a60b12c31d4a2d013544dfe05233f7a324cae02834aa9dd5e366230a6a9422",
+      "acao": "remover_copia_identica"
+    },
+    {
+      "arquivo": "experimentos/protocolo-etapa3-v1.json",
+      "sha256": "10cec077ac22299e6c643bc7a206858d923e98ee2aaef25dbcc6e693b27f327b",
+      "acao": "remover_copia_identica"
+    },
+    {
+      "arquivo": "experimentos/README.md",
+      "sha256": "9ce8e1d93d5514a5c222b77dd4650f767bb7cc494477d1f4f8e1ffba0f46c30b",
+      "acao": "remover_copia_identica"
+    },
+    {
+      "arquivo": "experimentos/verificacao-protocolo-v1.json",
+      "sha256": "6db51fcbccc7ec5d1dd47397f75dddb4d68451961b08d666d5ce8d396e05db8d",
+      "acao": "remover_copia_identica"
+    },
+    {
+      "arquivo": "redes_reais/escola_suica_2024/individuos.csv",
+      "sha256": "4f10518df73dbc91b80a0cdc918cc656733e2e7facca2c0ed8e336103f869d1a",
+      "acao": "remover_copia_identica"
+    },
+    {
+      "arquivo": "redes_reais/escola_suica_2024/mapa_ids.csv",
+      "sha256": "5edcecab590a1d59c4f44307ec21751a66a0000ea93df1a370828ea6909b2cb8",
+      "acao": "remover_copia_identica"
+    },
+    {
+      "arquivo": "redes_reais/escola_suica_2024/contatos.csv",
+      "sha256": "039c17357fab1b5f5101d13837a5d8c0e2256fc40bc3e6fd05d84e2fded37188",
+      "acao": "remover_copia_identica"
+    },
+    {
+      "arquivo": "redes_reais/escola_suica_2024/duracoes_observadas.csv",
+      "sha256": "1753703b00a5431271a446c25daa4772c147191e57054fdb829b4db285fe9829",
+      "acao": "remover_copia_identica"
+    },
+    {
+      "arquivo": "redes_reais/escola_suica_2024/manifesto.json",
+      "sha256": "8c9e27d53f450fba10cbe5e307bf68facd3b548bf5a01eb9bfe690d578a3f941",
+      "acao": "remover_copia_identica"
+    },
+    {
+      "arquivo": "redes_reais/evidencias/auditoria-fontes.json",
+      "sha256": "1f0c7a156884bd4a5567121a80207aa51870375fedc789856b7bcb387fb6eabb",
+      "acao": "remover_copia_identica"
+    },
+    {
+      "arquivo": "redes_reais/evidencias/reproducao.json",
+      "sha256": "1dccc7a8f24e5b285e41a8db40b17a7e1538048f25f4e84e5e3502412fc7d5ef",
+      "acao": "remover_copia_identica"
+    },
+    {
+      "arquivo": "redes_reais/evidencias/testes-importacao.json",
+      "sha256": "fd83199ca8ee24b75576ed74e66da9ead90cd2db3d30e3464ae02eb2591e6e2b",
+      "acao": "remover_copia_identica"
+    },
+    {
+      "arquivo": "redes_reais/evidencias/testes-analise-estrutural.log",
+      "sha256": "aabf5e7fcea500185733fa1e9350ddbdbbaa7313483ed99f814f7b1b424923d5",
+      "acao": "remover_copia_identica"
+    },
+    {
+      "arquivo": "redes_reais/evidencias/caracterizacao-estrutural.json",
+      "sha256": "8ea86f701e678e7ab5e4c9aab072cdb2a7c655bc6afa406f11316fbf05aa97c2",
+      "acao": "remover_copia_identica"
+    },
+    {
+      "arquivo": "redes_reais/evidencias/interface-escola/rede-escolar-3d.png",
+      "sha256": "164a026defd1b0c2b4b7ec5e9193293e3a697637f86874bc61b5c086f8383035",
+      "acao": "remover_copia_identica"
+    },
+    {
+      "arquivo": "redes_reais/evidencias/interface-escola/rede-escolar-medidas.png",
+      "sha256": "a6334aa3232053f418d8ca15121981f9923b25e39cf8da316914afaffb08eb93",
+      "acao": "remover_copia_identica"
+    },
+    {
+      "arquivo": "redes_reais/evidencias/interface-escola/rede-escolar-mapa.png",
+      "sha256": "48627399060ab9cfffec4a4d5535bf48ac827a27013e29448ba3088dd3b199de",
+      "acao": "remover_copia_identica"
+    },
+    {
+      "arquivo": "redes_reais/evidencias/interface-escola/rede-escolar-confirmacao.png",
+      "sha256": "ec8c61ad03b839d515e345b778a44f8a76ceb3ab89f72d1e80237340718941ae",
+      "acao": "remover_copia_identica"
+    },
+    {
+      "arquivo": "redes_reais/evidencias/interface-escola/rede-escolar-pagina-completa.png",
+      "sha256": "cc9e87008073da0ced0fa659d7e7b5a22ce85ac64ee686e33a252f24f70d5a29",
+      "acao": "remover_copia_identica"
+    },
+    {
+      "arquivo": "redes_reais/evidencias/interface-escola/verificacao.json",
+      "sha256": "d83f7caf3c620b58484b524b7a75bdba279cc8853ccc0046ab29b558d9250ca2",
+      "acao": "remover_copia_identica"
+    },
+    {
+      "arquivo": "redes_reais/evidencias/interface-escola/README.md",
+      "sha256": "a5674f0137bf5e6ceb3203ea6d71c7cdf94d0ce68466ce578e7b7e02486981c3",
+      "acao": "remover_copia_identica"
+    },
+    {
+      "arquivo": "redes_reais/escola_suica_2024/caracterizacao/resumo.csv",
+      "sha256": "fbdca8f378f15cf036ef62f922f3326f4de9f04488e0ca880e6d535dfd5a0999",
+      "acao": "remover_copia_identica"
+    },
+    {
+      "arquivo": "redes_reais/escola_suica_2024/caracterizacao/graus.csv",
+      "sha256": "4485817c77f5e09c5d44449dd45f85da80527f1c735528a198e2a1c8fabcca35",
+      "acao": "remover_copia_identica"
+    },
+    {
+      "arquivo": "redes_reais/escola_suica_2024/caracterizacao/distribuicao_graus.csv",
+      "sha256": "e59be603a488346a213fbcabe59bbc7c25f6a495369505718541efb1c43aa46d",
+      "acao": "remover_copia_identica"
+    },
+    {
+      "arquivo": "redes_reais/escola_suica_2024/caracterizacao/componentes.csv",
+      "sha256": "c0bbf0d27f64cbc3d5ac1a173d223336a40a19cbfd7c7993b31b6c99f9de7a26",
+      "acao": "remover_copia_identica"
+    },
+    {
+      "arquivo": "redes_reais/escola_suica_2024/caracterizacao/distribuicao_graus.pdf",
+      "sha256": "57d0d34ab53debf2c9175e61ea5317e6e14558c9257da82aceb96e9f7a28a781",
+      "acao": "remover_copia_identica"
+    },
+    {
+      "arquivo": "redes_reais/escola_suica_2024/caracterizacao/distribuicao_graus.svg",
+      "sha256": "193da870fef5eeeb810b487c5133248809e8506e15a3dfa4b8c2751ba873434e",
+      "acao": "remover_copia_identica"
+    },
+    {
+      "arquivo": "redes_reais/escola_suica_2024/caracterizacao/caracterizacao.json",
+      "sha256": "25bb37bd6d1a14e830fa1c2d6c6564c12e9f8c9da5b7b6b11529ede0bd85052b",
+      "acao": "remover_copia_identica"
+    },
+    {
+      "arquivo": "redes_reais/escola_suica_2024/caracterizacao/README.md",
+      "sha256": "6d4416da67d37219223be2457c24241ec9afd5d7abd346583d4bad4016be072b",
+      "acao": "remover_copia_identica"
+    },
+    {
+      "arquivo": "redes_reais/originais/escola_suica_2024/contact-duration-acc-based-att-65.csv",
+      "sha256": "5cd405e4cff6620a622463c122c7625fc3bf100d22452d6c7e8905cd296d2950",
+      "acao": "mover_unico_necessario"
+    }
+  ],
+  "referencias_atualizadas": [
+    "scripts/caracterizar_rede_real.py",
+    "scripts/verificar_base_escola_interface.mjs",
+    "docs/README.md",
+    "docs/implementacao/Aviso-IntegranteB-Etapa3.md",
+    "gerenciamento-latex/README.md",
+    "gerenciamento-latex/AGENTS.md",
+    "gerenciamento-latex/secoes/07-protocolo-experimental.tex",
+    "dados/dados/experimentos/protocolo-etapa3-v1.json",
+    "dados/dados/redes_reais/README.md",
+    "scripts/preparar_redes_reais.py",
+    "dados/dados/experimentos/README.md",
+    "dados/dados/redes_reais/README.md",
+    "dados/dados/redes_reais/evidencias/interface-escola/README.md",
+    "dados/dados/redes_reais/escola_suica_2024/caracterizacao/README.md"
+  ],
+  "campanha_executada": false,
+  "conferencias_pos_mudanca": {
+    "preparador_na_pasta_canonica": "aprovado",
+    "caracterizacao_na_pasta_canonica": "aprovado",
+    "csvs_preservados": true,
+    "navegador_na_pasta_canonica": "aprovado",
+    "contratos_api_33_lotes": "aprovados_sem_execucao",
+    "links_locais": "aprovados",
+    "pdf_relatorio_paginas": 15
+  },
+  "nota_hashes": "Os hashes da lista registram a comparação no momento da reorganização; manifestos, documentação e registros foram depois atualizados para os novos caminhos. Os CSVs e os gráficos permaneceram idênticos."
+}

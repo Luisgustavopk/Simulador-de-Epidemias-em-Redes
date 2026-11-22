@@ -1,5 +1,7 @@
 # Modelagem de classes do simulador de epidemias
 
+> **Detalhamento de projeto.** O [PDF da Etapa 1](../../Artefatos/Etapa1-Problema-Modelagem-Plano.pdf), seções 2.5 e 2.6, apresenta as responsabilidades dos componentes e sua relação com a implementação.
+
 ## 1. Escopo, status e configuração de referência
 
 Este é um diagrama de classes de projeto para uma execução SIR, não uma declaração de implementação concluída. A estrutura consultada utiliza RedeContatos, Contato e Individuo; os nomes correspondem à estrutura atual, evitando manter uma cópia paralela do mesmo domínio. Configuração, motor, execução, estratégias e resultados permanecem responsabilidades propostas.

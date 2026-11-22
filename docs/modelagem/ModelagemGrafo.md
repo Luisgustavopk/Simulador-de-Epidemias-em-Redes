@@ -1,5 +1,7 @@
 # Modelagem do grafo
 
+> **Documento de projeto.** A descrição da rede e de sua implementação está no [PDF da Etapa 1](../Artefatos/Etapa1-Problema-Modelagem-Plano.pdf), seção 2.
+
 Este documento descreve a modelagem vigente da rede. As [histórias de usuário](../requisitos/HistoriasDeUsuario.md) e os requisitos continuam sendo a base. As decisões complementares sobre duração do isolamento, pesos normalizados e composição da redução foram autorizadas pelo usuário em **15/11/2026** e registradas em [Mecanismos de isolamento](../implementacao/Isolamento.md).
 
 A [versão histórica](ModelagemGrafo-historico-2026-11-15.md) preserva o texto anterior para rastrear as divergências. A entrada diária por q, liberação na recuperação e pesos acima de 1 dessa versão foram substituídos pelas regras abaixo.

@@ -14,9 +14,16 @@ dist/
 /tmp/documentacao/
 /docs/Artefatos/apoio-etapa1/
 /docs/Artefatos/apoio-etapa2/
+/docs/Artefatos/apoio-etapa3/
 
 # Área local de redação e gerenciamento do artigo LaTeX.
 /gerenciamento-latex/
+
+# Materiais locais de apresentação e ensaio do vídeo.
+/docs/apresentacao/
+
+# Materiais locais de implementação e revisão técnica.
+/docs/implementacao/
 
 # Exportações regeneráveis do bloco A; pacote de lotes, hash e resumos ficam no Git.
 # Restaurar localmente: PYTHONPATH=src python3 scripts/restaurar_artefatos_topologia.py

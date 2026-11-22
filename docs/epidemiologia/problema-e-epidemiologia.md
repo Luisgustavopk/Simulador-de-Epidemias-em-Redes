@@ -244,7 +244,7 @@ Na agregação visual, trajetórias extintas mantêm o último estado somente pa
 
 ### 6.3. Sementes, manifestos e ambiente
 
-`GeradorAleatorio` encapsula instâncias de `random.Random`, cujo núcleo é Mersenne Twister, conforme a [documentação do Python](../referencias/REFERENCIAS.md#python-random). Há fluxos separados para iniciais, isolamento e eventos epidemiológicos; a geração da rede possui sua própria semente. Pessoas e vizinhos são processados em ordem de ID. Os sorteios de infecção e recuperação consomem o fluxo epidemiológico; ele não é reinicializado a cada passo.
+`GeradorAleatorio` encapsula instâncias de `random.Random`, cujo núcleo é Mersenne Twister. Há fluxos separados para iniciais, isolamento e eventos epidemiológicos; a geração da rede possui sua própria semente. Pessoas e vizinhos são processados em ordem de ID. Os sorteios de infecção e recuperação consomem o fluxo epidemiológico; ele não é reinicializado a cada passo.
 
 Na repetição r, contada a partir de 1, o lote utiliza **semente efetiva = semente-base + r − 1** para cada fluxo. A preparação sorteia os IDs iniciais uma vez e os reutiliza nos três cenários. No protocolo executado, as bases são 10000, 20000 e 30000; as 100 repetições usam, respectivamente, 10000–10099, 20000–20099 e 30000–30099.
 
@@ -307,10 +307,10 @@ A busca incluiu Kaggle, publicações e repositórios dos autores. A preferênci
 
 | Alternativa consultada | Dados e preparação considerada | Situação e limites |
 | --- | --- | --- |
-| Escola primária, [SocioPatterns](../referencias/REFERENCIAS.md#sociopatterns-primary), estudo de [Stehlé et al.](../referencias/REFERENCIAS.md#stehle2011) | Dois grafos diários GEXF, cerca de 44 e 57 KB, com turma, gênero, duração acumulada em segundos e contagem de contatos | Não usada no bloco A. O estudo envolveu 242 participantes, 232 crianças e dez professores; o número por arquivo diário exige conferência. CC BY-NC-SA, com citação e reconhecimento de SocioPatterns. |
-| Ensino médio de Marselha, [SocioPatterns](../referencias/REFERENCIAS.md#sociopatterns-high), estudo de [Mastrandrea et al.](../referencias/REFERENCIAS.md#mastrandrea2015) | Cinco dias de sensores, intervalos de 20 s, arquivo de cerca de 653 KB e metadados separados; agregação exigiria janela e acumulação de durações | Não usada no bloco A. A rede de todo o período do estudo tem 327 estudantes e 5.818 arestas; esses números não descrevem um único dia. Diários e amizade são camadas distintas. CC BY-NC-SA. |
-| [Facebook combinado do SNAP](../referencias/REFERENCIAS.md#snap-facebook) | 4.039 vértices e 88.234 arestas, em TXT compactado; poderia receber pesos unitários ou sintéticos explicitamente identificados | Alternativa estrutural, sem uso no bloco A. Amizade digital não mede exposição presencial; a página consultada não informa licença explícita dos dados. |
-| Círculos sociais no [catálogo de McAuley](../referencias/REFERENCIAS.md#mcauley-social) e no [Kaggle](../referencias/REFERENCIAS.md#kaggle-social) | Coleção relacionada de perfis anonimizados, círculos e redes egocêntricas | Registro do levantamento, sem uso nos experimentos. O pacote do Kaggle não foi tratado como idêntico ao arquivo combinado do SNAP. |
+| Escola primária do SocioPatterns | Dois grafos diários GEXF, com turma, gênero, duração acumulada em segundos e contagem de contatos | Não usada no bloco A. O estudo envolveu 242 participantes, 232 crianças e dez professores; a rede não foi adotada por ser de uma escola primária e outra escala. |
+| Ensino médio de Marselha do SocioPatterns | Cinco dias de sensores, intervalos de 20 s e metadados separados | Não usada no bloco A. Diários e amizade são camadas distintas, e a agregação exigiria critérios que não seriam comparáveis à janela escolar selecionada. |
+| Facebook combinado do SNAP | 4.039 vértices e 88.234 arestas, em arquivo textual | Alternativa estrutural, sem uso no bloco A. Amizade digital não mede exposição presencial. |
+| Círculos sociais de McAuley e Kaggle | Perfis anonimizados, círculos e redes egocêntricas | Registro do levantamento, sem uso nos experimentos. Não foram usados como contatos presenciais observados. |
 
 Sensores de proximidade se aproximam mais da exposição presencial do que relações digitais, mas não comprovam transmissão e podem omitir pessoas, ambientes e períodos. Os experimentos não utilizam diagnósticos clínicos para definir infectados iniciais nem reproduzem os resultados clínicos da fonte. Redes digitais permaneceriam casos estruturais, com hipóteses de exposição explicitamente artificiais.
 
@@ -327,7 +327,7 @@ Diferenças entre redes não foram atribuídas automaticamente a uma única prop
 
 ## 8. Diagramas UML
 
-Os diagramas existentes documentam casos de uso, estados e classes. Suas fontes editáveis e imagens são mantidas juntas na pasta de modelagem; esta revisão reutiliza esses artefatos. A sintaxe dos [casos de uso](../referencias/REFERENCIAS.md#plantuml-usecase) e dos [estados](../referencias/REFERENCIAS.md#plantuml-state) segue a documentação PlantUML. Para o comportamento executável e os campos disponíveis, a referência é a implementação conferida nesta edição.
+Os diagramas existentes documentam casos de uso, estados e classes. Suas fontes editáveis e imagens são mantidas juntas na pasta de modelagem; esta revisão reutiliza esses artefatos. Os formatos de casos de uso e estados seguem a sintaxe PlantUML. Para o comportamento executável e os campos disponíveis, a referência é a implementação conferida nesta edição.
 
 ### 8.1. Casos de uso
 

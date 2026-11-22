@@ -70,8 +70,8 @@
       "warning: secoes/06-verificacao-complexidade:64: Underfull \\vbox (badness 10000) has occurred while \\output is active",
       "warning: secoes/07-protocolo-experimental:6: Underfull \\hbox (badness 10000) in paragraph at lines 5--6"
     ],
-    "sha256_pdf": "a1cff4706f803d83eef5c51a2741cd851d0a0ace38132d9a5c6405b1cde3287e",
-    "sha256_zip": "4577cd92560cc1e554c0b643527a8f52971955582858fcfc5a506b6265e07129",
+    "sha256_pdf": "5789820325680da3e5e7388bb472a649a76458646c97d961743b6e07577a2f67",
+    "sha256_zip": "3b4e0d59bb0ec68950d6a4ffac80ac2dd2916e5c9ca8d8ffa8699db9b0cda06e",
     "nota": "Pasta LaTeX local ignorada pelo Git; o pacote contém as fontes e imagens completas para exportação."
   },
   "uml": "Diagramas originais consultados e preservados; contratos de projeto e implementação distinguidos em docs/modelagem/simulador-epidemias/revisao-modelagem-implementacao.md.",
@@ -86,5 +86,25 @@
     "dados/dados/experimentos/desempenho-v1/medicoes.json": "a0ca8d29a8b5b1e98301fdf044800872f57ffbe68e61d50898a4ed5b5e0259c7",
     "dados/dados/experimentos/intervencoes-v1/verificacao.json": "245b46a0d968cade1670bb7da81f3b894394a8085fc23afa5c34af32828fe270"
   },
-  "links_locais_conferidos": 33
+  "links_locais_conferidos": 33,
+  "atualizacao_identificacao_relatorio": {
+    "data": "2026-11-22",
+    "professor": "Leonardo Vilela Cardoso",
+    "emails": [
+      "joao09calixto@gmail.com",
+      "luisgustavoxavier1234@gmail.com",
+      "wdomingos@sga.pucminas.br"
+    ],
+    "paginas": 15,
+    "pagina_inicial_inspecionada": true,
+    "texto_do_resumo_ao_fim_preservado": true,
+    "texto_das_paginas_2_a_15_identico": true,
+    "zip_fontes_compilado_em_diretorio_limpo": true,
+    "arquivos_no_zip": 24,
+    "somente_main_tex_alterado_no_pacote": true,
+    "sem_overfull_ou_referencias_indefinidas": true,
+    "sha256_pdf": "5789820325680da3e5e7388bb472a649a76458646c97d961743b6e07577a2f67",
+    "sha256_zip": "3b4e0d59bb0ec68950d6a4ffac80ac2dd2916e5c9ca8d8ffa8699db9b0cda06e",
+    "novos_testes_ou_experimentos": false
+  }
 }

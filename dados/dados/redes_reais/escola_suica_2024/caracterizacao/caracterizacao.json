@@ -1,0 +1,63 @@
+{
+  "base": "escola_suica_2024",
+  "titulo_rede": "Contatos presenciais em uma escola secundária de Berna",
+  "coleta": {
+    "inicio": "2024-01-22",
+    "fim": "2024-03-08"
+  },
+  "calculado_em_utc": "2026-11-21T23:01:24.476939+00:00",
+  "python": "3.13.3",
+  "representacao": "União estática dos pares com duração > 0, ambos presentes e com movimento > 0; sem imputação. Peso 1.",
+  "indicadores": {
+    "numero_individuos": 67,
+    "numero_contatos": 1325,
+    "grau_medio": 39.55223880597015,
+    "grau_minimo": 18,
+    "grau_maximo": 54,
+    "densidade": 0.5992763455450023,
+    "numero_componentes": 1,
+    "maior_componente": 67,
+    "individuos_sem_contatos": 0,
+    "soma_graus": 2650
+  },
+  "ids_grau_maximo": [
+    25,
+    34,
+    47
+  ],
+  "ids_sem_contatos": [],
+  "tamanhos_componentes": [
+    67
+  ],
+  "sha256_entradas": {
+    "manifesto.json": "8c9e27d53f450fba10cbe5e307bf68facd3b548bf5a01eb9bfe690d578a3f941",
+    "contatos.csv": "039c17357fab1b5f5101d13837a5d8c0e2256fc40bc3e6fd05d84e2fded37188",
+    "duracoes_observadas.csv": "1753703b00a5431271a446c25daa4772c147191e57054fdb829b4db285fe9829",
+    "individuos.csv": "4f10518df73dbc91b80a0cdc918cc656733e2e7facca2c0ed8e336103f869d1a",
+    "mapa_ids.csv": "5edcecab590a1d59c4f44307ec21751a66a0000ea93df1a370828ea6909b2cb8"
+  },
+  "sha256_codigo": {
+    "src/simulador/analise_estrutural.py": "57c7c406d80e9e5d9d6ee5518814478bf779c16f699e97a166ec31c94c06d278",
+    "src/simulador/rede_contatos.py": "d820ce69f21e6ece33886eeae15150f7dbc1699637983c506760b8abf8e35a10",
+    "src/simulador/importacao.py": "ee7f498b3f34a5e4f3396db3ee5161e7f90f6c7649f9c0759abd55cb621fe288",
+    "scripts/caracterizar_rede_real.py": "d330022b72f92382b1bf51d10c1ab90cb5924fdb54b1b747f0243019d04e9f34"
+  },
+  "verificacoes": {
+    "soma_graus_igual_2m": true,
+    "populacao_preservada": true
+  },
+  "epidemias_executadas": false,
+  "graficos": {
+    "biblioteca": "ReportLab",
+    "versao": "4.3.1",
+    "pdf_invariant": true
+  },
+  "sha256_saidas": {
+    "resumo.csv": "fbdca8f378f15cf036ef62f922f3326f4de9f04488e0ca880e6d535dfd5a0999",
+    "graus.csv": "4485817c77f5e09c5d44449dd45f85da80527f1c735528a198e2a1c8fabcca35",
+    "distribuicao_graus.csv": "e59be603a488346a213fbcabe59bbc7c25f6a495369505718541efb1c43aa46d",
+    "componentes.csv": "c0bbf0d27f64cbc3d5ac1a173d223336a40a19cbfd7c7993b31b6c99f9de7a26",
+    "distribuicao_graus.pdf": "57d0d34ab53debf2c9175e61ea5317e6e14558c9257da82aceb96e9f7a28a781",
+    "distribuicao_graus.svg": "193da870fef5eeeb810b487c5133248809e8506e15a3dfa4b8c2751ba873434e"
+  }
+}

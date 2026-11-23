@@ -1252,9 +1252,22 @@
     border-top: 1px solid var(--color-border);
     display: flex;
     justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
     gap: 16px;
     color: var(--color-text-muted);
     font-size: 11px;
+  }
+  .footer-network-description {
+    margin-left: auto;
+  }
+  .privacy-notice {
+    flex-basis: 100%;
+    max-width: 980px;
+    margin: 0;
+    color: var(--color-text-muted);
+    font-size: 10px;
+    line-height: 1.55;
   }
   @media (hover: hover) {
     .button-primary:not(:disabled):hover {
@@ -1365,7 +1378,7 @@
     .simulation-workbench {
       grid-template-columns: 220px minmax(0, 1fr);
     }
-    .app-footer > span:last-child {
+    .footer-network-description {
       display: none;
     }
   }

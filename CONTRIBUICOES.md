@@ -1,19 +1,17 @@
 # Contribuições dos integrantes
 
-Registro atualizado em **22 de novembro de 2026**, a partir do histórico local integrado à branch `main`, até o commit `2d66d94`. As datas e autorias são as registradas pelo Git; as descrições foram conferidas pelas alterações de cada commit.
+Registro atualizado em **22 de novembro de 2026**, a partir do histórico integrado à branch `main`, até o commit `53340b8`. As datas e autorias são as registradas pelo Git; as descrições foram conferidas pelas alterações de cada commit.
 
-Foram identificados **85 commits: 77 de entregas e 8 de integração (merges)**. Os merges aparecem separadamente, pois integram contribuições já descritas nas entregas. A quantidade de commits registra o histórico de versionamento e não mede o esforço de cada integrante.
+Foram identificados **89 commits: 81 de entregas e 8 de integração (merges)**. Os merges aparecem separadamente, pois integram contribuições já descritas nas entregas. A quantidade de commits registra o histórico de versionamento e não mede o esforço de cada integrante.
 
 | Integrante | Entregas | Merges | Total |
 | --- | ---: | ---: | ---: |
 | João Vitor | 26 | 2 | 28 |
-| Luis Gustavo | 24 | 2 | 26 |
-| Wesley Domingos | 27 | 4 | 31 |
-| **Total** | **77** | **8** | **85** |
+| Luis Gustavo | 25 | 2 | 27 |
+| Wesley Domingos | 30 | 4 | 34 |
+| **Total** | **81** | **8** | **89** |
 
 Os registros `WesleySDz` e `Wesley Domingos` foram agrupados por utilizarem o mesmo e-mail de autoria no Git. A consulta considera os commits alcançáveis pela `main`; alterações exclusivas de outras branches não entram nesta contagem.
-
-O commit `2d66d94` está apenas na branch local nesta consulta. Os demais possuem links para os respectivos hashes no repositório, usando as referências remotas já disponíveis localmente.
 
 ## João Vitor
 
@@ -93,6 +91,7 @@ As entregas abrangem a inicialização do repositório, a modelagem UML e a docu
 | 18/11/2026 | [8bed5d6](https://github.com/Luisgustavopk/Simulador-de-Epidemias-em-Redes/commit/8bed5d646baee39a1a11cf572005d0fd6c57eff6) | `feat: implementa formulário de comparação` | Implementação do formulário de comparação, dos contratos do serviço e de seus testes. |
 | 18/11/2026 | [2af73d1](https://github.com/Luisgustavopk/Simulador-de-Epidemias-em-Redes/commit/2af73d10cb7c55c353766b445b616d9eb2fab88f) | `fix: valida a comparação de cenários` | Ajustes nas validações da comparação e em sua relação com sementes, configuração, seleção e motor SIR. |
 | 18/11/2026 | [9d56e68](https://github.com/Luisgustavopk/Simulador-de-Epidemias-em-Redes/commit/9d56e68d9994d1db98b8e44e11e5b8ab65fbdd3f) | `fix: corrige os formulários de validação` | Correções nos formulários e resumos de configuração, nos campos da intervenção e nos contratos de validação. |
+| 22/11/2026 | [03d457a](https://github.com/Luisgustavopk/Simulador-de-Epidemias-em-Redes/commit/03d457a911ad46c2f8ea56b0c3449cd865d058e0) | `fix(doc) ajusta o planejamento` | Atualização dos planejamentos das três etapas para refletir a implementação e a campanha concluída. |
 
 ### Integrações
 
@@ -137,7 +136,10 @@ As entregas abrangem a estrutura da rede, importação e geração, análise est
 | 20/11/2026 | [6694bb7](https://github.com/Luisgustavopk/Simulador-de-Epidemias-em-Redes/commit/6694bb78631833c922fa14c3ed732b556854705a) | `feat: integração main` | Consolidação da execução e dos resultados; inclusão de `ResumoEnsaio`, `TabelaHistorico`, `dadosResultados.ts` e `ResultadoSimulacao`, com ajustes no domínio, na API e nos testes. |
 | 20/11/2026 | [4326133](https://github.com/Luisgustavopk/Simulador-de-Epidemias-em-Redes/commit/4326133702c0ca46bf0696e2529de8980d42e74d) | `fix: sideabr e ensaio` | Correções na barra lateral e na tela de ensaio, inclusão de `benchmark_simulacao.py` e ajustes nos testes de interface e otimização. |
 | 22/11/2026 | [7d6f560](https://github.com/Luisgustavopk/Simulador-de-Epidemias-em-Redes/commit/7d6f560563ac5768cda8bcab21e18a50123fe2bc) | `feat: script rede real` | Inclusão dos scripts de preparação, caracterização, experimentação, análise, verificação e restauração; registro dos controles sintéticos; correção temporal do isolamento, testes e regras de versionamento. |
-| 22/11/2026 | `2d66d94` (local) | `docs: registra resultados de topologia e guia de Wesley` | Registro dos resultados de topologia de 21 redes e 6.300 trajetórias, com pacote de lotes, hashes, resumos, gráficos, estado experimental e documentação de modelagem e execução. |
+| 22/11/2026 | [2d66d94](https://github.com/Luisgustavopk/Simulador-de-Epidemias-em-Redes/commit/2d66d943fbd4a728def78fbc5401dd02afa867a8) | `docs: registra resultados de topologia e guia de Wesley` | Registro dos resultados de topologia de 21 redes e 6.300 trajetórias, com pacote de lotes, hashes, resumos, gráficos, estado experimental e documentação de modelagem e execução. |
+| 22/11/2026 | [f69ad66](https://github.com/Luisgustavopk/Simulador-de-Epidemias-em-Redes/commit/f69ad669153cb0d85a7c5561efc3a45f14e6db4f7) | `fix: resultados front` | Atualização dos gráficos e filtros do frontend, reorganização dos dados, expansão dos testes das telas e consolidação dos artefatos da Etapa 3. |
+| 22/11/2026 | [dc3d41c](https://github.com/Luisgustavopk/Simulador-de-Epidemias-em-Redes/commit/dc3d41c46300be419bf98ad561bb331745744f8f) | `feat: analise de desempenho` | Inclusão dos blocos B/C/D, dos 33 lotes da campanha, das figuras de intervenções e sensibilidade, do benchmark e dos scripts de restauração e verificação. |
+| 22/11/2026 | [53340b8](https://github.com/Luisgustavopk/Simulador-de-Epidemias-em-Redes/commit/53340b834660978860a3c1f2a7d08a66c7d21086) | `docs: slides, video e latex` | Preparação dos PDFs finais, dos slides e dos materiais de demonstração da entrega, com atualização dos índices e do README principal. |
 
 ### Integrações
 
@@ -154,7 +156,7 @@ A autoria dos commits foi preservada mesmo quando a atividade difere da divisão
 
 O isolamento reúne contribuições complementares: Luis implementou os critérios de seleção, Wesley implementou os mecanismos sobre os contatos e João desenvolveu o controle temporal que os aciona. A integração posterior alterou módulos dessas três partes, conforme os commits relacionados acima.
 
-A mensagem de `2d66d94` menciona o guia de Wesley, mas esse arquivo não integra o commit. O [guia de resultados da Etapa 3](docs/apresentacao/Resultados-Etapa3-IntegranteA-Wesley.md) permanece como `Untracked` nesta consulta. Materiais sem commit, incluindo a redação local do relatório em LaTeX, não recebem atribuição por este levantamento.
+As entregas finais da Etapa 3 incluem dados adaptados, testes, scripts, resultados, gráficos, relatório, slides e benchmark, distribuídos pelos commits acima. Materiais locais não versionados não recebem atribuição por este levantamento.
 
 As entradas sobre testes registram a inclusão ou alteração de código e evidências de teste. A aprovação de uma suíte deve ser conferida em seu respectivo relatório de execução.
 

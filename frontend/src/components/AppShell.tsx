@@ -160,7 +160,15 @@ export function AppShell({
           {children}
           <footer className="app-footer">
             <span>Observatório · Simulador de Epidemias em Redes</span>
-            <span>Grafo simples, não direcionado e ponderado</span>
+            <span className="footer-network-description">
+              Grafo simples, não direcionado e ponderado
+            </span>
+            <p className="privacy-notice">
+              Este site utiliza apenas um cookie técnico de sessão estritamente
+              necessário para manter o estado da rede de grafos. Não coletamos
+              dados pessoais para rastreamento, análise ou publicidade, e o cookie
+              é removido ao encerrar a sessão.
+            </p>
           </footer>
         </div>
       </div>
